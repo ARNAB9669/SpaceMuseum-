@@ -4,20 +4,23 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SpaceEnvironment, Biodome } from './Ui/dome.js';
 import { loadMuseumIsland } from './Logic/loa_modle.js';
+import { IntroSequence } from './Logic/intro.js';
+import { FirstPersonController } from './Logic/AI/ME/nevigation.js';
 
 /*/ Canvas & Rendering Setup /*/
 const canvas = document.getElementById('webgl-canvas');
+const dockPrompt = document.getElementById('dock-prompt');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#010106');
 
-/*/ Camera Setup /*/
+/*/ Camera Setup (Perspective Camera) /*/
 const camera = new THREE.PerspectiveCamera(
   60,
   window.innerWidth / window.innerHeight,
   0.1,
   3000
 );
-camera.position.set(0, 35, 75);
+camera.position.set(120, 160, 240);
 
 /*/ WebGL Renderer /*/
 const renderer = new THREE.WebGLRenderer({
@@ -53,10 +56,98 @@ const timer = new THREE.Timer();
 /*/ Transparent White Biodome Covering Museum Island /*/
 const biodome = new Biodome(scene);
 
-/*/ Load 3D Museum Island from CDN /*/
-loadMuseumIsland(scene).catch((err) => {
-  console.error('[main] Failed to load Space Museum Island:', err);
-});
+/*/ AAA Game Intro & Cutscene Controller /*/
+const intro = new IntroSequence(camera, controls);
+
+/*/ First-Person POV Controller (Perspective Camera) /*/
+const fpController = new FirstPersonController(camera, canvas, controls);
+
+/*/ Museum Island 3D Model Reference /*/
+let museumIslandModel = null;
+loadMuseumIsland(scene)
+  .then((obj) => {
+    museumIslandModel = obj;
+  })
+  .catch((err) => {
+    console.error('[main] Failed to load Space Museum Island:', err);
+  });
+
+/*/ Raycasting for Hover Highlight & Selection /*/
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let isHovered = false;
+
+/*/ Track Mouse Position for Raycasting /*/
+function onPointerMove(event) {
+  /*/ Only raycast when in Orbit Mode (not while in First Person or during landing) /*/
+  if (fpController.isFirstPerson || fpController.isLanding || fpController.isAscending) {
+    if (isHovered) {
+      isHovered = false;
+      canvas.style.cursor = 'default';
+      biodome.setHighlight(false);
+      if (museumIslandModel?.userData?.setHighlight) {
+        museumIslandModel.userData.setHighlight(false);
+      }
+      if (dockPrompt) dockPrompt.classList.remove('visible');
+    }
+    return;
+  }
+
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+
+  /*/ Collect raycast target meshes (Biodome and Island) /*/
+  const interactiveTargets = [...biodome.getRaycastMeshes()];
+  if (museumIslandModel) {
+    museumIslandModel.traverse((child) => {
+      if (child.isMesh) interactiveTargets.push(child);
+    });
+  }
+
+  const intersects = raycaster.intersectObjects(interactiveTargets, false);
+  const nowHovered = intersects.length > 0;
+
+  if (nowHovered !== isHovered) {
+    isHovered = nowHovered;
+    canvas.style.cursor = isHovered ? 'pointer' : 'default';
+
+    /*/ Highlight & Pop Dome and Island /*/
+    biodome.setHighlight(isHovered);
+    if (museumIslandModel?.userData?.setHighlight) {
+      museumIslandModel.userData.setHighlight(isHovered);
+    }
+
+    /*/ Show / Hide Selection Docking Prompt /*/
+    if (dockPrompt) {
+      if (isHovered) {
+        dockPrompt.classList.add('visible');
+      } else {
+        dockPrompt.classList.remove('visible');
+      }
+    }
+  }
+}
+window.addEventListener('pointermove', onPointerMove);
+
+/*/ Click to Land Inside Museum in First-Person POV /*/
+function onCanvasClick() {
+  if (isHovered && !fpController.isFirstPerson && !fpController.isLanding && !fpController.isAscending) {
+    /*/ Clear hover highlights /*/
+    isHovered = false;
+    canvas.style.cursor = 'default';
+    biodome.setHighlight(false);
+    if (museumIslandModel?.userData?.setHighlight) {
+      museumIslandModel.userData.setHighlight(false);
+    }
+    if (dockPrompt) dockPrompt.classList.remove('visible');
+
+    /*/ Execute cinematic landing into first person POV /*/
+    fpController.landInside();
+  }
+}
+canvas.addEventListener('click', onCanvasClick);
 
 /*/ Window Resize Handler /*/
 function onWindowResize() {
@@ -75,8 +166,15 @@ function animate(timestamp) {
   timer.update(timestamp);
   const delta = timer.getDelta();
 
-  /*/ Update Controls, Cosmic Drift & Biodome Grid /*/
-  controls.update();
+  /*/ Update Intro Cutscene, Controls, First Person & Biodome /*/
+  intro.update(delta);
+
+  if (fpController.isFirstPerson) {
+    fpController.update(delta);
+  } else if (!fpController.isLanding && !fpController.isAscending) {
+    controls.update();
+  }
+
   spaceEnv.update(delta);
   biodome.update(delta);
 

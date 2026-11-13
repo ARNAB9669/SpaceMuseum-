@@ -264,6 +264,10 @@ export class Biodome {
     this.floorY = -2.42;
     this.domeHeightScale = 0.62; /*/ Gentle hemisphere ratio /*/
 
+    /*/ Interactive Hover & Highlight State /*/
+    this.isHighlighted = false;
+    this.highlightFactor = 0; /*/ 0 = idle, 1 = fully popped & glowing /*/
+
     this.initGlassCanopy();
     this.initGeodesicGrid();
     this.initBaseRimRing();
@@ -289,7 +293,7 @@ export class Biodome {
     geometry.scale(1.0, this.domeHeightScale, 1.0);
 
     /*/ White Translucent Glass Material /*/
-    const material = new THREE.MeshPhysicalMaterial({
+    this.glassMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xffffff,
       roughness: 0.08,
       metalness: 0.1,
@@ -301,7 +305,7 @@ export class Biodome {
       depthWrite: false
     });
 
-    this.glassMesh = new THREE.Mesh(geometry, material);
+    this.glassMesh = new THREE.Mesh(geometry, this.glassMaterial);
     this.group.add(this.glassMesh);
   }
 
@@ -319,7 +323,7 @@ export class Biodome {
     gridGeometry.scale(1.0, this.domeHeightScale, 1.0);
 
     const wireframe = new THREE.WireframeGeometry(gridGeometry);
-    const lineMaterial = new THREE.LineBasicMaterial({
+    this.lineMaterial = new THREE.LineBasicMaterial({
       color: 0xe0f2fe,
       transparent: true,
       opacity: 0.12,
@@ -327,7 +331,7 @@ export class Biodome {
       depthWrite: false
     });
 
-    this.gridLines = new THREE.LineSegments(wireframe, lineMaterial);
+    this.gridLines = new THREE.LineSegments(wireframe, this.lineMaterial);
     this.group.add(this.gridLines);
   }
 
@@ -336,7 +340,7 @@ export class Biodome {
     const ringGeo = new THREE.TorusGeometry(this.baseRadius, 0.45, 16, 128);
     ringGeo.rotateX(Math.PI / 2);
 
-    const ringMat = new THREE.MeshStandardMaterial({
+    this.ringMat = new THREE.MeshStandardMaterial({
       color: 0xdbeafe,
       emissive: 0x38bdf8,
       emissiveIntensity: 0.6,
@@ -344,9 +348,9 @@ export class Biodome {
       metalness: 0.85
     });
 
-    const baseRing = new THREE.Mesh(ringGeo, ringMat);
-    baseRing.position.y = 0.05;
-    this.group.add(baseRing);
+    this.baseRing = new THREE.Mesh(ringGeo, this.ringMat);
+    this.baseRing.position.y = 0.05;
+    this.group.add(this.baseRing);
   }
 
   initFresnelShieldGlow() {
@@ -362,8 +366,8 @@ export class Biodome {
     );
     outerGeo.scale(1.0, this.domeHeightScale, 1.0);
 
-    const outerMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
+    this.glowMat = new THREE.MeshBasicMaterial({
+      color: 0x38bdf8,
       transparent: true,
       opacity: 0.06,
       blending: THREE.AdditiveBlending,
@@ -371,14 +375,50 @@ export class Biodome {
       depthWrite: false
     });
 
-    const glowDome = new THREE.Mesh(outerGeo, outerMat);
-    this.group.add(glowDome);
+    this.glowDome = new THREE.Mesh(outerGeo, this.glowMat);
+    this.group.add(this.glowDome);
+  }
+
+  setHighlight(active) {
+    this.isHighlighted = !!active;
+  }
+
+  getRaycastMeshes() {
+    return [this.glassMesh, this.baseRing];
   }
 
   update(delta) {
     /*/ Subtle structural grid rotation /*/
     if (this.gridLines) {
       this.gridLines.rotation.y += delta * 0.005;
+    }
+
+    /*/ Smooth pop & glow interpolation /*/
+    const target = this.isHighlighted ? 1.0 : 0.0;
+    this.highlightFactor += (target - this.highlightFactor) * Math.min(1.0, delta * 9.0);
+
+    /*/ Scale Pop when hovered /*/
+    const popScale = 1.0 + this.highlightFactor * 0.035;
+    this.group.scale.set(popScale, popScale, popScale);
+
+    /*/ Rim Ring Emissive Burst /*/
+    if (this.ringMat) {
+      this.ringMat.emissiveIntensity = 0.6 + this.highlightFactor * 1.5;
+    }
+
+    /*/ Geodesic Wireframe Brightness /*/
+    if (this.lineMaterial) {
+      this.lineMaterial.opacity = 0.12 + this.highlightFactor * 0.45;
+    }
+
+    /*/ Glass Sheen & Opacity Pop /*/
+    if (this.glassMaterial) {
+      this.glassMaterial.opacity = 0.32 + this.highlightFactor * 0.24;
+    }
+
+    /*/ Outer Holographic Shield Glow /*/
+    if (this.glowMat) {
+      this.glowMat.opacity = 0.06 + this.highlightFactor * 0.22;
     }
   }
 }

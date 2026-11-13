@@ -44,3 +44,44 @@
 - **Physical Glass Shading**: Utilized `MeshPhysicalMaterial` configured for optical transparency (`roughness: 0.08`, `transmission: 0.85`, `ior: 1.45`, `opacity: 0.32`, `DoubleSide`, `depthWrite: false`) allowing starlight and cosmic nebulae to refract realistically through the dome.
 - **Geodesic Lattice Ribs**: Embedded a subtle rotating geodesic wireframe overlay (`LineSegments` with additive starlight sheen) providing structural panel definition across the canopy surface.
 - **Perimeter Seal Ring**: Anchored the dome to the disc using an emissive neon cyan/white torus ring (`TorusGeometry`) sealing the atmospheric boundary of the island station.
+
+---
+
+### Log : 6
+**Title**: AAA Cinematic Game Intro & Cutscene Swoop (`src/Logic/intro.js`)  
+**Description**: Implemented a full-scale AAA gaming intro sequence and orbital docking cutscene on website load:
+- **Telemetry Preloader Overlay**: Futuristic frosted glass HUD displaying real-time telemetry calibration (coordinates, sol count, biodome status) and simulated sensor calibration progress bar ($0\% \to 100\%$).
+- **Synthesized Web Audio SFX**: Generated high-fidelity cinematic sound effects natively via the Web Audio API without relying on external audio assets (sub-bass frequency drop from $65\text{Hz} \to 32\text{Hz}$, cybernetic resonance ping, and filtered decompression noise).
+- **Cinematic Camera Flight**: Built a smooth Bezier flight path starting from high orbital perspective $(120, 160, 240)$ curving past the transparent firmament biodome down to establishing museum view $(0, 35, 75)$ using quintic ease-out deceleration ($1 - (1-t)^{3.5}$).
+- **Widescreen Letterboxing & Controls Handover**: Displayed 8vh cinematic black letterbox bars during flight, fading seamlessly into the primary HUD and unlocking interactive `OrbitControls` upon arrival. Included `[ESC] Skip Intro` functionality.
+
+
+---
+
+### Log : 7
+**Title**: Intro Simplification — Auto-Play, No Overlay, No Button  
+**Issue**: Previous intro showed a full-screen frosted-glass overlay with telemetry terminal, progress bar, and "INITIALIZE DOCKING SEQUENCE" button that required user interaction before they could see the 3D scene. Users would leave before clicking.  
+**Fix**: Stripped the entire overlay from `src/Logic/intro.js` and purged all dead CSS classes from `src/Ui/style.css`. Camera swoop now starts immediately on page load — no overlay, no button, no terminal box, no letterbox bars. 3D background (space environment + dome + island) is always visible from frame 0. `[ESC]` still skips the swoop and hands off to OrbitControls. HUD fades in after swoop completes. `style.css` reduced from 619 lines → 86 lines (removed: `.intro-overlay`, `.intro-card`, `.intro-badge`, `.intro-badge-pulse`, `.intro-title`, `.intro-tagline`, `.intro-telemetry`, `.telemetry-row`, `.telemetry-label`, `.telemetry-val`, `.intro-progress-container`, `.intro-progress-track`, `.intro-progress-fill`, `.intro-progress-status`, `.btn-launch-sequence`, `.cinematic-bar`, `.btn-intro-skip`). Build verified ✓ in 1.45s.  
+**Note for future**: Intro state is intentionally stateless — if a future feature requires a "Press any key to start" gating screen (e.g. for a multiplayer lobby), re-add it as a separate `src/Ui/LandingGate.js` component, NOT inside `intro.js` which owns camera choreography only.
+
+
+---
+
+### Log : 8
+**Title**: Station Hover Highlight, Selection Pop & First-Person POV Landing Navigation  
+**Description**: Implemented interactive selection and seamless transition from orbital perspective to first-person POV interior exploration:
+- **Station Hover Raycasting & Visual Pop**: Raycaster actively tracks cursor over the transparent firmament biodome (`glassMesh`, `baseRing`) and museum architecture. When hovered, the station triggers an interactive "pop" and highlight:
+  - Biodome smoothly scales up by $+3.5\%$ with spring damping.
+  - Base perimeter ring surges in cyan emissive luminosity ($0.6 \to 2.1$).
+  - Geodesic grid lattice lines brighten ($0.12 \to 0.57$) in neon starlight cyan (`#38bdf8`).
+  - Glass canopy and museum architecture take on an illuminated starlight sheen, with core pedestal light brightening ($2.5 \to 4.2$).
+  - Sleek HUD status pill appears: `STATION TARGETED • CLICK TO LAND & ENTER` with animated pulse indicator. Cursor switches to `pointer`.
+- **Cinematic Atmospheric Landing Cutscene**: Clicking the selected station triggers an orbital descent:
+  - Synthesized Web Audio SFX generates an atmospheric pass-through sweep ($95\text{Hz} \to 34\text{Hz}$ sub-bass glide, airlock white-noise decompression, and hermetic seal tone).
+  - Quintic ease-in-out Bezier flight path curves from orbital position down through the canopy to museum courtyard entry `(0, -0.15, -13)` at exact human eye level ($1.72\text{m}$ above the $Y = -1.87$ floor).
+- **First-Person POV Controller (`src/Logic/AI/ME/nevigation.js`)**:
+  - Uses the existing `THREE.PerspectiveCamera` for seamless visual fidelity.
+  - **Look Controls**: Supports Pointer Lock (`canvas.requestPointerLock()`) on click with smooth mouse drag fallback. Vertical pitch clamped to $\pm 80^\circ$ to prevent gimbal inversion.
+  - **Movement Physics**: Smooth horizontal vector locomotion along player facing direction with `WASD` / arrow keys, `Shift` sprint multiplier ($6.2\text{m/s} \to 11.0\text{m/s}$), momentum damping ($9.0$), and subtle rhythmic head-bobbing.
+  - **Perimeter Safety**: Island radial boundary clamp ($R \le 38.0\text{m}$) prevents walking off the floating museum disc into outer space.
+  - **Return to Orbit**: `[ESC]` key or clicking `ORBIT VIEW` in the HUD gracefully ascends the perspective camera back to orbital vantage `(0, 35, 75)` and hands control back to `OrbitControls`.

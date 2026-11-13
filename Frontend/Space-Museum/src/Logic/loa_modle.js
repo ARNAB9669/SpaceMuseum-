@@ -14,13 +14,17 @@ export async function loadMuseumIsland(scene, onProgress) {
     color: 0x333b4f,
     roughness: 0.5,
     metalness: 0.4,
+    emissive: 0x000000,
+    emissiveIntensity: 0.0,
     flatShading: false
   });
 
   const platformMaterial = new THREE.MeshStandardMaterial({
     color: 0x1e2538,
     roughness: 0.7,
-    metalness: 0.2
+    metalness: 0.2,
+    emissive: 0x000000,
+    emissiveIntensity: 0.0
   });
 
   /*/ Primary attempt via GitHub CDN with local fallback /*/
@@ -100,6 +104,28 @@ export async function loadMuseumIsland(scene, onProgress) {
   islandLights.add(coreLight);
 
   scene.add(islandLights);
+
+  /*/ Interactive Highlight Controller for Museum Island /*/
+  let isHighlighted = false;
+  obj.userData = {
+    isMuseumIsland: true,
+    setHighlight: (active) => {
+      isHighlighted = !!active;
+      if (isHighlighted) {
+        structureMaterial.emissive.setHex(0x1e3a5f);
+        structureMaterial.emissiveIntensity = 0.45;
+        platformMaterial.emissive.setHex(0x0a192f);
+        platformMaterial.emissiveIntensity = 0.25;
+        coreLight.intensity = 4.2;
+      } else {
+        structureMaterial.emissive.setHex(0x000000);
+        structureMaterial.emissiveIntensity = 0.0;
+        platformMaterial.emissive.setHex(0x000000);
+        platformMaterial.emissiveIntensity = 0.0;
+        coreLight.intensity = 2.5;
+      }
+    }
+  };
 
   return obj;
 }
