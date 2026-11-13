@@ -1,0 +1,20 @@
+# Private Startup Architecture Notes (Covelly / RAW)
+Meta/stuff.md
+**/stuff.md
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
