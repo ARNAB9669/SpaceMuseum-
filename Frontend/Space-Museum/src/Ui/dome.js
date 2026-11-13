@@ -43,6 +43,7 @@ function createNebulaTexture() {
   return texture;
 }
 
+/*/ Space Environment Background (Cosmic Stars, Nebulae, Horizon) /*/
 export class SpaceEnvironment {
   constructor(scene) {
     this.scene = scene;
@@ -77,7 +78,6 @@ export class SpaceEnvironment {
     ];
 
     for (let i = 0; i < starCount; i++) {
-      /*/ Uniform spherical distribution /*/
       const radius = 600 + Math.random() * 500;
       const theta = 2 * Math.PI * Math.random();
       const phi = Math.acos(2 * Math.random() - 1);
@@ -200,19 +200,14 @@ export class SpaceEnvironment {
   }
 
   initDistantCelestial() {
-    /*/ Distant Celestial Crescent in deep space /*/
     const celestialGroup = new THREE.Group();
     celestialGroup.position.set(380, 160, -520);
 
-    /*/ Planet body /*/
     const planetGeo = new THREE.SphereGeometry(32, 32, 32);
-    const planetMat = new THREE.MeshBasicMaterial({
-      color: 0x05162a
-    });
+    const planetMat = new THREE.MeshBasicMaterial({ color: 0x05162a });
     const planet = new THREE.Mesh(planetGeo, planetMat);
     celestialGroup.add(planet);
 
-    /*/ Crescent glow halo /*/
     const glowMat = new THREE.SpriteMaterial({
       map: this.nebulaTexture,
       color: new THREE.Color('#38bdf8'),
@@ -231,18 +226,15 @@ export class SpaceEnvironment {
   }
 
   initAmbientSpaceGlow() {
-    /*/ Subtle cosmic ambient lighting /*/
     const ambient = new THREE.AmbientLight(0x0a1020, 0.4);
     this.group.add(ambient);
 
-    /*/ Directional starlight /*/
     const starlight = new THREE.DirectionalLight(0xdbeafe, 0.6);
     starlight.position.set(-200, 300, 400);
     this.group.add(starlight);
   }
 
   update(delta) {
-    /*/ Cinematic cosmic drift /*/
     if (this.stars) {
       this.stars.rotation.y += delta * 0.003;
       this.stars.rotation.x += delta * 0.001;
@@ -253,6 +245,140 @@ export class SpaceEnvironment {
     }
     if (this.nebulaGroup) {
       this.nebulaGroup.rotation.y += delta * 0.0015;
+    }
+  }
+}
+
+/*/ -------------------------------------------------------------
+    Transparent White Biodome / Firmament Canopy
+    Covers the circular museum island like a protective glass dome
+    ------------------------------------------------------------- /*/
+export class Biodome {
+  constructor(scene) {
+    this.scene = scene;
+    this.group = new THREE.Group();
+    this.group.name = 'IslandBiodome';
+
+    /*/ Calibrated Dimensions to match the 3D Island base /*/
+    this.baseRadius = 42.25;
+    this.floorY = -2.42;
+    this.domeHeightScale = 0.62; /*/ Gentle hemisphere ratio /*/
+
+    this.initGlassCanopy();
+    this.initGeodesicGrid();
+    this.initBaseRimRing();
+    this.initFresnelShieldGlow();
+
+    this.group.position.set(0, this.floorY, 0);
+    this.scene.add(this.group);
+  }
+
+  initGlassCanopy() {
+    /*/ Upper hemisphere geometry (thetaLength = PI/2) /*/
+    const geometry = new THREE.SphereGeometry(
+      this.baseRadius,
+      64,
+      32,
+      0,
+      Math.PI * 2,
+      0,
+      Math.PI / 2
+    );
+
+    /*/ Scale Y to form a sleek architectural canopy /*/
+    geometry.scale(1.0, this.domeHeightScale, 1.0);
+
+    /*/ White Translucent Glass Material /*/
+    const material = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff,
+      roughness: 0.08,
+      metalness: 0.1,
+      transmission: 0.85,  /*/ Real optical transmission /*/
+      ior: 1.45,           /*/ Glass Index of Refraction /*/
+      transparent: true,
+      opacity: 0.32,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+
+    this.glassMesh = new THREE.Mesh(geometry, material);
+    this.group.add(this.glassMesh);
+  }
+
+  initGeodesicGrid() {
+    /*/ Structural Hexagonal / Lat-Lon Ribs /*/
+    const gridGeometry = new THREE.SphereGeometry(
+      this.baseRadius * 1.002,
+      48,
+      20,
+      0,
+      Math.PI * 2,
+      0,
+      Math.PI / 2
+    );
+    gridGeometry.scale(1.0, this.domeHeightScale, 1.0);
+
+    const wireframe = new THREE.WireframeGeometry(gridGeometry);
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xe0f2fe,
+      transparent: true,
+      opacity: 0.12,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    this.gridLines = new THREE.LineSegments(wireframe, lineMaterial);
+    this.group.add(this.gridLines);
+  }
+
+  initBaseRimRing() {
+    /*/ High-tech perimeter foundation ring sealing dome to disc /*/
+    const ringGeo = new THREE.TorusGeometry(this.baseRadius, 0.45, 16, 128);
+    ringGeo.rotateX(Math.PI / 2);
+
+    const ringMat = new THREE.MeshStandardMaterial({
+      color: 0xdbeafe,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 0.6,
+      roughness: 0.2,
+      metalness: 0.85
+    });
+
+    const baseRing = new THREE.Mesh(ringGeo, ringMat);
+    baseRing.position.y = 0.05;
+    this.group.add(baseRing);
+  }
+
+  initFresnelShieldGlow() {
+    /*/ Subtle soft starlight edge sheen /*/
+    const outerGeo = new THREE.SphereGeometry(
+      this.baseRadius * 1.008,
+      32,
+      16,
+      0,
+      Math.PI * 2,
+      0,
+      Math.PI / 2
+    );
+    outerGeo.scale(1.0, this.domeHeightScale, 1.0);
+
+    const outerMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.06,
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      depthWrite: false
+    });
+
+    const glowDome = new THREE.Mesh(outerGeo, outerMat);
+    this.group.add(glowDome);
+  }
+
+  update(delta) {
+    /*/ Subtle structural grid rotation /*/
+    if (this.gridLines) {
+      this.gridLines.rotation.y += delta * 0.005;
     }
   }
 }

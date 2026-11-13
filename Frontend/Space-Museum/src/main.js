@@ -2,7 +2,7 @@
 import './Ui/style.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { SpaceEnvironment } from './Ui/dome.js';
+import { SpaceEnvironment, Biodome } from './Ui/dome.js';
 import { loadMuseumIsland } from './Logic/loa_modle.js';
 
 /*/ Canvas & Rendering Setup /*/
@@ -50,6 +50,9 @@ const spaceEnv = new SpaceEnvironment(scene);
 /*/ Precision High-Performance Core Timer /*/
 const timer = new THREE.Timer();
 
+/*/ Transparent White Biodome Covering Museum Island /*/
+const biodome = new Biodome(scene);
+
 /*/ Load 3D Museum Island from CDN /*/
 loadMuseumIsland(scene).catch((err) => {
   console.error('[main] Failed to load Space Museum Island:', err);
@@ -72,9 +75,10 @@ function animate(timestamp) {
   timer.update(timestamp);
   const delta = timer.getDelta();
 
-  /*/ Update Controls & Cosmic Drift /*/
+  /*/ Update Controls, Cosmic Drift & Biodome Grid /*/
   controls.update();
   spaceEnv.update(delta);
+  biodome.update(delta);
 
   renderer.render(scene, camera);
 }
