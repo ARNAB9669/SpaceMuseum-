@@ -371,6 +371,111 @@
   - Pinned `lil-gui` is now hidden during normal gameplay to present an immersive, clutter-free viewport. Can be re-invoked anytime by appending `#gui` to the URL.
 
 
+---
+
+### Log : 26
+**Title**: Entry Wall "Welcome to Space Museum" Sign & Posters Subsystem Implementation  
+**Description**: Created the dedicated wall painting and poster architecture in `src/Ui/posters.js` and implemented the entry wall welcome sign:
+- **Dedicated Wall Artworks Module ([posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js))**:
+  - Established `posters.js` as the central hub for all wall-mounted signage, gallery plaques, NASA artworks, and surface paintings.
+  - Implemented `WelcomeSign` class rendering high-resolution ($1536 \times 576$) procedural canvas typography: "★ NASA DEEP SPACE EXHIBITION ★", "WELCOME TO", "SPACE MUSEUM" in warm gold with drop shadow glow, and futuristic sub-captions with sci-fi bracket borders.
+  - Fitted with a 3D dark titanium bezel frame (`#1e293b`), solid backing enclosure, and pulsing neon cyan LED trim glow (`#38bdf8`).
+- **Interactive lil-gui Calibration Panel**:
+  - Integrated `lil-gui` pinned to the top-right with controls for Position ($X, Y, Z$), Rotation (Pitch, Yaw, Roll), Dimensions (Width, Height, Scale), and 3D Frame parameters.
+  - Included a `[📋 Copy Wall Sign Values]` button that exports the configuration object directly to the clipboard with an on-screen confirmation toast.
+- **Main Pipeline Wiring ([main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js))**:
+  - Imported and instantiated `WelcomeSign(scene)` and wired into the `animate()` loop.
+
+
+---
+
+### Log : 27
+**Title**: Finalization of Entry Wall "Welcome to Space Museum" Sign  
+**Description**: Locked in the final user-calibrated transform, dimensions, and frame parameters for the entry wall welcome sign:
+- **Finalized Parameters ([posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js))**:
+  - **Position**: $(-4.60, -1.00, 23.50)$ — mounted centered on the front entry wall panel facing incoming visitors.
+  - **Rotation**: `Pitch: 0.0°, Yaw: 0.0°, Roll: 0.0°` — aligned flush with the wall face.
+  - **Dimensions & Scale**: Width $4.20\text{m}$, Height $1.90\text{m}$, Scale $1.0$.
+  - **3D Bezel Frame**: Thickness $0.08\text{m}$, Depth $0.08\text{m}$, Color `#1e293b` (slate titanium), solid backing enclosure.
+  - **LED Edge Lighting**: Neon cyan edge trim glow active (`#38bdf8`) with subtle pulsing animation.
+- **Clean UI & Hidden Debug Panel**:
+  - The `lil-gui` panel is now hidden during normal gameplay for a clean, immersive view. Can be re-opened anytime by appending `#gui` to the URL.
+
+
+---
+
+### Log : 28
+**Title**: Monumental World Scale & First-Person POV Perspective Calibration  
+**Issue**: From first-person POV, the museum world felt small, compressed, and toy-like rather than huge, vast, and monumental.  
+**Root Cause Analysis**:
+1. **Narrow Camera FOV (60°)**: 60° acts like a telephoto lens on computer screens, flattening perspective depth and eliminating the dramatic upward convergence that makes architecture look soaring.
+2. **Elevated Eye Height ($Y = -0.77\text{m}$)**: With floor at $Y = -1.87\text{m}$ and wall tops at $Y = 0.33\text{m}$, the camera was sitting at exactly $50\%$ wall height ($1.10\text{m}$ above floor), making walls look like low room partitions or desk cubicles rather than a grand museum.
+3. **Walk Speed ($4.2\text{m/s}$)**: High locomotion speed made traversing the island take mere seconds, shrinking the perceived size of the environment.
+**Fix & Calibration ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js) & [main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js))**:
+1. **Dynamic Wide-Angle FOV ($78^\circ$)**: Smoothly interpolates `camera.fov` from $60^\circ$ (orbit overview) to $78^\circ$ on touchdown, expanding the peripheral horizon and exaggerating verticality so walls and the biodome dome soar overhead.
+2. **True Architectural Human Eye Level ($Y = -1.28\text{m}$)**: Lowered camera height by $51\text{cm}$ closer to the floor ($0.59\text{m}$ above pavement). Walls now reach $1.61\text{m}$ above the player's head, the entry banner looms grandly overhead, and the central rotunda tower rises $13.7\text{m}$ into the sky.
+3. **Paced Locomotion**: Adjusted default walking speed to $3.6\text{m/s}$ (sprint $7.0\text{m/s}$), providing realistic human scale when strolling the avenue.
+4. **Near Plane Refinement**: Reduced `camera.near` from $0.1\text{m}$ to $0.05\text{m}$ to prevent pavement clipping at lower eye levels.
+5. **Interactive GUI (`🎥 World Scale & Monumental POV`)**: Added live sliders pinned to top-left for live tuning of FOV ($55^\circ \dots 105^\circ$), Eye Height ($Y = -1.75\text{m} \dots -0.40\text{m}$), and Walk Speeds with one-click clipboard export.
+
+
+---
+
+### Log : 29
+**Title**: Finalization of Monumental Camera Scale & Human Perspective Parameters  
+**Description**: Locked in the final user-calibrated camera optics, eye height, and human locomotion dynamics in `nevigation.js`:
+- **Finalized Parameters ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js))**:
+  - **Monumental Wide-Angle FOV**: `90.0°` — provides an expansive panoramic perspective where museum walls, entrance signs, rotunda tower, and the entire biodome canopy soar dramatically overhead.
+  - **Human Eye Level ($Y$)**: `-1.32m` ($0.55\text{m}$ above the $Y = -1.87\text{m}$ pavement) — architectural walls ($Y = 0.33\text{m}$) now tower $1.65\text{m}$ above the visitor's eye, creating a genuinely colossal sense of scale.
+  - **Calibrated Human Walking Speed**: `1.8m/s` — natural museum visitor walking pace that makes traversing the avenue feel expansive and substantial.
+  - **Sprint Speed**: `5.2m/s` — comfortable exploration sprint.
+  - **Near Clipping Plane**: `0.05m` — crystal clear close-proximity ground rendering.
+- **Clean UI & Hidden Debug Panel**:
+  - Pinned `lil-gui` is now hidden during gameplay to present a clean, cinematic viewport. Can be re-opened anytime by appending `#gui` to the URL.
+
+---
+
+### Log : 30
+**Title**: Outer Wall Exhibition Poster & Live lil-gui Calibration Implementation  
+**Description**: Implemented the outer wall exhibition poster in `src/Ui/posters.js` mounted along the entrance approach road, featuring live `lil-gui` controls:
+- **Outer Wall Poster Subsystem ([posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js))**:
+  - Implemented `OuterWallPoster` class loading the high-resolution artwork (`/out-wal;-poster.png`, $2284 \times 1602$ px, aspect ratio $1.426$).
+  - Configured with `THREE.SRGBColorSpace`, `DoubleSide`, and `toneMapped: true` for rich dynamic range under the space dome lighting.
+  - Constructed a full 3D physical bezel frame with four dark slate-titanium border bars (`#1e293b`), solid backing plate, and pulsing cyan LED perimeter trim glow (`#38bdf8`).
+- **Initial Wall Alignment**:
+  - Positioned along the outer approach wall facing the curving road at $X = 10.30, Y = 0.10, Z = 16.60$ with $Yaw = -90^\circ$ to directly face approaching visitors.
+  - Dimensions set to $3.80\text{m} \times 2.66\text{m}$ (maintaining the exact native $1.426$ aspect ratio).
+- **Interactive lil-gui Tuning Panel**:
+  - Integrated `lil-gui` panel titled `🖼️ Outer Wall Poster` pinned to the top-right with live controls for:
+    - **Position**: $X, Y, Z$ sliders (step $0.05\text{m}$)
+    - **Rotation**: Pitch $X$, Yaw $Y$, Roll $Z$ (step $1^\circ$)
+    - **Dimensions & Scale**: Width, Height, Scale
+    - **3D Frame & Glow**: Frame Active, Thickness, Depth, Frame Color, LED Glow Trim, Glow Color
+    - **One-Click Export**: `[📋 Copy Poster Values]` button exporting `OUTER_WALL_POSTER_CONFIG` to clipboard with visual toast.
+- **Main Pipeline Integration ([main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js))**:
+  - Instantiated `OuterWallPoster(scene)` and wired its animation pulse into the main render loop.
+
+---
+
+### Log : 31
+**Title**: Fix Outer Wall Poster Texture Resolution & Orientation Calibration  
+**Issue**: The outer wall poster rendered as a solid black rectangle from the approach road.  
+**Root Cause Analysis**:
+1. **URI Semicolon Parsing & Async Texture Update**: Loading `/out-wal;-poster.png` containing a semicolon `;` caused Vite's dev server to split the URI as matrix parameters and 404, while the async fallback lacked an `onLoad` callback to rebind the texture to WebGL when download completed.
+2. **Reverse Orientation (`Yaw: -90°`) & Backing Plate Occlusion**: The outer wall normal points toward $+X$ (toward the approaching road at $X \approx 14.36$). Rotating by `rotY: -90°` oriented the poster normal to $-X$ (facing inward into the wall core), which placed the solid dark-slate backing plate (`#1e293b`) directly between the camera and the artwork.
+**Fix & Calibration ([posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js))**:
+1. **Direct High-Resolution Texture Loading**: Directly loaded `/outer-wall-poster.png` with explicit `onLoad` setting `colorSpace = THREE.SRGBColorSpace` and `material.needsUpdate = true`. Set `transparent: false` on the poster plane to guarantee proper opaque depth writing without alpha sorting conflicts.
+2. **Correct Forward Facing Orientation (`Yaw: 90°`)**: Oriented `rotY: 90.0°` so the poster face points toward $+X$ directly facing approaching visitors, with the backing enclosure positioned behind against the concrete wall.
+3. **Interactive lil-gui Coexistence**: Retained the live `lil-gui` panel active on screen so the user can immediately observe the loaded artwork in full color and fine-tune if desired.
+
+
+
+
+
+
+
+
+
 
 
 

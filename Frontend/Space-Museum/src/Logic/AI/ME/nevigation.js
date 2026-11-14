@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import GUI from 'three/addons/libs/lil-gui.module.min.js';
 
 /*/ Synthesized Atmospheric Entry & Docking Audio Engine /*/
 class LandingAudioEngine {
@@ -79,10 +80,14 @@ export class FirstPersonController {
     this.isLanding = false;
     this.isAscending = false;
 
-    /*/ Human Eye Height calibrated to exactly 50% of the Museum Wall height (Floor Y = -1.87, Wall top Y = 0.33) /*/
-    this.baseEyeHeight = -0.77;
+    /*/ Human Eye Height calibrated to grand monumental architectural scale (Floor Y = -1.87) /*/
+    this.baseEyeHeight = -1.32;
     this.islandRadiusLimit = 38.0;
     this.customLandingPos = null;
+
+    /*/ Monumental Field of View & Cinematic Scale /*/
+    this.defaultOrbitFov = 60.0;
+    this.targetFov = 90.0;
 
     /*/ View Angles /*/
     this.yaw = 0;
@@ -94,11 +99,12 @@ export class FirstPersonController {
     this.playerLight.position.set(0, 0, 0);
     this.camera.add(this.playerLight);
 
-    /*/ Physics & Motion Velocity /*/
+    /*/ Physics & Motion Velocity (Calibrated for grand architectural pacing) /*/
     this.velocity = new THREE.Vector3();
-    this.walkSpeed = 4.2;
-    this.sprintSpeed = 7.5;
+    this.walkSpeed = 1.8;
+    this.sprintSpeed = 5.2;
     this.headBobTimer = 0;
+    this.bobAmount = 0.025;
 
     /*/ Developer Drone / Flight Mode (Exact parameters from Experiment player.js) /*/
     this.isFlying = false;
@@ -123,6 +129,7 @@ export class FirstPersonController {
 
     this.initEventListeners();
     this.initHUD();
+    this.initCameraGui();
   }
 
   /*/ Backward compatibility getter /*/
@@ -431,6 +438,7 @@ export class FirstPersonController {
 
     const duration = 2.8;
     let elapsed = 0;
+    const startFov = this.camera.fov;
 
     const animateLanding = () => {
       if (!this.isLanding) return;
@@ -457,6 +465,10 @@ export class FirstPersonController {
       /*/ Interpolate Look Direction /*/
       const lookAtPt = new THREE.Vector3().lerpVectors(new THREE.Vector3(0, 2, 0), targetLook, ease);
       this.camera.lookAt(lookAtPt);
+
+      /*/ Smoothly transition FOV to monumental wide-angle perspective /*/
+      this.camera.fov = THREE.MathUtils.lerp(startFov, this.targetFov, ease);
+      this.camera.updateProjectionMatrix();
 
       if (t < 1.0) {
         requestAnimationFrame(animateLanding);
@@ -502,6 +514,7 @@ export class FirstPersonController {
 
     const duration = 2.0;
     let elapsed = 0;
+    const startFov = this.camera.fov;
 
     const animateAscent = () => {
       elapsed += 0.016;
@@ -510,6 +523,10 @@ export class FirstPersonController {
 
       this.camera.position.lerpVectors(startPos, targetOrbitPos, ease);
       this.camera.lookAt(targetCenter);
+
+      /*/ Smoothly restore orbit FOV /*/
+      this.camera.fov = THREE.MathUtils.lerp(startFov, this.defaultOrbitFov, ease);
+      this.camera.updateProjectionMatrix();
 
       if (t < 1.0) {
         requestAnimationFrame(animateAscent);
@@ -573,9 +590,9 @@ export class FirstPersonController {
 
       this.camera.position.addScaledVector(this.velocity, delta);
 
-      /*/ Boundary clamping: floor at -1.2, max height 65m for panoramic overhead view /*/
-      if (this.camera.position.y < -1.2) {
-        this.camera.position.y = -1.2;
+      /*/ Boundary clamping: floor at -1.55, max height 65m for panoramic overhead view /*/
+      if (this.camera.position.y < -1.55) {
+        this.camera.position.y = -1.55;
       }
       this.camera.position.y = Math.min(65.0, this.camera.position.y);
       this.camera.position.x = Math.max(-55, Math.min(55, this.camera.position.x));
@@ -625,10 +642,61 @@ export class FirstPersonController {
     if (isMoving && Math.hypot(this.velocity.x, this.velocity.z) > 0.5) {
       const bobFreq = isSprinting ? 14.0 : 9.5;
       this.headBobTimer += delta * bobFreq;
-      const bobAmount = Math.sin(this.headBobTimer) * 0.035;
+      const bobAmount = Math.sin(this.headBobTimer) * this.bobAmount;
       this.camera.position.y = this.baseEyeHeight + bobAmount;
     } else {
       this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, this.baseEyeHeight, delta * 6.0);
+    }
+  }
+
+  /*/ Live Camera Scale, Height & Monumental Perspective GUI /*/
+  initCameraGui() {
+    /*/ The camera scale parameters are finalized.
+        To re-open the live calibration GUI, add #gui to the URL in browser /*/
+    if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_CAMERA) {
+      return;
+    }
+
+    try {
+      this.gui = new GUI({ title: '🎥 World Scale & Monumental POV' });
+      this.gui.domElement.style.position = 'fixed';
+      this.gui.domElement.style.top = '20px';
+      this.gui.domElement.style.left = '20px';
+      this.gui.domElement.style.zIndex = '99999';
+
+      /*/ Prevent canvas clicks or pointer lock from stealing focus /*/
+      ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((evt) => {
+        this.gui.domElement.addEventListener(evt, (e) => e.stopPropagation());
+      });
+
+      this.gui.add(this, 'targetFov', 55, 105, 1).name('FOV (Wide Angle)').onChange((val) => {
+        if (this.isFirstPerson) {
+          this.camera.fov = val;
+          this.camera.updateProjectionMatrix();
+        }
+      });
+
+      this.gui.add(this, 'baseEyeHeight', -1.75, -0.40, 0.02).name('Eye Height (Y)').onChange((val) => {
+        if (this.isFirstPerson && !this.isFlying) {
+          this.camera.position.y = val;
+        }
+      });
+
+      this.gui.add(this, 'walkSpeed', 1.5, 8.0, 0.1).name('Walk Speed');
+      this.gui.add(this, 'sprintSpeed', 3.0, 14.0, 0.2).name('Sprint Speed');
+      this.gui.add(this, 'bobAmount', 0.0, 0.06, 0.005).name('Head Bob');
+
+      this.gui.add({
+        copyValues: () => {
+          const text = `CAMERA_SCALE = {\n  fov: ${this.targetFov},\n  baseEyeHeight: ${this.baseEyeHeight.toFixed(2)},\n  walkSpeed: ${this.walkSpeed.toFixed(1)},\n  sprintSpeed: ${this.sprintSpeed.toFixed(1)}\n};`;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text);
+          }
+          this.showNotification('📋 Camera scale settings copied to clipboard!');
+        }
+      }, 'copyValues').name('📋 Copy Camera Scale');
+    } catch (err) {
+      console.warn('[FirstPersonController] Failed to initialize lil-gui:', err);
     }
   }
 }

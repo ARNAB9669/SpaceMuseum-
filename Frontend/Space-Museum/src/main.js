@@ -8,6 +8,7 @@ import { IntroSequence } from './Logic/intro.js';
 import { FirstPersonController } from './Logic/AI/ME/nevigation.js';
 import { DirectionArrows } from './Ui/dirrection-arrow.js';
 import { FloorMapSelector } from './Logic/map-selector.js';
+import { WelcomeSign, OuterWallPoster } from './Ui/posters.js';
 
 /*/ Canvas & Rendering Setup /*/
 const canvas = document.getElementById('webgl-canvas');
@@ -15,11 +16,11 @@ const dockPrompt = document.getElementById('dock-prompt');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#010106');
 
-/*/ Camera Setup (Perspective Camera) /*/
+/*/ Camera Setup (Perspective Camera with 0.05m Near Plane for Immersive First-Person Scale) /*/
 const camera = new THREE.PerspectiveCamera(
   60,
   window.innerWidth / window.innerHeight,
-  0.1,
+  0.05,
   3000
 );
 camera.position.set(120, 160, 240);
@@ -69,6 +70,10 @@ const directionArrows = new DirectionArrows(scene);
 
 /*/ Interactive Floor Map & Landing Point Selector /*/
 const mapSelector = new FloorMapSelector(scene, camera, controls, fpController, () => museumIslandModel);
+
+/*/ Wall Paintings, Signs & Surface Artworks /*/
+const welcomeSign = new WelcomeSign(scene);
+const outerWallPoster = new OuterWallPoster(scene);
 
 /*/ Museum Island 3D Model Reference /*/
 let museumIslandModel = null;
@@ -215,6 +220,8 @@ function animate(timestamp) {
   biodome.update(delta);
   directionArrows.update(delta);
   mapSelector.update(delta);
+  welcomeSign.update(delta);
+  outerWallPoster.update(delta);
 
   renderer.render(scene, camera);
 }
