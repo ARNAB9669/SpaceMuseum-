@@ -61,12 +61,14 @@ export async function loadMuseumIsland(scene, onProgress) {
   }
 
   /*/ Apply PBR Materials & Smooth Normals /*/
+  const collidableMeshes = [];
   obj.traverse((child) => {
     if (child.isMesh) {
       if (child.name === 'Body4') {
         child.material = platformMaterial;
       } else {
         child.material = structureMaterial;
+        collidableMeshes.push(child);
       }
       child.castShadow = true;
       child.receiveShadow = true;
@@ -257,6 +259,7 @@ export async function loadMuseumIsland(scene, onProgress) {
 
   obj.userData = {
     isMuseumIsland: true,
+    collidableMeshes: collidableMeshes,
     setInsideTransition: (factor) => {
       currentFactor = THREE.MathUtils.clamp(factor, 0.0, 1.0);
       applyAtmosphere();
@@ -298,6 +301,7 @@ export async function loadMuseumIsland(scene, onProgress) {
 
   /*/ Initialize Island in Cold Cosmic Blue state for Orbit View /*/
   obj.userData.setInsideTransition(0.0);
+  obj.userData.collidableMeshes = collidableMeshes;
 
   return obj;
 }

@@ -159,9 +159,75 @@ export class FirstPersonController {
     this.prevPointerX = 0;
     this.prevPointerY = 0;
 
+    /*/ Physical Wall Collision System (12 Radial Rays with Penetration Sliding) /*/
+    this.collidableMeshes = [];
+    this.playerRadius = 0.38;
+    this.collisionRaycaster = new THREE.Raycaster();
+    this.collisionRaycaster.firstHitOnly = true;
+
+    this.collisionRayDirections = [];
+    const rayCount = 12;
+    for (let i = 0; i < rayCount; i++) {
+      const angle = (i / rayCount) * Math.PI * 2;
+      this.collisionRayDirections.push(new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle)));
+    }
+
     this.initEventListeners();
     this.initHUD();
     this.initCameraGui();
+  }
+
+  /*/ Collidable Meshes Registration & Wall Collision Engine /*/
+  setCollidableMeshes(meshes) {
+    this.collidableMeshes = Array.isArray(meshes) ? [...meshes] : [];
+  }
+
+  addCollidableMeshes(meshes) {
+    if (Array.isArray(meshes)) {
+      this.collidableMeshes.push(...meshes);
+    } else if (meshes) {
+      this.collidableMeshes.push(meshes);
+    }
+  }
+
+  handleWallCollisions() {
+    if (!this.collidableMeshes || this.collidableMeshes.length === 0) return;
+    if (this.isSeated || this.isLanding || this.isAscending || this.isFlying) return;
+
+    const R = this.playerRadius;
+    this.collisionRaycaster.far = R * 1.6;
+
+    for (let pass = 0; pass < 2; pass++) {
+      let collided = false;
+      const checkOrigin = new THREE.Vector3(
+        this.camera.position.x,
+        this.camera.position.y - 0.25,
+        this.camera.position.z
+      );
+
+      for (let i = 0; i < this.collisionRayDirections.length; i++) {
+        const dir = this.collisionRayDirections[i];
+        this.collisionRaycaster.set(checkOrigin, dir);
+
+        const hits = this.collisionRaycaster.intersectObjects(this.collidableMeshes, true);
+        if (hits.length > 0) {
+          const hit = hits[0];
+          if (hit.distance < R) {
+            const penetration = R - hit.distance;
+            this.camera.position.x -= dir.x * penetration;
+            this.camera.position.z -= dir.z * penetration;
+
+            const velDot = this.velocity.x * dir.x + this.velocity.z * dir.z;
+            if (velDot > 0) {
+              this.velocity.x -= dir.x * velDot;
+              this.velocity.z -= dir.z * velDot;
+            }
+            collided = true;
+          }
+        }
+      }
+      if (!collided) break;
+    }
   }
 
   /*/ Seated Mode State Synchronizer /*/
@@ -755,6 +821,9 @@ export class FirstPersonController {
 
     this.camera.position.x += this.velocity.x * delta;
     this.camera.position.z += this.velocity.z * delta;
+
+    /*/ Physical Wall Collision System (Sliding & Penetration Resolution) /*/
+    this.handleWallCollisions();
 
     /*/ Island Radial Boundary Check /*/
     const horizontalDist = Math.hypot(this.camera.position.x, this.camera.position.z);

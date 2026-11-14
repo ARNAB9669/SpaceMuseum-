@@ -98,6 +98,12 @@ let museumIslandModel = null;
 loadMuseumIsland(scene)
   .then((obj) => {
     museumIslandModel = obj;
+    if (obj.userData?.collidableMeshes) {
+      fpController.setCollidableMeshes(obj.userData.collidableMeshes);
+    }
+    if (theatre.getCollidableMeshes) {
+      fpController.addCollidableMeshes(theatre.getCollidableMeshes());
+    }
   })
   .catch((err) => {
     console.error('[main] Failed to load Space Museum Island:', err);

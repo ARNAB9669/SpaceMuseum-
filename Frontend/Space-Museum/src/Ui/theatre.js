@@ -264,7 +264,12 @@ export class TheatreRoom {
     strip3.position.set(0, stepH * 2 + 0.01, z3 - D / 2);
     this.riserGroup.add(strip3);
 
+    this.collidableMeshes = [tier2Box, tier3Box];
     this.group.add(this.riserGroup);
+  }
+
+  getCollidableMeshes() {
+    return this.collidableMeshes || [];
   }
 
   /*/ --- 4. LOAD & POPULATE THEATRE SEATS --- /*/

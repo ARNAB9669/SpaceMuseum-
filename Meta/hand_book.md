@@ -592,6 +592,27 @@
 - **Slerp Quaternion Interpolation**: Interpolated camera rotation using quaternion spherical linear interpolation (`slerpQuaternions`) directly into the exact First-Person POV quaternion, eliminating all orientation snapping.
 - **Calm, Atmospheric Entry Sound**: Softened sub-bass gain to $0.06$, replaced white noise blast with a gentle lowpass airflow whisper (gain $0.02$), and transitioned into a harmonic 3-note landing chime.
 
+---
+
+### Log : 41
+**Title**: Physical Wall Collision & Penetration Sliding System (Matching Experiments Prototype)  
+**Description**: Implemented physical wall collision detection and smooth sliding for the First-Person POV camera, preventing the player from walking through walls, corridors, and theatre risers:
+- **Collidable Mesh Registration ([loa_modle.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/loa_modle.js) & [theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js))**:
+  - Filtered all architectural walls, partitions, columns, and exterior structures (`child.name !== 'Body4'`) into `obj.userData.collidableMeshes`.
+  - Added stepped cinema risers (`tier2Box`, `tier3Box`) via `theatre.getCollidableMeshes()`.
+  - Linked both mesh collections into `fpController.setCollidableMeshes()` and `fpController.addCollidableMeshes()` in `main.js`.
+- **12 Radial Horizontal Raycasters with Penetration Pushback ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js))**:
+  - Configured 12 radial horizontal ray directions ($0^\circ, 30^\circ, \dots, 330^\circ$) at torso height (`camera.position.y - 0.25`, ~$-1.57\text{m}$).
+  - Calibrated player collision radius to $R = 0.38\text{m}$ (standard human shoulder clearance, matching `/Experiments/src/player.js`).
+  - On intersection at distance $d < R$, calculates penetration depth and displaces the camera position away from the wall along the ray direction: $\vec{p} \leftarrow \vec{p} - \vec{d} \cdot (R - d)$.
+- **Tangential Wall Sliding & Velocity Projection ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js))**:
+  - Projects player velocity onto the collision ray: $v_{\text{dot}} = \vec{v} \cdot \vec{d}$.
+  - When $v_{\text{dot}} > 0$ (velocity directed into the wall), cancels only the inward normal component ($\vec{v} \leftarrow \vec{v} - \vec{d} \cdot v_{\text{dot}}$), preserving tangential velocity for smooth, silky sliding along walls without sticking or jitter.
+  - Implemented a 2-pass iterative solver to smoothly resolve corner pinches.
+- **Locomotion Mode Safety**:
+  - Collision physics is strictly active during ground locomotion (`!isFlying && !isSeated && !isLanding && !isAscending`).
+  - Developer spectator drone flight (`[G]`) and smooth runway landing remain unrestricted.
+
 
 
 
