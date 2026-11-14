@@ -226,10 +226,8 @@ export class SpaceEnvironment {
   }
 
   initAmbientSpaceGlow() {
-    const ambient = new THREE.AmbientLight(0x0a1020, 0.4);
-    this.group.add(ambient);
-
-    const starlight = new THREE.DirectionalLight(0xdbeafe, 0.6);
+    /*/ Distant celestial starlight direction /*/
+    const starlight = new THREE.DirectionalLight(0xdbeafe, 0.4);
     starlight.position.set(-200, 300, 400);
     this.group.add(starlight);
   }
@@ -292,15 +290,13 @@ export class Biodome {
     /*/ Scale Y to form a sleek architectural canopy /*/
     geometry.scale(1.0, this.domeHeightScale, 1.0);
 
-    /*/ White Translucent Glass Material /*/
-    this.glassMaterial = new THREE.MeshPhysicalMaterial({
+    /*/ High-Performance White Translucent Glass Material /*/
+    this.glassMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.08,
-      metalness: 0.1,
-      transmission: 0.85,  /*/ Real optical transmission /*/
-      ior: 1.45,           /*/ Glass Index of Refraction /*/
+      roughness: 0.1,
+      metalness: 0.15,
       transparent: true,
-      opacity: 0.32,
+      opacity: 0.22,
       side: THREE.DoubleSide,
       depthWrite: false
     });

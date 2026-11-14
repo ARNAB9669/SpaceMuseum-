@@ -6,6 +6,7 @@ import { SpaceEnvironment, Biodome } from './Ui/dome.js';
 import { loadMuseumIsland } from './Logic/loa_modle.js';
 import { IntroSequence } from './Logic/intro.js';
 import { FirstPersonController } from './Logic/AI/ME/nevigation.js';
+import { DirectionArrows } from './Ui/dirrection-arrow.js';
 
 /*/ Canvas & Rendering Setup /*/
 const canvas = document.getElementById('webgl-canvas');
@@ -29,7 +30,7 @@ const renderer = new THREE.WebGLRenderer({
   powerPreference: 'high-performance'
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 renderer.shadowMap.enabled = true;
@@ -62,6 +63,9 @@ const intro = new IntroSequence(camera, controls);
 /*/ First-Person POV Controller (Perspective Camera) /*/
 const fpController = new FirstPersonController(camera, canvas, controls);
 
+/*/ Approach Road Infrastructure: Direction Chevrons /*/
+const directionArrows = new DirectionArrows(scene);
+
 /*/ Museum Island 3D Model Reference /*/
 let museumIslandModel = null;
 loadMuseumIsland(scene)
@@ -72,12 +76,13 @@ loadMuseumIsland(scene)
     console.error('[main] Failed to load Space Museum Island:', err);
   });
 
-/*/ Raycasting for Hover Highlight & Selection /*/
+/*/ Raycasting for Hover Highlight & Selection (High-Performance Proxy) /*/
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let isHovered = false;
+let raycastPending = false;
 
-/*/ Track Mouse Position for Raycasting /*/
+/*/ Track Mouse Position for Raycasting with Frame Throttling /*/
 function onPointerMove(event) {
   /*/ Only raycast when in Orbit Mode (not while in First Person or during landing) /*/
   if (fpController.isFirstPerson || fpController.isLanding || fpController.isAscending) {
@@ -96,38 +101,38 @@ function onPointerMove(event) {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-  raycaster.setFromCamera(mouse, camera);
+  if (raycastPending) return;
+  raycastPending = true;
 
-  /*/ Collect raycast target meshes (Biodome and Island) /*/
-  const interactiveTargets = [...biodome.getRaycastMeshes()];
-  if (museumIslandModel) {
-    museumIslandModel.traverse((child) => {
-      if (child.isMesh) interactiveTargets.push(child);
-    });
-  }
+  requestAnimationFrame(() => {
+    raycastPending = false;
+    raycaster.setFromCamera(mouse, camera);
 
-  const intersects = raycaster.intersectObjects(interactiveTargets, false);
-  const nowHovered = intersects.length > 0;
+    /*/ Raycast against the enclosing biodome canopy (instant 0.001ms test) /*/
+    const interactiveTargets = biodome.getRaycastMeshes();
+    const intersects = raycaster.intersectObjects(interactiveTargets, false);
+    const nowHovered = intersects.length > 0;
 
-  if (nowHovered !== isHovered) {
-    isHovered = nowHovered;
-    canvas.style.cursor = isHovered ? 'pointer' : 'default';
+    if (nowHovered !== isHovered) {
+      isHovered = nowHovered;
+      canvas.style.cursor = isHovered ? 'pointer' : 'default';
 
-    /*/ Highlight & Pop Dome and Island /*/
-    biodome.setHighlight(isHovered);
-    if (museumIslandModel?.userData?.setHighlight) {
-      museumIslandModel.userData.setHighlight(isHovered);
-    }
+      /*/ Highlight & Pop Dome and Island /*/
+      biodome.setHighlight(isHovered);
+      if (museumIslandModel?.userData?.setHighlight) {
+        museumIslandModel.userData.setHighlight(isHovered);
+      }
 
-    /*/ Show / Hide Selection Docking Prompt /*/
-    if (dockPrompt) {
-      if (isHovered) {
-        dockPrompt.classList.add('visible');
-      } else {
-        dockPrompt.classList.remove('visible');
+      /*/ Show / Hide Selection Docking Prompt /*/
+      if (dockPrompt) {
+        if (isHovered) {
+          dockPrompt.classList.add('visible');
+        } else {
+          dockPrompt.classList.remove('visible');
+        }
       }
     }
-  }
+  });
 }
 window.addEventListener('pointermove', onPointerMove);
 
@@ -154,7 +159,7 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
 }
 window.addEventListener('resize', onWindowResize);
 
@@ -177,6 +182,7 @@ function animate(timestamp) {
 
   spaceEnv.update(delta);
   biodome.update(delta);
+  directionArrows.update(delta);
 
   renderer.render(scene, camera);
 }

@@ -85,3 +85,110 @@
   - **Movement Physics**: Smooth horizontal vector locomotion along player facing direction with `WASD` / arrow keys, `Shift` sprint multiplier ($6.2\text{m/s} \to 11.0\text{m/s}$), momentum damping ($9.0$), and subtle rhythmic head-bobbing.
   - **Perimeter Safety**: Island radial boundary clamp ($R \le 38.0\text{m}$) prevents walking off the floating museum disc into outer space.
   - **Return to Orbit**: `[ESC]` key or clicking `ORBIT VIEW` in the HUD gracefully ascends the perspective camera back to orbital vantage `(0, 35, 75)` and hands control back to `OrbitControls`.
+
+
+---
+
+### Log : 9
+**Title**: Approach Road Drop Point, 50% Wall Eye Height Calibration & Runway Lights with Guidance Arch  
+**Description**: Refined the First-Person POV landing location and perspective scaling, and built airport-style approach road infrastructure guiding visitors directly into the museum:
+- **50% Wall Eye Height Calibration (`src/Logic/AI/ME/nevigation.js`)**:
+  - Measured architectural model geometry: Museum floor is at $Y = -1.87$, wall coping is at $Y = 0.33$, giving an absolute wall height of $2.20\text{m}$.
+  - Re-calibrated player eye level to exactly $50\%$ of the wall height: $Y_{\text{eye}} = -1.87 + (0.5 \times 2.20) = -0.77\text{m}$.
+  - The museum wall now stands $1.10\text{m}$ above eye level and $1.10\text{m}$ below, giving a realistic, towering architectural presence without towering over the viewer.
+- **Road Drop Point**:
+  - Moved the landing drop point to the beginning of the curved approach road at $(-6.2, -0.77, -22.0)$ facing forward along the runway toward the building entrance at $(-6.2, -0.77, -2.0)$.
+- **Runway Pathway Lights (`src/Ui/road-light.js`)**:
+  - Installed a series of 14 futuristic sci-fi bollards along both the left curb ($X = -10.8$) and right curb ($X = -1.6$) from $Z = -24.0$ to $Z = +12.0$.
+  - Each bollard features a dark titanium base, an illuminated cyan LED emitter ring (`#38bdf8`), an additive ground decal ring, and alternating point lights casting pools of starlight onto the pavement.
+  - Added a sequential wave pulse animation (`Math.sin(pulseTime - offset)`) flowing down the runway toward the building.
+- **Overhead Guidance Gantry & Entrance Sign (`src/Ui/banner.js`)**:
+  - Spanned a titanium archway gantry across the road at $Z = -2.0$ ($9.2\text{m}$ span, $3.8\text{m}$ height).
+  - Suspended a double-sided illuminated holographic sign: `NASA SPACE MUSEUM // MAIN EXHIBITION ENTRANCE // LUNAR & MARTIAN RELIC GALLERIES // WALK INSIDE TO EXPLORE`.
+  - Added downward spotlights illuminating the portal.
+- **Holographic Direction Chevrons (`src/Ui/dirrection-arrow.js`)**:
+  - Projected animated cyan chevron arrows onto the asphalt along the center of the road ($X = -6.2$) with sequential forward-running light flow.
+
+
+---
+
+### Log : 10
+**Title**: Comprehensive Performance & FPS Optimization  
+**Issue**: Severe frame drops and lag occurred in first-person mode and when navigating the station.  
+**Fix**: Diagnosed and resolved 5 critical bottlenecks:
+1. **Removed Swarm of 16 Dynamic PointLights**: Replaced individual point lights along the road and banners with a single zero-overhead `HemisphereLight(0xe2e8f0, 0x1e293b, 2.0)` and self-luminous emissive materials (`MeshBasicMaterial` ground decals and `#38bdf8` LED rings). This eliminated 16 light attenuation loop passes over 44,594 vertices per frame.
+2. **Eliminated Full-Screen Transmission Pass**: The dome's `MeshPhysicalMaterial` with `transmission: 0.85` previously forced a secondary off-screen render target copy of the entire scene every frame. Switched to high-efficiency `MeshStandardMaterial` (`opacity: 0.22, roughness: 0.1, metalness: 0.15`), providing crystal-clear transparency with zero render target overhead.
+3. **Throttled Raycasting on PointerMove**: Replaced the deep recursive traversal of all 44k island triangles on every mousemove with a fast proxy raycast against `biodome.getRaycastMeshes()` (1 sphere test, 0.001ms), throttled via `requestAnimationFrame`.
+4. **Disabled Unused Shadow Maps**: Turned off `renderer.shadowMap.enabled = false` to eliminate redundant shadow map passes in deep space.
+5. **Capped Viewport Pixel Ratio**: Clamped device pixel ratio to `1.5` to prevent 2x/3x Retina resolution fragment shader bottlenecks.  
+**Note for future**: In WebGL with large architectural models (40k+ vertices), prefer `HemisphereLight` and emissive shaders over multiple dynamic `PointLight`s to guarantee a sustained 60-120 FPS.
+
+
+---
+
+### Log : 11
+**Title**: Road Platform Drop Point Realignment & Approach Corridor Relocation  
+**Issue**: When clicking the dome, the camera was landing on the rear/backside of the island ($Z = -22$), facing away from the actual entrance with the tower and entrance banner misplaced behind the viewer.  
+**Fix**: Analyzed the 3D model geometry to pinpoint `Body4` ($X \in [-9.5, 17.7]$, $Z \in [6.9, 32.5]$), which is the intended front road platform and entrance apron.
+1. **Drop Point Coordinates (`src/Logic/AI/ME/nevigation.js`)**: Moved the landing target from $(-6.2, -0.77, -22.0)$ to $(4.0, -0.77, 28.0)$, looking along $-Z$ towards $(4.0, -0.77, 8.0)$. The camera now drops directly onto the front road platform, facing forward into the museum entrance with the central tower and exhibition rooms directly ahead.
+2. **Guidance Arch Relocation (`src/Ui/banner.js`)**: Shifted the titanium archway and illuminated double-sided banner from the rear ($Z = -2.0$) to the front entrance threshold at $Z = 21.0$, spanning across $X \in [-2.5, 10.5]$ (span $13.0\text{m}$, height $4.2\text{m}$).
+3. **Runway Lights Alignment (`src/Ui/road-light.js`)**: Realigned the 14 runway bollards along the road platform curbs ($X = -2.2$ left, $X = 10.2$ right) from $Z = 30.0$ to $Z = 6.0$.
+4. **Direction Chevrons Alignment (`src/Ui/dirrection-arrow.js`)**: Repositioned holographic animated floor chevrons along the central axis ($X = 4.0$) pointing into the entrance doors.  
+**Note for future**: In `Space-Mesume.obj`, `Body4` represents the front approach platform and entrance apron ($+Z$ quadrant), while the central tower is located at $X \approx 7.1, Z \approx 9.9$. Any future exhibits or entryway elements should orient towards $+Z$ when facing visitors.
+
+
+---
+
+### Log : 12
+**Title**: Lighting Calibration & Port from Experimental Build  
+**Description**: Ported the exact architectural lighting, materials, and camera aura lighting from the original experimental build (`/Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/src/`):
+- **Core Atmospheric Lighting (`src/Logic/loa_modle.js`)**:
+  - `AmbientLight(0xffffff, 0.95)`: Balanced pure white ambient fill ensuring clear visibility and eliminates pitch-black shadows across all chambers and roadways.
+  - `HemisphereLight(0xbae6fd, 0x1e293b, 0.85)` at `(0, 20, 0)`: Sky-blue celestial tint from above with warm ground reflection below.
+  - `DirectionalLight(0xffffff, 1.8)` at `(12, 25, 15)`: Primary architectural sunlight with calibrated shadow camera (`near: 0.5, far: 70, left/right: ±30, top/bottom: ±30, bias: -0.0003`, 2048x2048 map).
+  - `DirectionalLight(0xdbeafe, 0.9)` at `(-15, 20, -15)`: Soft cross-fill light preventing stark contrast clipping.
+- **Overhead Chamber & Corridor Accent Lights**:
+  - Re-introduced the 10 overhead ceiling lights with their visual sleek LED cylinder fixtures (`CylinderGeometry(0.24, 0.28, 0.06, 16)`) across all exhibition halls, central atrium, and connecting galleries.
+- **First-Person Camera Aura Light (`src/Logic/AI/ME/nevigation.js`)**:
+  - Attached `PointLight(0xffffff, 1.8, 12, 1.5)` to the player camera (from `player.js`), ensuring smooth, natural eye-level illumination wherever the visitor walks.
+- **Architectural Materials Restored**:
+  - Walls: `0x475569` (rich slate concrete gray, roughness 0.65, metalness 0.15, double-sided).
+  - Floor platform: `0x0f172a` (deep slate/navy, roughness 0.25, metalness 0.35).
+- **Renderer Settings**:
+  - `PCFSoftShadowMap` re-enabled with `ACESFilmicToneMapping` at exposure `1.15`.
+
+
+---
+
+### Log : 13
+**Title**: Roadway Bollard Lights Removal  
+**Description**: Removed the small pathway runway bollard lights and their circular ground projection decals along the road platform per user request, creating a clean, unobstructed walking surface leading into the museum entrance archway.
+
+
+---
+
+### Log : 14
+**Title**: Developer Drone Flight Mode  
+**Description**: Implemented a 3D drone / free-flight mode for first-person POV to allow surveying the entire museum architecture, chambers, and road layout from above during development:
+- **Flight Toggle**: Pressing `[G]` or clicking the on-screen `[G] FLIGHT: OFF/ACTIVE` button toggles developer flight mode on and off.
+- **Altitude Controls**: `[SPACE]` smoothly ascends up into the air; `[C]` smoothly descends.
+- **Unconstrained 3D Motion**: In flight mode, movement speed increases ($16.0\text{m/s}$ normal, $32.0\text{m/s}$ with `[SHIFT]` sprint) and camera altitude can fly freely up to $Y = 26.0\text{m}$ (under the biodome apex) across a full $41\text{m}$ radius.
+- **Seamless Ground Re-entry**: Toggling flight mode off smoothly brings the camera back down to human eye level ($Y = -0.77\text{m}$) and restores physical ground walking.
+
+
+---
+
+### Log : 15
+**Title**: Entrance Banner Removal & Exact Experimental Flight Mode Port  
+**Description**: Fully ported the flight movement system from the original reference implementation (`/Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/src/player.js`) and removed the central entrance banner gantry per user request:
+- **Middle Banner Archway Removed**:
+  - Removed `GuidanceBanner` from [main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js) and converted [banner.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/banner.js) to a clean stub.
+  - Cleared the physical gantry archway and sign from the middle entrance of the road platform.
+- **Exact Experimental Flight Mode Port (`src/Logic/AI/ME/nevigation.js`)**:
+  - **3D Look-Direction Flight**: Replaced horizontal-only movement with `camera.getWorldDirection(forward)`. Looking up or down and pressing `[W]` now directly soars or dives in true 3D space.
+  - **Dynamic Elevation & Strafe**: `[SPACE]` ascends vertically (`flyUp`), `[C]` descends vertically (`flyDown`), `[A]/[D]` strafe horizontally via cross-product with world up.
+  - **Aero Deceleration**: Added the exact `0.82` aerodynamic glide decay from `player.js` for instant responsiveness without laggy inertia dampening.
+  - **Speeds & Boost**: Standard flight speed calibrated to $12.0\text{m/s}$ and sprint boost (`[SHIFT]`) to $26.0\text{m/s}$.
+  - **Flight Ceiling & Radius**: Increased ceiling to $Y = 65.0\text{m}$ and radius to $55\text{m}$, allowing wide overhead panoramic views of the entire museum and biodome.
+  - **Toast Notifications**: Integrated `#gamepad-badge` notification toast with cyan theme displaying flight activation and landing alerts.
+

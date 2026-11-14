@@ -66,7 +66,7 @@ class LandingAudioEngine {
   }
 }
 
-/*/ First-Person POV Controller with smooth landing, WASD movement and mouse look /*/
+/*/ First-Person POV Controller with smooth landing, WASD movement and exact experimental flight mode /*/
 export class FirstPersonController {
   constructor(camera, domElement, orbitControls) {
     this.camera = camera;
@@ -79,8 +79,8 @@ export class FirstPersonController {
     this.isLanding = false;
     this.isAscending = false;
 
-    /*/ Human Eye Height relative to Museum Floor (Floor Y = -1.87) /*/
-    this.baseEyeHeight = -0.15;
+    /*/ Human Eye Height calibrated to exactly 50% of the Museum Wall height (Floor Y = -1.87, Wall top Y = 0.33) /*/
+    this.baseEyeHeight = -0.77;
     this.islandRadiusLimit = 38.0;
 
     /*/ View Angles /*/
@@ -88,20 +88,31 @@ export class FirstPersonController {
     this.pitch = 0;
     this.mouseSensitivity = 0.0022;
 
+    /*/ Player Ambient Aura Light (from original experimental player.js) /*/
+    this.playerLight = new THREE.PointLight(0xffffff, 1.8, 12, 1.5);
+    this.playerLight.position.set(0, 0, 0);
+    this.camera.add(this.playerLight);
+
     /*/ Physics & Motion Velocity /*/
     this.velocity = new THREE.Vector3();
-    this.walkSpeed = 6.2;
-    this.sprintSpeed = 11.0;
-    this.damping = 9.0;
+    this.walkSpeed = 4.2;
+    this.sprintSpeed = 7.5;
     this.headBobTimer = 0;
 
-    /*/ Input Map /*/
+    /*/ Developer Drone / Flight Mode (Exact parameters from Experiment player.js) /*/
+    this.isFlying = false;
+    this.flySpeed = 12.0;
+    this.flySprintSpeed = 26.0;
+
+    /*/ Input Map matching Experiment player.js /*/
     this.keys = {
       forward: false,
       backward: false,
       left: false,
       right: false,
-      sprint: false
+      sprint: false,
+      flyUp: false,
+      flyDown: false
     };
 
     /*/ Mouse Drag Fallback when PointerLock is not active /*/
@@ -113,18 +124,33 @@ export class FirstPersonController {
     this.initHUD();
   }
 
+  /*/ Backward compatibility getter /*/
+  get isFlightMode() {
+    return this.isFlying;
+  }
+
+  set isFlightMode(val) {
+    this.isFlying = val;
+  }
+
   initHUD() {
     /*/ Create First-Person Navigation HUD element /*/
     this.hudElement = document.createElement('div');
     this.hudElement.className = 'firstperson-hud';
     this.hudElement.innerHTML = `
-      <div class="fp-status-badge">
+      <div class="fp-status-badge" id="fp-badge">
         <span class="fp-pulse-dot"></span>
-        FIRST-PERSON POV ACTIVE
+        <span id="fp-mode-text">FIRST-PERSON POV</span>
       </div>
-      <div class="fp-instructions">
-        <span>[W][A][S][D]</span> Move &bull; <span>[SHIFT]</span> Sprint &bull; <span>Mouse</span> Look
+      <div class="fp-instructions" id="fp-instr">
+        <span>[W][A][S][D]</span> Move &bull; <span>[SHIFT]</span> Sprint &bull; <span>[G]</span> Fly Mode
       </div>
+      <button class="btn-flight-mode" id="btn-flight-toggle" title="Toggle Developer Flight Mode [G]">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        [G] FLIGHT: OFF
+      </button>
       <button class="btn-orbit-return" id="btn-return-orbit">
         ORBIT VIEW [ESC]
       </button>
@@ -144,31 +170,159 @@ export class FirstPersonController {
         this.returnToOrbit();
       });
     }
+
+    /*/ Flight Toggle Button Listener /*/
+    const flightBtn = this.hudElement.querySelector('#btn-flight-toggle');
+    if (flightBtn) {
+      flightBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleFlyMode();
+      });
+    }
+  }
+
+  showNotification(text) {
+    let badge = document.getElementById('gamepad-badge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'gamepad-badge';
+      document.body.appendChild(badge);
+    }
+    badge.textContent = text;
+    badge.classList.add('visible');
+    if (this.notifTimeout) clearTimeout(this.notifTimeout);
+    this.notifTimeout = setTimeout(() => {
+      badge.classList.remove('visible');
+    }, 4000);
+  }
+
+  /*/ Exact toggleFlyMode logic from Experiment player.js /*/
+  toggleFlyMode() {
+    this.isFlying = !this.isFlying;
+    this.velocity.set(0, 0, 0);
+
+    const btn = this.hudElement?.querySelector('#btn-flight-toggle');
+    const modeText = this.hudElement?.querySelector('#fp-mode-text');
+    const dot = this.hudElement?.querySelector('.fp-pulse-dot');
+    const instr = this.hudElement?.querySelector('#fp-instr');
+
+    if (btn) {
+      btn.textContent = this.isFlying ? '[G] FLIGHT: ACTIVE' : '[G] FLIGHT: OFF';
+      btn.classList.toggle('active', this.isFlying);
+    }
+    if (modeText) {
+      modeText.textContent = this.isFlying ? 'DRONE FLIGHT ACTIVE' : 'FIRST-PERSON POV';
+    }
+    if (dot) {
+      dot.style.background = this.isFlying ? '#38bdf8' : '#4ade80';
+      dot.style.boxShadow = this.isFlying ? '0 0 8px #38bdf8' : '0 0 8px #4ade80';
+    }
+    if (instr) {
+      instr.innerHTML = this.isFlying
+        ? '<span>[W][A][S][D]</span> 3D Fly &bull; <span>[SPACE]</span> Ascend &bull; <span>[C]</span> Descend &bull; <span>[SHIFT]</span> Boost &bull; <span>[G]</span> Land'
+        : '<span>[W][A][S][D]</span> Move &bull; <span>[SHIFT]</span> Sprint &bull; <span>[G]</span> Fly Mode';
+    }
+
+    if (this.isFlying) {
+      if (this.camera.position.y < 1.0) {
+        this.camera.position.y += 1.8;
+      }
+      this.showNotification('🛸 Fly Mode: [W/A/S/D] Fly • [Space] Ascend • [C] Descend • [Shift] Boost • [G] Land');
+    } else {
+      this.camera.position.y = this.baseEyeHeight;
+      this.showNotification('🚶 Landed: Ground Walking Mode Active');
+    }
+  }
+
+  /*/ Alias for backward compatibility /*/
+  toggleFlightMode() {
+    this.toggleFlyMode();
   }
 
   initEventListeners() {
     /*/ Keyboard Listeners /*/
     window.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyG') {
+        if (!this.isFirstPerson && !this.isLanding && !this.isAscending) {
+          /*/ Smoothly enter First-Person and activate flight mode /*/
+          this.landInside(() => {
+            this.toggleFlyMode();
+          });
+          return;
+        }
+        if (this.isFirstPerson) {
+          this.toggleFlyMode();
+          return;
+        }
+      }
+
       if (!this.isFirstPerson) return;
 
-      if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.forward = true;
-      if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.backward = true;
-      if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = true;
-      if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = true;
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.sprint = true;
-
-      /*/ ESC returns to orbit view /*/
-      if (e.code === 'Escape') {
-        this.returnToOrbit();
+      switch (e.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+          this.keys.forward = true;
+          break;
+        case 'KeyS':
+        case 'ArrowDown':
+          this.keys.backward = true;
+          break;
+        case 'KeyA':
+        case 'ArrowLeft':
+          this.keys.left = true;
+          break;
+        case 'KeyD':
+        case 'ArrowRight':
+          this.keys.right = true;
+          break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          this.keys.sprint = true;
+          break;
+        case 'KeyC':
+          this.keys.flyDown = true;
+          break;
+        case 'Space':
+          if (this.isFlying) {
+            this.keys.flyUp = true;
+            e.preventDefault();
+          }
+          break;
+        case 'Escape':
+          this.returnToOrbit();
+          break;
       }
     });
 
     window.addEventListener('keyup', (e) => {
-      if (e.code === 'KeyW' || e.code === 'ArrowUp') this.keys.forward = false;
-      if (e.code === 'KeyS' || e.code === 'ArrowDown') this.keys.backward = false;
-      if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.keys.left = false;
-      if (e.code === 'KeyD' || e.code === 'ArrowRight') this.keys.right = false;
-      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') this.keys.sprint = false;
+      switch (e.code) {
+        case 'KeyW':
+        case 'ArrowUp':
+          this.keys.forward = false;
+          break;
+        case 'KeyS':
+        case 'ArrowDown':
+          this.keys.backward = false;
+          break;
+        case 'KeyA':
+        case 'ArrowLeft':
+          this.keys.left = false;
+          break;
+        case 'KeyD':
+        case 'ArrowRight':
+          this.keys.right = false;
+          break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+          this.keys.sprint = false;
+          break;
+        case 'KeyC':
+          this.keys.flyDown = false;
+          break;
+        case 'Space':
+          this.keys.flyUp = false;
+          break;
+      }
     });
 
     /*/ Pointer Lock Support /*/
@@ -221,8 +375,8 @@ export class FirstPersonController {
   }
 
   clampPitch() {
-    /*/ Clamp vertical look angle to avoid gimbal flips /*/
-    const maxPitch = Math.PI * 0.44;
+    /*/ Pitch clamp from Experiment player.js (Math.PI / 2.05) /*/
+    const maxPitch = Math.PI / 2.05;
     this.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.pitch));
   }
 
@@ -240,15 +394,15 @@ export class FirstPersonController {
     /*/ Starting Camera State /*/
     const startPos = this.camera.position.clone();
 
-    /*/ Target Landing Spot in Museum Plaza /*/
-    const targetPos = new THREE.Vector3(0, this.baseEyeHeight, -13);
-    const targetLook = new THREE.Vector3(3.5, 1.2, 5.0);
+    /*/ Target Landing Spot on the Front Museum Road Platform (Body4 Entrance) /*/
+    const targetPos = new THREE.Vector3(4.0, this.baseEyeHeight, 28.0);
+    const targetLook = new THREE.Vector3(4.0, this.baseEyeHeight, 8.0);
 
     /*/ High apex waypoint for a grand sweeping trajectory /*/
     const midPos = new THREE.Vector3(
-      startPos.x * 0.4,
-      Math.max(startPos.y * 0.5, 18),
-      startPos.z * 0.4
+      startPos.x * 0.4 + 2.0,
+      Math.max(startPos.y * 0.5, 20),
+      startPos.z * 0.4 + 14.0
     );
 
     const duration = 2.8;
@@ -307,6 +461,7 @@ export class FirstPersonController {
     if (this.isAscending || !this.isFirstPerson) return;
     this.isAscending = true;
     this.isFirstPerson = false;
+    this.isFlying = false;
 
     /*/ Release Pointer Lock /*/
     if (document.pointerLockElement) {
@@ -347,36 +502,88 @@ export class FirstPersonController {
     requestAnimationFrame(animateAscent);
   }
 
-  /*/ Frame Update: Computes First-Person Camera Motion & Damping /*/
+  /*/ Frame Update: Computes Camera Motion & Damping /*/
   update(delta) {
     if (!this.isFirstPerson || this.isLanding || this.isAscending) return;
 
-    /*/ Compute Horizontal Forward & Right Movement Vectors /*/
+    /*/ Synchronize camera orientation with pitch & yaw /*/
+    const euler = new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ');
+    this.camera.quaternion.setFromEuler(euler);
+    this.camera.updateMatrixWorld();
+
+    /*/ --- 0. FLY / SPECTATOR DRONE MODE (Exact from Experiment player.js) --- /*/
+    if (this.isFlying) {
+      /*/ 3D Directional Movement: flies in the exact 3D direction the camera is looking /*/
+      const forward = new THREE.Vector3();
+      this.camera.getWorldDirection(forward);
+
+      const right = new THREE.Vector3();
+      right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+
+      const up = new THREE.Vector3(0, 1, 0);
+
+      const flyDir = new THREE.Vector3();
+      if (this.keys.forward) flyDir.add(forward);
+      if (this.keys.backward) flyDir.sub(forward);
+      if (this.keys.right) flyDir.add(right);
+      if (this.keys.left) flyDir.sub(right);
+      if (this.keys.flyUp) flyDir.add(up);
+      if (this.keys.flyDown) flyDir.sub(up);
+
+      const isSprinting = this.keys.sprint;
+      const speed = isSprinting ? this.flySprintSpeed : this.flySpeed;
+
+      if (flyDir.lengthSq() > 0.001) {
+        flyDir.normalize();
+        this.velocity.copy(flyDir).multiplyScalar(speed);
+      } else {
+        this.velocity.multiplyScalar(0.82); /*/ Smooth aerodynamic glide stop /*/
+        if (this.velocity.lengthSq() < 0.01) this.velocity.set(0, 0, 0);
+      }
+
+      this.camera.position.addScaledVector(this.velocity, delta);
+
+      /*/ Boundary clamping: floor at -1.2, max height 65m for panoramic overhead view /*/
+      if (this.camera.position.y < -1.2) {
+        this.camera.position.y = -1.2;
+      }
+      this.camera.position.y = Math.min(65.0, this.camera.position.y);
+      this.camera.position.x = Math.max(-55, Math.min(55, this.camera.position.x));
+      this.camera.position.z = Math.max(-55, Math.min(55, this.camera.position.z));
+      return;
+    }
+
+    /*/ --- 1. GROUND WALKING MODE --- /*/
     const forward = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
     const right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
 
-    /*/ Desired Movement Direction /*/
-    const inputDir = new THREE.Vector3();
-    if (this.keys.forward) inputDir.add(forward);
-    if (this.keys.backward) inputDir.sub(forward);
-    if (this.keys.right) inputDir.add(right);
-    if (this.keys.left) inputDir.sub(right);
+    const moveDir = new THREE.Vector3();
+    if (this.keys.forward) moveDir.add(forward);
+    if (this.keys.backward) moveDir.sub(forward);
+    if (this.keys.right) moveDir.add(right);
+    if (this.keys.left) moveDir.sub(right);
 
-    const speed = this.keys.sprint ? this.sprintSpeed : this.walkSpeed;
-    const isMoving = inputDir.lengthSq() > 0.001;
+    const isMoving = moveDir.lengthSq() > 0.001;
+    const isSprinting = this.keys.sprint;
 
     if (isMoving) {
-      inputDir.normalize();
-      const targetVel = inputDir.multiplyScalar(speed);
-      this.velocity.lerp(targetVel, Math.min(1.0, delta * this.damping));
+      const inputMagnitude = Math.min(1.0, moveDir.length());
+      moveDir.normalize();
+      const currentSpeed = (isSprinting ? this.sprintSpeed : this.walkSpeed) * inputMagnitude;
+      this.velocity.x = moveDir.x * currentSpeed;
+      this.velocity.z = moveDir.z * currentSpeed;
     } else {
-      this.velocity.lerp(new THREE.Vector3(0, 0, 0), Math.min(1.0, delta * this.damping));
+      /*/ Smooth friction deceleration /*/
+      this.velocity.x *= 0.75;
+      this.velocity.z *= 0.75;
+      if (Math.abs(this.velocity.x) < 0.01) this.velocity.x = 0;
+      if (Math.abs(this.velocity.z) < 0.01) this.velocity.z = 0;
     }
 
-    /*/ Apply Movement to Camera Position /*/
-    this.camera.position.addScaledVector(this.velocity, delta);
+    this.camera.position.x += this.velocity.x * delta;
+    this.camera.position.z += this.velocity.z * delta;
 
-    /*/ Island Radial Boundary Check (keep user on museum platform) /*/
+    /*/ Island Radial Boundary Check /*/
     const horizontalDist = Math.hypot(this.camera.position.x, this.camera.position.z);
     if (horizontalDist > this.islandRadiusLimit) {
       const angle = Math.atan2(this.camera.position.z, this.camera.position.x);
@@ -384,18 +591,14 @@ export class FirstPersonController {
       this.camera.position.z = Math.sin(angle) * this.islandRadiusLimit;
     }
 
-    /*/ Head-bobbing effect while walking /*/
-    if (isMoving && this.velocity.length() > 0.5) {
-      const bobFreq = this.keys.sprint ? 14.0 : 9.5;
+    /*/ Subtle head bobbing while walking /*/
+    if (isMoving && Math.hypot(this.velocity.x, this.velocity.z) > 0.5) {
+      const bobFreq = isSprinting ? 14.0 : 9.5;
       this.headBobTimer += delta * bobFreq;
       const bobAmount = Math.sin(this.headBobTimer) * 0.035;
       this.camera.position.y = this.baseEyeHeight + bobAmount;
     } else {
       this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, this.baseEyeHeight, delta * 6.0);
     }
-
-    /*/ Update Camera Orientation from Euler Angles /*/
-    const euler = new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ');
-    this.camera.quaternion.setFromEuler(euler);
   }
 }

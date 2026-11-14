@@ -9,20 +9,20 @@ const LOCAL_MUSEUM_OBJ_URL = '/Space-Mesume.obj';
 export async function loadMuseumIsland(scene, onProgress) {
   const loader = new OBJLoader();
 
-  /*/ Material Setup for Museum Architecture /*/
+  /*/ Material Setup for Museum Architecture (Identical to original museum.js) /*/
   const structureMaterial = new THREE.MeshStandardMaterial({
-    color: 0x333b4f,
-    roughness: 0.5,
-    metalness: 0.4,
+    color: 0x475569, /*/ Rich slate concrete gray with clear 3D definition /*/
+    roughness: 0.65,
+    metalness: 0.15,
+    side: THREE.DoubleSide,
     emissive: 0x000000,
-    emissiveIntensity: 0.0,
-    flatShading: false
+    emissiveIntensity: 0.0
   });
 
   const platformMaterial = new THREE.MeshStandardMaterial({
-    color: 0x1e2538,
-    roughness: 0.7,
-    metalness: 0.2,
+    color: 0x0f172a, /*/ Deep slate/navy for dramatic floor contrast /*/
+    roughness: 0.25,
+    metalness: 0.35,
     emissive: 0x000000,
     emissiveIntensity: 0.0
   });
@@ -84,23 +84,70 @@ export async function loadMuseumIsland(scene, onProgress) {
 
   scene.add(obj);
 
-  /*/ Add Key Architectural Lighting for the Island /*/
+  /*/ Exact Architectural Lighting setup from original experimental museum.js /*/
   const islandLights = new THREE.Group();
   islandLights.name = 'IslandLighting';
 
-  /*/ Main Sun / Starlight /*/
-  const sunLight = new THREE.DirectionalLight(0xfff6e5, 1.8);
-  sunLight.position.set(60, 90, 50);
-  islandLights.add(sunLight);
+  /*/ 1. Balanced ambient fill so shadows and 3D depth are clear /*/
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+  islandLights.add(ambientLight);
 
-  /*/ Blue Atmospheric Bounce Light from Nebula /*/
-  const bounceLight = new THREE.DirectionalLight(0x38bdf8, 0.9);
-  bounceLight.position.set(-60, -40, -40);
-  islandLights.add(bounceLight);
+  /*/ 2. Hemisphere light (sky blue above, warm floor bounce) /*/
+  const hemiLight = new THREE.HemisphereLight(0xbae6fd, 0x1e293b, 0.85);
+  hemiLight.position.set(0, 20, 0);
+  islandLights.add(hemiLight);
+
+  /*/ 3. Primary sunlight from top-right for realistic architectural shadows /*/
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+  dirLight.position.set(12, 25, 15);
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width = 2048;
+  dirLight.shadow.mapSize.height = 2048;
+  dirLight.shadow.camera.near = 0.5;
+  dirLight.shadow.camera.far = 70;
+  dirLight.shadow.camera.left = -30;
+  dirLight.shadow.camera.right = 30;
+  dirLight.shadow.camera.top = 30;
+  dirLight.shadow.camera.bottom = -30;
+  dirLight.shadow.bias = -0.0003;
+  islandLights.add(dirLight);
+
+  /*/ 4. Secondary soft fill light /*/
+  const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.9);
+  fillLight.position.set(-15, 20, -15);
+  islandLights.add(fillLight);
+
+  /*/ 5. Gallery Overhead Accent Lights (scaled to fit current 0.055 island geometry) /*/
+  const s = 0.055 / 0.08; /*/ 0.6875 ratio /*/
+  const accentLightDefs = [
+    { x: -10 * s, y: 1.4, z: -20 * s, color: 0x38bdf8, intensity: 22 },
+    { x: 0 * s,   y: 1.4, z: -20 * s, color: 0xffffff, intensity: 26 },
+    { x: 10 * s,  y: 1.4, z: -20 * s, color: 0x818cf8, intensity: 22 },
+    { x: 0 * s,   y: 1.4, z: -28 * s, color: 0xbae6fd, intensity: 20 },
+    { x: 0 * s,   y: 1.4, z: -12 * s, color: 0xf1f5f9, intensity: 20 },
+    { x: 0 * s,   y: 1.2, z: 0 * s,   color: 0xffffff, intensity: 24 },
+    { x: 6 * s,   y: 1.2, z: 0 * s,   color: 0xfef9c3, intensity: 20 },
+    { x: 0 * s,   y: 1.0, z: 6 * s,   color: 0xfff8ee, intensity: 20 },
+    { x: -10 * s, y: 1.0, z: 14 * s,  color: 0xeff6ff, intensity: 20 },
+    { x: -10 * s, y: 1.0, z: 22 * s,  color: 0xffedd5, intensity: 20 }
+  ];
+
+  const fixtureGeo = new THREE.CylinderGeometry(0.24, 0.28, 0.06, 16);
+  const fixtureMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+  accentLightDefs.forEach(({ x, y, z, color, intensity }) => {
+    const pLight = new THREE.PointLight(color, intensity, 16, 1.2);
+    pLight.position.set(x, y, z);
+    islandLights.add(pLight);
+
+    const fixture = new THREE.Mesh(fixtureGeo, fixtureMat);
+    fixture.position.set(x, y, z);
+    islandLights.add(fixture);
+  });
 
   /*/ Core Center Pedestal Point Light /*/
-  const coreLight = new THREE.PointLight(0x67e8f9, 2.5, 80, 1.2);
-  coreLight.position.set(0, 8, 0);
+  const coreLight = new THREE.PointLight(0x67e8f9, 2.5, 60, 1.2);
+  coreLight.position.set(0, 6, 0);
   islandLights.add(coreLight);
 
   scene.add(islandLights);
