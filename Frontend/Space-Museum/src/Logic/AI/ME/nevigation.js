@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
 import { SoundEffects } from '../../soundfx.js';
+import { GamepadManager } from '../../gamepad.js';
 
 /*/ Synthesized Atmospheric Entry & Docking Audio Engine /*/
 class LandingAudioEngine {
@@ -111,6 +112,9 @@ export class FirstPersonController {
     this.currentSeat = null;
     this.seatedEyePos = new THREE.Vector3();
     this.theatre = null;
+
+    /*/ Gamepad API Controller (Xbox / PlayStation / Nintendo Pro / Generic) /*/
+    this.gamepad = new GamepadManager(this);
 
     /*/ Human Eye Height calibrated to grand monumental architectural scale (Floor Y = -1.87) /*/
     this.baseEyeHeight = -1.32;
@@ -342,6 +346,7 @@ export class FirstPersonController {
 
     this.isFlying = !this.isFlying;
     this.velocity.set(0, 0, 0);
+    this.gamepad?.vibrate(70, 0.3, 0.4);
 
     const btn = this.hudElement?.querySelector('#btn-flight-toggle');
     const modeText = this.hudElement?.querySelector('#fp-mode-text');
@@ -656,6 +661,7 @@ export class FirstPersonController {
         /*/ Show First-Person UI /*/
         if (this.hudElement) this.hudElement.classList.add('visible');
         if (this.reticle) this.reticle.classList.add('visible');
+        this.gamepad?.vibrate(90, 0.4, 0.3);
 
         if (onComplete) onComplete();
       }
@@ -722,6 +728,34 @@ export class FirstPersonController {
   update(delta) {
     if (!this.isFirstPerson || this.isLanding || this.isAscending) return;
 
+    /*/ Poll Gamepad API Controller /*/
+    const gp = this.gamepad?.update(delta);
+
+    /*/ Gamepad Flight Mode Toggle: Button Y (Triangle) /*/
+    if (gp?.btnY) {
+      this.toggleFlyMode();
+    }
+
+    /*/ Gamepad Cinema Seat Interaction: Press X (Xbox X / PlayStation Cross) or Square to Sit /*/
+    if ((gp?.btnX || gp?.btnA) && !this.isSeated && this.theatre) {
+      let targetSeat = this.theatre.checkSeatProximity(this.camera.position);
+      if (!targetSeat) {
+        /*/ Crosshair Raycast Fallback: sitting while looking directly at a seat within 3.6m /*/
+        const seatRay = new THREE.Raycaster();
+        seatRay.setFromCamera(new THREE.Vector2(0, 0), this.camera);
+        seatRay.far = 3.6;
+        const seatMeshes = this.theatre.getSeatMeshes();
+        const hits = seatRay.intersectObjects(seatMeshes, true);
+        if (hits.length > 0 && hits[0].object.userData?.seatData) {
+          targetSeat = hits[0].object.userData.seatData;
+        }
+      }
+      if (targetSeat) {
+        this.theatre.sitInSeat(targetSeat);
+        this.gamepad?.vibrate(70, 0.4, 0.4);
+      }
+    }
+
     /*/ Synchronize camera orientation with pitch & yaw /*/
     const euler = new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ');
     this.camera.quaternion.setFromEuler(euler);
@@ -735,6 +769,18 @@ export class FirstPersonController {
 
     /*/ --- SEATED IN THEATRE CHAIR --- /*/
     if (this.isSeated) {
+      /*/ Stand Up via Gamepad (Left Stick tilt, Button A, Button B, or Button X) /*/
+      const gpWantsStand = gp && (Math.abs(gp.moveX) > 0.4 || Math.abs(gp.moveY) > 0.4 || gp.btnA || gp.btnB || gp.btnX);
+      if (gpWantsStand) {
+        if (this.theatre) {
+          this.theatre.standUp();
+        } else {
+          this.setSeated(false);
+        }
+        this.gamepad?.vibrate(50, 0.3, 0.2);
+        return;
+      }
+
       this.velocity.set(0, 0, 0);
       this.camera.position.copy(this.seatedEyePos);
       const coordEl = this.hudElement?.querySelector('#fp-coord-display');
@@ -769,7 +815,17 @@ export class FirstPersonController {
       if (this.keys.flyUp) flyDir.add(up);
       if (this.keys.flyDown) flyDir.sub(up);
 
-      const isSprinting = this.keys.sprint;
+      /*/ Blend Analog Gamepad Left Stick and Triggers in 3D Flight /*/
+      if (gp) {
+        if (Math.abs(gp.moveX) > 0 || Math.abs(gp.moveY) > 0) {
+          flyDir.addScaledVector(right, gp.moveX);
+          flyDir.addScaledVector(forward, -gp.moveY);
+        }
+        if (gp.flyUp) flyDir.add(up);
+        if (gp.flyDown) flyDir.sub(up);
+      }
+
+      const isSprinting = this.keys.sprint || !!(gp?.isSprinting);
       const speed = isSprinting ? this.flySprintSpeed : this.flySpeed;
 
       if (flyDir.lengthSq() > 0.001) {
@@ -802,8 +858,14 @@ export class FirstPersonController {
     if (this.keys.right) moveDir.add(right);
     if (this.keys.left) moveDir.sub(right);
 
+    /*/ Blend Analog Gamepad Left Stick Movement /*/
+    if (gp && (Math.abs(gp.moveX) > 0 || Math.abs(gp.moveY) > 0)) {
+      moveDir.addScaledVector(right, gp.moveX);
+      moveDir.addScaledVector(forward, -gp.moveY);
+    }
+
     const isMoving = moveDir.lengthSq() > 0.001;
-    const isSprinting = this.keys.sprint;
+    const isSprinting = this.keys.sprint || !!(gp?.isSprinting);
 
     if (isMoving) {
       const inputMagnitude = Math.min(1.0, moveDir.length());

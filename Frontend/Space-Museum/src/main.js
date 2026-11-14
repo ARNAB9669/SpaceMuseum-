@@ -293,8 +293,14 @@ function animate(timestamp) {
       if (nearbySeat) {
         if (interactPrompt) {
           interactPrompt.classList.remove('hidden');
+          const promptKey = interactPrompt.querySelector('.prompt-key');
           const promptText = interactPrompt.querySelector('.prompt-text');
-          if (promptText) promptText.textContent = `Sit in Seat (${nearbySeat.name})`;
+          if (promptKey) {
+            promptKey.textContent = fpController.gamepad?.isConnected ? 'X' : 'E';
+          }
+          if (promptText) {
+            promptText.textContent = `Sit in Seat (${nearbySeat.name})`;
+          }
         }
       } else {
         if (interactPrompt) interactPrompt.classList.add('hidden');

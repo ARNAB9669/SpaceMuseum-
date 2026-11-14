@@ -613,6 +613,25 @@
   - Collision physics is strictly active during ground locomotion (`!isFlying && !isSeated && !isLanding && !isAscending`).
   - Developer spectator drone flight (`[G]`) and smooth runway landing remain unrestricted.
 
+---
+
+### Log : 42
+**Title**: Full HTML5 Gamepad API Controller & Haptic Rumble Integration  
+**Description**: Implemented native gamepad controller support with dual analog sticks, button edge triggering, haptic rumble vibration, and HUD status toasts matching the prototype architecture:
+- **Gamepad Engine ([gamepad.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/gamepad.js))**:
+  - Auto-detects Xbox, PlayStation (DualShock 4 / DualSense), Nintendo Switch Pro, and standard HID gamepads via `gamepadconnected` and `gamepaddisconnected` window events.
+  - Displays HUD connection/disconnection toasts `#gamepad-badge` with controller device name.
+  - Implements radial deadzone filtering ($0.15$) on analog sticks for drift-free precision.
+  - Supports dual-rumble haptic vibration (`vibrate(duration, weakMag, strongMag)`) via `gamepad.vibrationActuator`.
+- **First-Person POV Integration ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js))**:
+  - **Left Analog Stick / D-Pad**: Fluid 360° omnidirectional locomotion (walking & sprinting).
+  - **Right Analog Stick**: Smooth 360° camera looking (yaw & pitch) with sensitivity scaling.
+  - **Button X / Square**: Proximity interaction & sit down in nearest theatre seat (`[E]` key equivalent).
+  - **Button Y / Triangle**: Toggle 3D developer spectator drone flight (`[G]` key equivalent).
+  - **Button A / B / Stick Tilt while Seated**: Smoothly stands up from the theatre chair.
+  - **Triggers & Bumpers**: Right Trigger (`RT`) / Bumper (`RB`) activates sprint boost; Left Bumper / Trigger descends/ascends during drone flight.
+  - **Tactile Haptic Feedback**: Delivers subtle rumble pulses upon touchdown, seat transitions, and flight toggle.
+
 
 
 
