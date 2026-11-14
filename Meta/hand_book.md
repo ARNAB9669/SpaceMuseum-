@@ -576,6 +576,23 @@
 - **Center-Screen Pointer Lock Raycasting ([main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js))**: When pointer lock is active, clicking uses `new THREE.Vector2(0, 0)` so clicking any chair in front of the crosshair immediately sits down.
 - **Total Cinema Blackout ([loa_modle.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/loa_modle.js))**: When seated (`currentCinema = 1.0`), ambient, hemisphere, directional sunlight, fill, core rotunda, and gallery accent lights all smoothly dim to **0.0** (100% total room blackout).
 
+---
+
+### Log : 40
+**Title**: Smooth Cinematic Landing Glide & Softened Entry Audio  
+**Issue**: Landing from Orbit View into First-Person POV felt harsh, dropping steeply into the road with aggressive quintic acceleration, abrupt orientation snapping, and loud sub-bass/white-noise audio.  
+**Root Cause Analysis**:
+1. **Vertical Plummeting Trajectory**: The previous quadratic Bezier apex dropped steeply from $Y = 22\text{m}$ down to $Y = -1.32\text{m}$ with a steep downward angle at touchdown, creating the sensation of slamming vertically into the road.
+2. **Aggressive Quintic Easing**: The $t^5$ acceleration curve caused an intense velocity spike in the middle of the descent over an abbreviated $2.8\text{s}$ duration.
+3. **Touchdown Orientation Snap**: During flight, the camera used `lookAt(lookAtPt)`. On the touchdown frame, it abruptly transitioned to `Euler(pitch, yaw)`, causing an instantaneous rotational jolt.
+4. **Harsh Audio Volume**: `LandingAudioEngine` fired a $42\text{Hz}$ sub-bass boom (gain $0.35$) and high-gain white noise decompression blast (gain $0.12$).
+**Fix & Resolution ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js))**:
+- **4-Point Cubic Bezier Runway Glide**: Replaced the steep drop with a 4-point Cubic Bezier curve where control point $P_2$ is positioned $7.5\text{m}$ behind the landing spot and just $1.1\text{m}$ above the asphalt, curving parallel to the road tangent so the descent levels out horizontally before touchdown.
+- **Zero-Jerk Cosine Easing & Extended Duration**: Extended duration from $2.8\text{s} \to 3.8\text{s}$ with smooth cosine easing (`0.5 * (1 - Math.cos(Math.PI * t))`) providing continuous gentle acceleration and deceleration.
+- **Slerp Quaternion Interpolation**: Interpolated camera rotation using quaternion spherical linear interpolation (`slerpQuaternions`) directly into the exact First-Person POV quaternion, eliminating all orientation snapping.
+- **Calm, Atmospheric Entry Sound**: Softened sub-bass gain to $0.06$, replaced white noise blast with a gentle lowpass airflow whisper (gain $0.02$), and transitioned into a harmonic 3-note landing chime.
+
+
 
 
 

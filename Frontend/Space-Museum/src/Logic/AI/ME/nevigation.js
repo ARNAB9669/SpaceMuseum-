@@ -10,22 +10,22 @@ class LandingAudioEngine {
       const ctx = new AudioCtx();
       const now = ctx.currentTime;
 
-      /*/ Deep Sub-Bass Atmospheric Descent /*/
+      /*/ Gentle Sub-Bass Cinematic Drone /*/
       const sub = ctx.createOscillator();
       const subGain = ctx.createGain();
       sub.type = 'sine';
-      sub.frequency.setValueAtTime(95, now);
-      sub.frequency.exponentialRampToValueAtTime(34, now + 2.4);
-      subGain.gain.setValueAtTime(0.001, now);
-      subGain.gain.linearRampToValueAtTime(0.35, now + 0.5);
-      subGain.gain.exponentialRampToValueAtTime(0.001, now + 2.6);
+      sub.frequency.setValueAtTime(65, now);
+      sub.frequency.exponentialRampToValueAtTime(32, now + 3.0);
+      subGain.gain.setValueAtTime(0.0001, now);
+      subGain.gain.linearRampToValueAtTime(0.06, now + 0.8);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.4);
       sub.connect(subGain);
       subGain.connect(ctx.destination);
       sub.start(now);
-      sub.stop(now + 2.7);
+      sub.stop(now + 3.5);
 
-      /*/ Pressurization White-Noise Decompression /*/
-      const bufferSize = ctx.sampleRate * 1.5;
+      /*/ Soft Ambient Airflow (Whispering Wind) /*/
+      const bufferSize = ctx.sampleRate * 2.0;
       const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const output = noiseBuffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -35,35 +35,35 @@ class LandingAudioEngine {
       whiteNoise.buffer = noiseBuffer;
 
       const filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.setValueAtTime(450, now);
-      filter.frequency.exponentialRampToValueAtTime(140, now + 1.6);
-      filter.Q.setValueAtTime(3.0, now);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(320, now);
+      filter.frequency.exponentialRampToValueAtTime(80, now + 2.6);
 
       const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.001, now);
-      noiseGain.gain.linearRampToValueAtTime(0.12, now + 0.3);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+      noiseGain.gain.setValueAtTime(0.0001, now);
+      noiseGain.gain.linearRampToValueAtTime(0.02, now + 0.6);
+      noiseGain.gain.exponentialRampToValueAtTime(0.0001, now + 2.9);
 
       whiteNoise.connect(filter);
       filter.connect(noiseGain);
       noiseGain.connect(ctx.destination);
       whiteNoise.start(now);
-      whiteNoise.stop(now + 1.9);
+      whiteNoise.stop(now + 3.0);
 
-      /*/ Hermetic Seal Docking Chime /*/
+      /*/ Soft Harmonic Arrival Chime /*/
       const chime = ctx.createOscillator();
       const chimeGain = ctx.createGain();
       chime.type = 'sine';
-      chime.frequency.setValueAtTime(587.33, now + 1.4);
-      chime.frequency.setValueAtTime(880.0, now + 1.65);
-      chimeGain.gain.setValueAtTime(0.001, now + 1.4);
-      chimeGain.gain.linearRampToValueAtTime(0.18, now + 1.66);
-      chimeGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+      chime.frequency.setValueAtTime(523.25, now + 2.2);
+      chime.frequency.setValueAtTime(659.25, now + 2.5);
+      chime.frequency.setValueAtTime(783.99, now + 2.8);
+      chimeGain.gain.setValueAtTime(0.0001, now + 2.2);
+      chimeGain.gain.linearRampToValueAtTime(0.06, now + 2.85);
+      chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 3.8);
       chime.connect(chimeGain);
       chimeGain.connect(ctx.destination);
-      chime.start(now + 1.4);
-      chime.stop(now + 2.6);
+      chime.start(now + 2.2);
+      chime.stop(now + 3.9);
     } catch (e) {}
   }
 
@@ -487,7 +487,7 @@ export class FirstPersonController {
     /*/ Initialize procedural sound engine on user interaction /*/
     this.soundfx?.init();
 
-    /*/ Trigger synthesized entry audio /*/
+    /*/ Trigger gentle entry atmospheric audio /*/
     this.audio.play();
 
     /*/ Disable OrbitControls during landing /*/
@@ -496,7 +496,7 @@ export class FirstPersonController {
     /*/ Starting Camera State /*/
     const startPos = this.camera.position.clone();
 
-    /*/ Target Landing Spot: Calibrated to User's Exact Choice (X: 15.04, Y: -0.77, Z: 10.41) /*/
+    /*/ Target Landing Spot: Calibrated to User's Exact Choice (X: 15.04, Y: baseEyeHeight, Z: 10.41) /*/
     const targetPos = (customTargetPos && customTargetPos.isVector3)
       ? customTargetPos.clone()
       : (this.customLandingPos
@@ -507,44 +507,70 @@ export class FirstPersonController {
       ? customTargetLook.clone()
       : new THREE.Vector3(12.0, this.baseEyeHeight, 24.0);
 
-    /*/ High apex waypoint for a grand sweeping trajectory /*/
-    const midPos = new THREE.Vector3(
-      startPos.x * 0.4 + targetPos.x * 0.6,
-      Math.max(startPos.y * 0.5, 22.0),
-      startPos.z * 0.4 + targetPos.z * 0.6
-    );
+    /*/ Compute exact final yaw/pitch and orientation quaternion /*/
+    const finalDir = new THREE.Vector3().subVectors(targetLook, targetPos).normalize();
+    const finalYaw = Math.atan2(-finalDir.x, -finalDir.z);
+    const finalPitch = Math.asin(Math.max(-0.95, Math.min(0.95, finalDir.y)));
+    const targetQuat = new THREE.Quaternion().setFromEuler(new THREE.Euler(finalPitch, finalYaw, 0, 'YXZ'));
 
-    const duration = 2.8;
+    /*/ Smooth 4-Point Cubic Bezier Flight Trajectory:
+        p0 = startPos (high orbit)
+        p1 = high archway curving gracefully over the transparent biodome
+        p2 = low level alignment waypoint (behind landing spot along road tangent)
+        p3 = targetPos (soft, horizontal touchdown at eye level) /*/
+    const p0 = startPos;
+    const p1 = new THREE.Vector3(
+      startPos.x * 0.65 + targetPos.x * 0.35,
+      Math.max(startPos.y * 0.75, 24.0),
+      startPos.z * 0.65 + targetPos.z * 0.35
+    );
+    const p2 = new THREE.Vector3(
+      targetPos.x - finalDir.x * 7.5,
+      targetPos.y + 1.10,
+      targetPos.z - finalDir.z * 7.5
+    );
+    const p3 = targetPos;
+
+    const duration = 3.8; /*/ Graceful 3.8s majestic glide /*/
     let elapsed = 0;
     const startFov = this.camera.fov;
+    let lastTime = performance.now();
 
     const animateLanding = () => {
       if (!this.isLanding) return;
 
-      const dt = 0.016;
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
       elapsed += dt;
       const t = Math.min(1.0, elapsed / duration);
 
-      /*/ Quintic EaseInOut for silky smooth acceleration & touchdown /*/
-      const ease = t < 0.5
-        ? 16 * t * t * t * t * t
-        : 1 - Math.pow(-2 * t + 2, 5) / 2;
+      /*/ Smooth Cosine Easing (Zero jerk, continuous gentle acceleration & deceleration) /*/
+      const ease = 0.5 * (1 - Math.cos(Math.PI * t));
 
-      /*/ Quadratic Bezier Curve from Orbit -> Canopy -> Plaza /*/
-      const inv = 1 - ease;
+      /*/ Cubic Bezier Position Interpolation /*/
+      const u = 1 - ease;
+      const u2 = u * u;
+      const u3 = u2 * u;
+      const e2 = ease * ease;
+      const e3 = e2 * ease;
+
       const currentPos = new THREE.Vector3(
-        inv * inv * startPos.x + 2 * inv * ease * midPos.x + ease * ease * targetPos.x,
-        inv * inv * startPos.y + 2 * inv * ease * midPos.y + ease * ease * targetPos.y,
-        inv * inv * startPos.z + 2 * inv * ease * midPos.z + ease * ease * targetPos.z
+        u3 * p0.x + 3 * u2 * ease * p1.x + 3 * u * e2 * p2.x + e3 * p3.x,
+        u3 * p0.y + 3 * u2 * ease * p1.y + 3 * u * e2 * p2.y + e3 * p3.y,
+        u3 * p0.z + 3 * u2 * ease * p1.z + 3 * u * e2 * p2.z + e3 * p3.z
       );
-
       this.camera.position.copy(currentPos);
 
-      /*/ Interpolate Look Direction /*/
+      /*/ Seamless Look & Orientation Blending without abrupt snapping /*/
       const lookAtPt = new THREE.Vector3().lerpVectors(new THREE.Vector3(0, 2, 0), targetLook, ease);
-      this.camera.lookAt(lookAtPt);
+      const lookMatrix = new THREE.Matrix4().lookAt(currentPos, lookAtPt, new THREE.Vector3(0, 1, 0));
+      const lookQuat = new THREE.Quaternion().setFromRotationMatrix(lookMatrix);
 
-      /*/ Smoothly transition FOV to monumental wide-angle perspective /*/
+      /*/ Slerp smoothly into the exact first-person orientation /*/
+      this.camera.quaternion.slerpQuaternions(lookQuat, targetQuat, ease * ease);
+
+      /*/ Smooth FOV transition /*/
       this.camera.fov = THREE.MathUtils.lerp(startFov, this.targetFov, ease);
       this.camera.updateProjectionMatrix();
 
@@ -554,10 +580,12 @@ export class FirstPersonController {
         this.isLanding = false;
         this.isFirstPerson = true;
 
-        /*/ Compute initial yaw/pitch from arrived orientation /*/
-        const dir = new THREE.Vector3().subVectors(targetLook, targetPos).normalize();
-        this.yaw = Math.atan2(-dir.x, -dir.z);
-        this.pitch = Math.asin(dir.y);
+        this.yaw = finalYaw;
+        this.pitch = finalPitch;
+        this.camera.position.copy(targetPos);
+        const finalEuler = new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ');
+        this.camera.quaternion.setFromEuler(finalEuler);
+        this.camera.updateMatrixWorld();
 
         /*/ Show First-Person UI /*/
         if (this.hudElement) this.hudElement.classList.add('visible');
