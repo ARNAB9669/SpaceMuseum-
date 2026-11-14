@@ -9,19 +9,26 @@ const LOCAL_MUSEUM_OBJ_URL = '/Space-Mesume.obj';
 export async function loadMuseumIsland(scene, onProgress) {
   const loader = new OBJLoader();
 
-  /*/ Material Setup for Museum Architecture (Identical to original museum.js) /*/
+  /*/ Palette: Cold Cosmic Blue (Outside Orbit View) vs Warm Classical European (Inside Gallery View) /*/
+  const coldStructureColor = new THREE.Color(0x384556); /*/ Cold slate tech alloy /*/
+  const warmStructureColor = new THREE.Color(0xd2c4b2); /*/ Warm French limestone / Louvre travertine /*/
+
+  const coldPlatformColor = new THREE.Color(0x111827); /*/ Deep cosmic slate navy /*/
+  const warmPlatformColor = new THREE.Color(0x241d1a); /*/ Deep warm aged walnut / basalt gallery floor /*/
+
+  /*/ Material Setup for Museum Architecture /*/
   const structureMaterial = new THREE.MeshStandardMaterial({
-    color: 0x475569, /*/ Rich slate concrete gray with clear 3D definition /*/
+    color: coldStructureColor.clone(),
     roughness: 0.65,
-    metalness: 0.15,
+    metalness: 0.20,
     side: THREE.DoubleSide,
     emissive: 0x000000,
     emissiveIntensity: 0.0
   });
 
   const platformMaterial = new THREE.MeshStandardMaterial({
-    color: 0x0f172a, /*/ Deep slate/navy for dramatic floor contrast /*/
-    roughness: 0.25,
+    color: coldPlatformColor.clone(),
+    roughness: 0.30,
     metalness: 0.35,
     emissive: 0x000000,
     emissiveIntensity: 0.0
@@ -84,21 +91,29 @@ export async function loadMuseumIsland(scene, onProgress) {
 
   scene.add(obj);
 
-  /*/ Exact Architectural Lighting setup from original experimental museum.js /*/
+  /*/ Dynamic Architectural Lighting Architecture /*/
   const islandLights = new THREE.Group();
   islandLights.name = 'IslandLighting';
 
-  /*/ 1. Balanced ambient fill so shadows and 3D depth are clear /*/
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.95);
+  /*/ 1. Ambient Fill Light /*/
+  const coldAmbientColor = new THREE.Color(0x8ecae6);
+  const warmAmbientColor = new THREE.Color(0xfff5ea);
+  const ambientLight = new THREE.AmbientLight(coldAmbientColor.clone(), 0.85);
   islandLights.add(ambientLight);
 
-  /*/ 2. Hemisphere light (sky blue above, warm floor bounce) /*/
-  const hemiLight = new THREE.HemisphereLight(0xbae6fd, 0x1e293b, 0.85);
+  /*/ 2. Hemisphere Light /*/
+  const coldHemiSky = new THREE.Color(0xbae6fd);
+  const warmHemiSky = new THREE.Color(0xffeedb);
+  const coldHemiGround = new THREE.Color(0x1e293b);
+  const warmHemiGround = new THREE.Color(0x5c3826);
+  const hemiLight = new THREE.HemisphereLight(coldHemiSky.clone(), coldHemiGround.clone(), 0.85);
   hemiLight.position.set(0, 20, 0);
   islandLights.add(hemiLight);
 
-  /*/ 3. Primary sunlight from top-right for realistic architectural shadows /*/
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+  /*/ 3. Primary Directional Sunlight /*/
+  const coldDirColor = new THREE.Color(0xdbeafe);
+  const warmDirColor = new THREE.Color(0xffecd1);
+  const dirLight = new THREE.DirectionalLight(coldDirColor.clone(), 1.8);
   dirLight.position.set(12, 25, 15);
   dirLight.castShadow = true;
   dirLight.shadow.mapSize.width = 2048;
@@ -112,67 +127,161 @@ export async function loadMuseumIsland(scene, onProgress) {
   dirLight.shadow.bias = -0.0003;
   islandLights.add(dirLight);
 
-  /*/ 4. Secondary soft fill light /*/
-  const fillLight = new THREE.DirectionalLight(0xdbeafe, 0.9);
+  /*/ 4. Secondary Soft Cross-Fill Light /*/
+  const coldFillColor = new THREE.Color(0x38bdf8);
+  const warmFillColor = new THREE.Color(0xfed7aa);
+  const fillLight = new THREE.DirectionalLight(coldFillColor.clone(), 0.9);
   fillLight.position.set(-15, 20, -15);
   islandLights.add(fillLight);
 
-  /*/ 5. Gallery Overhead Accent Lights (scaled to fit current 0.055 island geometry) /*/
+  /*/ 5. Gallery Overhead Accent Lights /*/
   const s = 0.055 / 0.08; /*/ 0.6875 ratio /*/
   const accentLightDefs = [
-    { x: -10 * s, y: 1.4, z: -20 * s, color: 0x38bdf8, intensity: 22 },
-    { x: 0 * s,   y: 1.4, z: -20 * s, color: 0xffffff, intensity: 26 },
-    { x: 10 * s,  y: 1.4, z: -20 * s, color: 0x818cf8, intensity: 22 },
-    { x: 0 * s,   y: 1.4, z: -28 * s, color: 0xbae6fd, intensity: 20 },
-    { x: 0 * s,   y: 1.4, z: -12 * s, color: 0xf1f5f9, intensity: 20 },
-    { x: 0 * s,   y: 1.2, z: 0 * s,   color: 0xffffff, intensity: 24 },
-    { x: 6 * s,   y: 1.2, z: 0 * s,   color: 0xfef9c3, intensity: 20 },
-    { x: 0 * s,   y: 1.0, z: 6 * s,   color: 0xfff8ee, intensity: 20 },
-    { x: -10 * s, y: 1.0, z: 14 * s,  color: 0xeff6ff, intensity: 20 },
-    { x: -10 * s, y: 1.0, z: 22 * s,  color: 0xffedd5, intensity: 20 }
+    { x: -10 * s, y: 1.4, z: -20 * s },
+    { x: 0 * s,   y: 1.4, z: -20 * s },
+    { x: 10 * s,  y: 1.4, z: -20 * s },
+    { x: 0 * s,   y: 1.4, z: -28 * s },
+    { x: 0 * s,   y: 1.4, z: -12 * s },
+    { x: 0 * s,   y: 1.2, z: 0 * s   },
+    { x: 6 * s,   y: 1.2, z: 0 * s   },
+    { x: 0 * s,   y: 1.0, z: 6 * s   },
+    { x: -10 * s, y: 1.0, z: 14 * s  },
+    { x: -10 * s, y: 1.0, z: 22 * s  }
   ];
 
-  const fixtureGeo = new THREE.CylinderGeometry(0.24, 0.28, 0.06, 16);
-  const fixtureMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const accentColdColors = [
+    new THREE.Color(0x38bdf8),
+    new THREE.Color(0xffffff),
+    new THREE.Color(0x818cf8),
+    new THREE.Color(0xbae6fd),
+    new THREE.Color(0xf1f5f9),
+    new THREE.Color(0xffffff),
+    new THREE.Color(0xbae6fd),
+    new THREE.Color(0x67e8f9),
+    new THREE.Color(0x38bdf8),
+    new THREE.Color(0x818cf8)
+  ];
 
-  accentLightDefs.forEach(({ x, y, z, color, intensity }) => {
-    const pLight = new THREE.PointLight(color, intensity, 16, 1.2);
+  const accentWarmColors = [
+    new THREE.Color(0xffedd5),
+    new THREE.Color(0xfef3c7),
+    new THREE.Color(0xfde68a),
+    new THREE.Color(0xffedd5),
+    new THREE.Color(0xfef9c3),
+    new THREE.Color(0xfff7ed),
+    new THREE.Color(0xfef08a),
+    new THREE.Color(0xffedd5),
+    new THREE.Color(0xfef3c7),
+    new THREE.Color(0xffeed5)
+  ];
+
+  const coldFixtureColor = new THREE.Color(0x94a3b8);
+  const warmFixtureColor = new THREE.Color(0xfef08a);
+  const coldFixtureEmissive = new THREE.Color(0x38bdf8);
+  const warmFixtureEmissive = new THREE.Color(0xf59e0b);
+
+  const fixtureGeo = new THREE.CylinderGeometry(0.24, 0.28, 0.06, 16);
+  const fixtureMat = new THREE.MeshStandardMaterial({
+    color: coldFixtureColor.clone(),
+    emissive: coldFixtureEmissive.clone(),
+    emissiveIntensity: 0.6,
+    roughness: 0.3
+  });
+
+  const pointLights = [];
+  accentLightDefs.forEach(({ x, y, z }, idx) => {
+    const pLight = new THREE.PointLight(accentColdColors[idx].clone(), 20, 16, 1.2);
     pLight.position.set(x, y, z);
     islandLights.add(pLight);
+    pointLights.push(pLight);
 
     const fixture = new THREE.Mesh(fixtureGeo, fixtureMat);
     fixture.position.set(x, y, z);
     islandLights.add(fixture);
   });
 
-  /*/ Core Center Pedestal Point Light /*/
-  const coreLight = new THREE.PointLight(0x67e8f9, 2.5, 60, 1.2);
+  /*/ 6. Core Rotunda Point Light /*/
+  const coldCoreColor = new THREE.Color(0x67e8f9);
+  const warmCoreColor = new THREE.Color(0xfde68a);
+  const coreLight = new THREE.PointLight(coldCoreColor.clone(), 2.5, 60, 1.2);
   coreLight.position.set(0, 6, 0);
   islandLights.add(coreLight);
 
   scene.add(islandLights);
 
-  /*/ Interactive Highlight Controller for Museum Island /*/
+  /*/ Dynamic Outside/Inside Transition State /*/
+  let currentFactor = 0.0; /*/ 0 = Outside Cold Blue, 1 = Inside Warm Classical /*/
   let isHighlighted = false;
+
   obj.userData = {
     isMuseumIsland: true,
+    setInsideTransition: (factor) => {
+      currentFactor = THREE.MathUtils.clamp(factor, 0.0, 1.0);
+
+      /*/ Interpolate Architectural Materials /*/
+      structureMaterial.color.lerpColors(coldStructureColor, warmStructureColor, currentFactor);
+      structureMaterial.roughness = THREE.MathUtils.lerp(0.65, 0.72, currentFactor);
+      structureMaterial.metalness = THREE.MathUtils.lerp(0.20, 0.05, currentFactor);
+
+      platformMaterial.color.lerpColors(coldPlatformColor, warmPlatformColor, currentFactor);
+      platformMaterial.roughness = THREE.MathUtils.lerp(0.30, 0.38, currentFactor);
+      platformMaterial.metalness = THREE.MathUtils.lerp(0.35, 0.16, currentFactor);
+
+      /*/ Interpolate Core Lights /*/
+      ambientLight.color.lerpColors(coldAmbientColor, warmAmbientColor, currentFactor);
+      ambientLight.intensity = THREE.MathUtils.lerp(0.85, 1.05, currentFactor);
+
+      hemiLight.color.lerpColors(coldHemiSky, warmHemiSky, currentFactor);
+      hemiLight.groundColor.lerpColors(coldHemiGround, warmHemiGround, currentFactor);
+      hemiLight.intensity = THREE.MathUtils.lerp(0.85, 0.95, currentFactor);
+
+      dirLight.color.lerpColors(coldDirColor, warmDirColor, currentFactor);
+      dirLight.intensity = THREE.MathUtils.lerp(1.8, 2.2, currentFactor);
+
+      fillLight.color.lerpColors(coldFillColor, warmFillColor, currentFactor);
+      fillLight.intensity = THREE.MathUtils.lerp(0.9, 0.85, currentFactor);
+
+      coreLight.color.lerpColors(coldCoreColor, warmCoreColor, currentFactor);
+      coreLight.intensity = THREE.MathUtils.lerp(2.5, 3.2, currentFactor);
+
+      /*/ Interpolate Accent Lights & Ceiling Fixtures /*/
+      pointLights.forEach((pLight, idx) => {
+        pLight.color.lerpColors(accentColdColors[idx], accentWarmColors[idx], currentFactor);
+      });
+      fixtureMat.color.lerpColors(coldFixtureColor, warmFixtureColor, currentFactor);
+      fixtureMat.emissive.lerpColors(coldFixtureEmissive, warmFixtureEmissive, currentFactor);
+    },
+
     setHighlight: (active) => {
       isHighlighted = !!active;
       if (isHighlighted) {
-        structureMaterial.emissive.setHex(0x1e3a5f);
-        structureMaterial.emissiveIntensity = 0.45;
-        platformMaterial.emissive.setHex(0x0a192f);
-        platformMaterial.emissiveIntensity = 0.25;
-        coreLight.intensity = 4.2;
+        if (currentFactor < 0.5) {
+          /*/ Cold Blue Orbit Glow Pop /*/
+          structureMaterial.emissive.setHex(0x1e3a5f);
+          structureMaterial.emissiveIntensity = 0.45;
+          platformMaterial.emissive.setHex(0x0a192f);
+          platformMaterial.emissiveIntensity = 0.25;
+          coreLight.intensity = 4.2;
+        } else {
+          /*/ Warm Amber Gallery Glow Pop /*/
+          structureMaterial.emissive.setHex(0x5c3826);
+          structureMaterial.emissiveIntensity = 0.35;
+          platformMaterial.emissive.setHex(0x3d2010);
+          platformMaterial.emissiveIntensity = 0.2;
+          coreLight.intensity = 4.8;
+        }
       } else {
         structureMaterial.emissive.setHex(0x000000);
         structureMaterial.emissiveIntensity = 0.0;
         platformMaterial.emissive.setHex(0x000000);
         platformMaterial.emissiveIntensity = 0.0;
-        coreLight.intensity = 2.5;
+        coreLight.intensity = THREE.MathUtils.lerp(2.5, 3.2, currentFactor);
       }
     }
   };
+
+  /*/ Initialize Island in Cold Cosmic Blue state for Orbit View /*/
+  obj.userData.setInsideTransition(0.0);
 
   return obj;
 }

@@ -266,10 +266,22 @@ export class Biodome {
     this.isHighlighted = false;
     this.highlightFactor = 0; /*/ 0 = idle, 1 = fully popped & glowing /*/
 
+    /*/ Outside (Cold Cosmic Blue) vs Inside (Warm Classical Gold) Colors /*/
+    this.coldRingColor = new THREE.Color(0xdbeafe);
+    this.warmRingColor = new THREE.Color(0xfef3c7);
+    this.coldRingEmissive = new THREE.Color(0x38bdf8);
+    this.warmRingEmissive = new THREE.Color(0xf59e0b);
+    this.coldLineColor = new THREE.Color(0x93c5fd);
+    this.warmLineColor = new THREE.Color(0xfef3c7);
+    this.coldGlowColor = new THREE.Color(0x38bdf8);
+    this.warmGlowColor = new THREE.Color(0xfef08a);
+
     this.initGlassCanopy();
     this.initGeodesicGrid();
     this.initBaseRimRing();
     this.initFresnelShieldGlow();
+
+    this.setInsideTransition(0.0);
 
     this.group.position.set(0, this.floorY, 0);
     this.scene.add(this.group);
@@ -320,9 +332,9 @@ export class Biodome {
 
     const wireframe = new THREE.WireframeGeometry(gridGeometry);
     this.lineMaterial = new THREE.LineBasicMaterial({
-      color: 0xe0f2fe,
+      color: 0xfef3c7,
       transparent: true,
-      opacity: 0.12,
+      opacity: 0.1,
       blending: THREE.AdditiveBlending,
       depthWrite: false
     });
@@ -337,9 +349,9 @@ export class Biodome {
     ringGeo.rotateX(Math.PI / 2);
 
     this.ringMat = new THREE.MeshStandardMaterial({
-      color: 0xdbeafe,
-      emissive: 0x38bdf8,
-      emissiveIntensity: 0.6,
+      color: 0xfef3c7,
+      emissive: 0xf59e0b,
+      emissiveIntensity: 0.65,
       roughness: 0.2,
       metalness: 0.85
     });
@@ -363,9 +375,9 @@ export class Biodome {
     outerGeo.scale(1.0, this.domeHeightScale, 1.0);
 
     this.glowMat = new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
+      color: 0xfef08a,
       transparent: true,
-      opacity: 0.06,
+      opacity: 0.05,
       blending: THREE.AdditiveBlending,
       side: THREE.BackSide,
       depthWrite: false
@@ -373,6 +385,20 @@ export class Biodome {
 
     this.glowDome = new THREE.Mesh(outerGeo, this.glowMat);
     this.group.add(this.glowDome);
+  }
+
+  setInsideTransition(factor) {
+    const f = THREE.MathUtils.clamp(factor, 0.0, 1.0);
+    if (this.ringMat) {
+      this.ringMat.color.lerpColors(this.coldRingColor, this.warmRingColor, f);
+      this.ringMat.emissive.lerpColors(this.coldRingEmissive, this.warmRingEmissive, f);
+    }
+    if (this.lineMaterial) {
+      this.lineMaterial.color.lerpColors(this.coldLineColor, this.warmLineColor, f);
+    }
+    if (this.glowMat) {
+      this.glowMat.color.lerpColors(this.coldGlowColor, this.warmGlowColor, f);
+    }
   }
 
   setHighlight(active) {

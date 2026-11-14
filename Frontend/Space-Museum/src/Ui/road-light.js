@@ -3,5 +3,5 @@ export class RoadLights {
   constructor(scene) {
     this.scene = scene;
   }
-  update(delta) {}
+  update(delta) { }
 }

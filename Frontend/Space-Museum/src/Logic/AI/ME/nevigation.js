@@ -82,14 +82,15 @@ export class FirstPersonController {
     /*/ Human Eye Height calibrated to exactly 50% of the Museum Wall height (Floor Y = -1.87, Wall top Y = 0.33) /*/
     this.baseEyeHeight = -0.77;
     this.islandRadiusLimit = 38.0;
+    this.customLandingPos = null;
 
     /*/ View Angles /*/
     this.yaw = 0;
     this.pitch = 0;
     this.mouseSensitivity = 0.0022;
 
-    /*/ Player Ambient Aura Light (from original experimental player.js) /*/
-    this.playerLight = new THREE.PointLight(0xffffff, 1.8, 12, 1.5);
+    /*/ Player Ambient Aura Light (Warm incandescent gallery lantern) /*/
+    this.playerLight = new THREE.PointLight(0xffedd5, 2.0, 14, 1.4);
     this.playerLight.position.set(0, 0, 0);
     this.camera.add(this.playerLight);
 
@@ -145,6 +146,9 @@ export class FirstPersonController {
       <div class="fp-instructions" id="fp-instr">
         <span>[W][A][S][D]</span> Move &bull; <span>[SHIFT]</span> Sprint &bull; <span>[G]</span> Fly Mode
       </div>
+      <div class="fp-coord-badge" id="fp-coord-display" title="Click to copy your coordinates to clipboard">
+        POS: X: 4.00 | Y: -0.77 | Z: 28.00
+      </div>
       <button class="btn-flight-mode" id="btn-flight-toggle" title="Toggle Developer Flight Mode [G]">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -177,6 +181,19 @@ export class FirstPersonController {
       flightBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.toggleFlyMode();
+      });
+    }
+
+    /*/ Live Coordinates Click-to-Copy Listener /*/
+    const coordEl = this.hudElement.querySelector('#fp-coord-display');
+    if (coordEl) {
+      coordEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const coordText = `X: ${this.camera.position.x.toFixed(2)}, Y: ${this.camera.position.y.toFixed(2)}, Z: ${this.camera.position.z.toFixed(2)}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(coordText);
+        }
+        this.showNotification(`📋 Copied Coordinates: ${coordText}`);
       });
     }
   }
@@ -381,7 +398,7 @@ export class FirstPersonController {
   }
 
   /*/ Smooth Cinematic Landing from Orbit into Museum Interior /*/
-  landInside(onComplete) {
+  landInside(onComplete, customTargetPos, customTargetLook) {
     if (this.isLanding || this.isFirstPerson) return;
     this.isLanding = true;
 
@@ -394,15 +411,22 @@ export class FirstPersonController {
     /*/ Starting Camera State /*/
     const startPos = this.camera.position.clone();
 
-    /*/ Target Landing Spot on the Front Museum Road Platform (Body4 Entrance) /*/
-    const targetPos = new THREE.Vector3(4.0, this.baseEyeHeight, 28.0);
-    const targetLook = new THREE.Vector3(4.0, this.baseEyeHeight, 8.0);
+    /*/ Target Landing Spot: Calibrated to User's Exact Choice (X: 15.04, Y: -0.77, Z: 10.41) /*/
+    const targetPos = (customTargetPos && customTargetPos.isVector3)
+      ? customTargetPos.clone()
+      : (this.customLandingPos
+        ? this.customLandingPos.clone()
+        : new THREE.Vector3(15.04, this.baseEyeHeight, 10.41));
+
+    const targetLook = (customTargetLook && customTargetLook.isVector3)
+      ? customTargetLook.clone()
+      : new THREE.Vector3(12.0, this.baseEyeHeight, 24.0);
 
     /*/ High apex waypoint for a grand sweeping trajectory /*/
     const midPos = new THREE.Vector3(
-      startPos.x * 0.4 + 2.0,
-      Math.max(startPos.y * 0.5, 20),
-      startPos.z * 0.4 + 14.0
+      startPos.x * 0.4 + targetPos.x * 0.6,
+      Math.max(startPos.y * 0.5, 22.0),
+      startPos.z * 0.4 + targetPos.z * 0.6
     );
 
     const duration = 2.8;
@@ -510,6 +534,12 @@ export class FirstPersonController {
     const euler = new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ');
     this.camera.quaternion.setFromEuler(euler);
     this.camera.updateMatrixWorld();
+
+    /*/ Update Real-Time Player Coordinates in HUD /*/
+    const coordEl = this.hudElement?.querySelector('#fp-coord-display');
+    if (coordEl) {
+      coordEl.textContent = `POS: X: ${this.camera.position.x.toFixed(2)} | Y: ${this.camera.position.y.toFixed(2)} | Z: ${this.camera.position.z.toFixed(2)}`;
+    }
 
     /*/ --- 0. FLY / SPECTATOR DRONE MODE (Exact from Experiment player.js) --- /*/
     if (this.isFlying) {

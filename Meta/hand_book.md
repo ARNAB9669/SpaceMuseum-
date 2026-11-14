@@ -192,3 +192,152 @@
   - **Flight Ceiling & Radius**: Increased ceiling to $Y = 65.0\text{m}$ and radius to $55\text{m}$, allowing wide overhead panoramic views of the entire museum and biodome.
   - **Toast Notifications**: Integrated `#gamepad-badge` notification toast with cyan theme displaying flight activation and landing alerts.
 
+
+---
+
+### Log : 16
+**Title**: Classical European Museum Warm Lighting & Limestone Wall Transformation  
+**Description**: Transformed the museum from cold, sterile blue/slate tones to a warm, prestigious classical European gallery aesthetic (inspired by grand European institutions like the Louvre, Vatican galleries, and classical travertine museum wings):
+- **Warm Limestone Architectural Walls (`src/Logic/loa_modle.js`)**:
+  - Replaced cold slate gray (`0x475569`) with warm French limestone / Roman travertine gallery stone (`0xd2c4b2`, roughness 0.72, metalness 0.05).
+- **Aged Gallery Hardwood / Basalt Floor**:
+  - Replaced dark navy platform (`0x0f172a`) with deep warm aged walnut / basalt gallery floor (`0x241d1a`, roughness 0.38, metalness 0.16).
+- **Warm Architectural Gallery Illumination**:
+  - **Ambient Light**: Warm gallery soft ambient fill (`0xfff5ea`, intensity 1.05).
+  - **Hemisphere Light**: Golden daylight from upper skylight (`0xffeedb`) with warm terracotta / polished hardwood bounce from below (`0x5c3826`, intensity 0.95).
+  - **Primary Directional Sun**: Warm 3000K afternoon sunlight (`0xffecd1`, intensity 2.2).
+  - **Cross-Fill Light**: Warm amber / champagne soft fill (`0xfed7aa`, intensity 0.85).
+  - **Overhead Chamber Downlights**: Warm halogen / incandescent exhibition spotlights (`0xffedd5`, `0xfef3c7`, `0xfde68a`, `0xfef08a`) with warm glowing brass ceiling fixtures (`0xfef08a`, emissive `0xf59e0b`).
+  - **Core Rotunda Light**: Warm golden amber lantern (`0xfde68a`, intensity 3.2).
+- **Player Camera Aura Light (`src/Logic/AI/ME/nevigation.js`)**:
+  - Calibrated player camera illumination to a warm incandescent gallery lantern glow (`0xffedd5`, intensity 2.0).
+- **Wayfinding & Canopy Accents**:
+  - Floor chevrons in [dirrection-arrow.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dirrection-arrow.js) updated to warm brass floor inlays (`#f59e0b`, glow `#fbbf24`).
+  - Biodome foundation rim ring in [dome.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dome.js) styled with warm champagne gold (`0xfef3c7`, emissive `0xf59e0b`).
+
+
+---
+
+### Log : 17
+**Title**: Dynamic Adaptive Environment: Cold Sci-Fi Blue Exterior vs Warm European Interior  
+**Description**: Implemented a dynamic atmospheric color & lighting interpolation system that adapts automatically based on whether the viewer is outside in deep space orbit or walking/flying inside the biodome:
+- **Outside Orbit View (Cold Cosmic Blue)**:
+  - While surveying the station from deep space, the station retains its sleek, cold sci-fi aesthetic: cold slate alloy walls (`0x384556`), cosmic navy floor platform (`0x111827`), cool starlight ambient (`0x8ecae6`), crisp blue directional light (`0xdbeafe`), electric cyan biodome foundation ring (`0x38bdf8`), and holographic cyan chevrons.
+- **Cinematic Atmospheric Transition**:
+  - In [main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js), `currentAtmosphereFactor` dynamically interpolates between `0.0` (Orbit) and `1.0` (Inside) at delta-scaled transition speeds.
+  - As the landing sequence descends through the biodome canopy, the cold cosmic blue smoothly melts into warm golden gallery tones over the 2.8s descent curve.
+- **Inside Interior View (Warm Classical European Gallery)**:
+  - Inside First-Person POV and drone flight mode, all materials and lights transition into rich warm European museum tones: French limestone / Roman travertine walls (`0xd2c4b2`), aged walnut floor (`0x241d1a`), warm 3000K afternoon sunlight (`0xffecd1`), golden daylight hemisphere fill (`0xffeedb` / `0x5c3826`), warm amber exhibition spotlights, and warm brass wayfinding inlays.
+- **Reversible Orbit Return**:
+  - Pressing `[ESC]` smoothly reverses the transition, returning the station to the cold blue exterior as the camera ascends back out to orbit.
+
+
+---
+
+### Log : 18
+**Title**: Interactive Floor Map & Precision Landing Spot Calibrator  
+**Description**: Implemented an architectural top-down Floor Map and real-time 3D coordinate calibration tool so the user can visually select and copy exact landing coordinates:
+- **Floor Map & Landing Selector Mode ([map-selector.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/map-selector.js))**:
+  - **Top-Down Architectural View**: Clicking `[🗺️ FLOOR MAP & LANDING SELECTOR]` or pressing `[M]` smoothly glides the camera directly overhead ($Y = 54.0\text{m}$) overlooking the full floor plan of all exhibition rooms, galleries, and approach road platforms.
+  - **Real-Time Floor Reticle**: Moving the mouse over any floor or road platform displays a holographic cursor ring and tooltip with live $(X, Z)$ coordinates.
+  - **Interactive Landing Marker**: Clicking anywhere on the floor drops a 3D animated beacon (concentric pulsing target rings, vertical laser pillar, and spinning diamond).
+  - **Coordinate Panel & Actions**:
+    - Displays exact coordinates: $X, Y, Z$ (with calibrated human eye height $+1.1\text{m}$ above the clicked surface).
+    - **`[📋 COPY COORDINATES]`**: Copies formatted coordinates directly to clipboard to easily share with the AI agent.
+    - **`[🚀 TEST LAND HERE]`**: Triggers the cinematic landing descent directly onto the selected coordinate so the user can verify the view in first-person immediately.
+- **First-Person & Flight Mode Live Coordinates ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js))**:
+  - Added real-time coordinate badge `POS: X: ... | Y: ... | Z: ...` to the first-person HUD.
+  - Clicking this badge copies the player's live position directly to clipboard.
+- **Custom Landing Target Integration**:
+  - `landInside` now accepts custom coordinates and saves selected points as the default landing destination when clicking the biodome.
+
+
+---
+
+### Log : 19
+**Title**: Precision Calibration to User-Selected Landing Coordinates  
+**Description**: Locked in the exact landing point and camera look angle chosen and confirmed by the user via the live HUD coordinate badge (`POS: X: 15.04 | Y: -0.77 | Z: 10.41`):
+- **Exact Landing Coordinates ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js))**:
+  - `targetPos`: Updated default landing point to $(15.04, -0.77, 10.41)$.
+  - `targetLook`: Calibrated look direction to $(12.0, -0.77, 24.0)$, orienting the visitor to look straight ahead down the curving road platform toward the museum entrance with the limestone building wall on the right side.
+  - `midPos`: Calibrated trajectory waypoint to $(0.4 \times \text{start}.x + 0.6 \times 15.04, \text{apex } 22.0\text{m}, 0.4 \times \text{start}.z + 0.6 \times 10.41)$ for a smooth parabolic landing swoop through the dome canopy.
+- **Directional Chevrons Realigned ([dirrection-arrow.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dirrection-arrow.js))**:
+  - Re-mapped all 6 holographic floor chevrons along the exact road curve starting right in front of the touchdown point:
+    - $(14.8, 13.5) \rightarrow (14.0, 17.5) \rightarrow (12.5, 21.5) \rightarrow (10.2, 25.0) \rightarrow (6.8, 27.5) \rightarrow (3.0, 28.0)$.
+  - Each chevron dynamically rotates along the road tangent curve, guiding visitors smoothly into the museum.
+
+
+---
+
+### Log : 20
+**Title**: Approach Road Direction Chevrons Tangent Orientation Fix  
+**Description**: Fixed the orientation and progression of all pathway guidance chevrons along the L-shaped road platform:
+- **Root Cause of Broken Arrows**:
+  - The chevron geometry base plane is rotated $-90^\circ$ around $X$, placing the apex along the local $-Z$ axis.
+  - The previous rotation formula used $\text{atan2}(dx, dz)$ rather than $\text{atan2}(-dx, -dz)$, causing all chevrons to be flipped $180^\circ$ backwards and sideways.
+  - The terminal chevron also had an inverted constant rotation ($-90^\circ$ instead of $+90^\circ$).
+- **Calculated Tangent Alignment ([dirrection-arrow.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dirrection-arrow.js))**:
+  - Re-mapped waypoints along the road and oriented each chevron using $\text{Math.atan2}(-\Delta x, -\Delta z)$ to point directly toward the next waypoint.
+  - Added `polygonOffset` to eliminate all surface depth-clipping with the road platform.
+  - Synchronized sequential wave pulse animation towards the entrance.
+
+
+---
+
+### Log : 21
+**Title**: Approach Road Direction Chevrons Dead-Center Alignment & Full Extension  
+**Description**: Fully recalibrated and extended the holographic floor chevrons along the exact architectural centerline of the dark asphalt road (`Body4`) to eliminate all curb clipping and guide visitors all the way into the museum entrance:
+- **Geometry & Root Cause Analysis**:
+  - Sliced the 3D model vertices of the road surface (`Body4`, $Y \approx -1.87\text{m}$):
+    - **Straight Section**: $X \in [12.55, 17.71]$ (width $5.16\text{m}$), dead-center is $X = 15.13$.
+    - **Corner Curve**: Inner curb is an arc with $R_{\text{in}} \approx 5.08\text{m}$ centered at $(7.46, 22.69)$; outer curb has $R_{\text{out}} \approx 10.0\text{m}$. Dead-center curve radius is $R_{\text{center}} \approx 7.54\text{m}$.
+    - **Horizontal Avenue**: $Z \in [27.77, 32.46]$ (width $4.68\text{m}$), dead-center is $Z = 30.11$.
+  - Previous coordinates placed chevrons at $X = 12.00$ and $Z = 27.20 \dots 27.50$, which fell outside the asphalt boundaries ($X < 12.55$ and $Z < 27.77$), causing them to clip and rest on top of the beige curb ledge.
+  - Furthermore, the previous arrows stopped short at $X = 2.20$, leaving the remaining $11\text{m}$ of the avenue unguided.
+- **Precision Centerline Trajectory ([dirrection-arrow.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dirrection-arrow.js))**:
+  - Extended all the way from touchdown $(15.04, 10.41)$ at $Z = 11.50$ along $X = 15.13$, smoothly curving through the corner ($R \approx 7.54\text{m}$), and spanning across the horizontal avenue ($Z = 30.11$).
+
+
+---
+
+### Log : 22
+**Title**: Approach Road Decals Runway Ending Alignment & Margin Calibration  
+**Description**: Refined the terminal section of the horizontal avenue chevrons to fix the skewed trajectory and edge collision at the museum entrance:
+- **Root Cause Analysis ([media_1794653146147_3ed9207e.jpg](file:///Users/arnabbiswas/.gemini/antigravity/brain/73192dd4-6b59-453c-aab9-5cb0f7083de7/.user_uploaded/media_1794653146147_3ed9207e.jpg))**:
+  - The road surface is a straight rectangular strip with a fixed centerline at $Z = 30.11$ terminating at $X = -9.46$.
+  - In Log 21, the last two chevrons had their $Z$ coordinates shifted to $29.80$ and $28.50$, causing the path to visibly break off from the road centerline and skew upwards into the inner curb.
+  - The fallback `next` vector for the final chevron had an artificial $dz = -1.5$ term, forcing a $53^\circ$ diagonal tilt rather than pointing straight down the avenue.
+  - The terminal position $X = -8.80$ was too close to the asphalt boundary ($X = -9.46$) for a $1.5\text{m}$ chevron, causing the apex to touch and clip off the edge of the road.
+- **Precision Centerline & Margin Fix ([dirrection-arrow.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dirrection-arrow.js))**:
+  - **Uniform Centerline Trajectory**: All 8 chevrons on the horizontal avenue now strictly maintain $Z = 30.11$:
+    $$(6.00, 30.11) \to (3.90, 30.11) \to (1.80, 30.11) \to (-0.30, 30.11) \to (-2.40, 30.11) \to (-4.50, 30.11) \to (-6.50, 30.11) \to (-8.30, 30.11)$$
+  - **Clean Terminal Buffer**: The final chevron is positioned at $X = -8.30$, maintaining an exact $1.16\text{m}$ center margin and $0.41\text{m}$ apex clearance before the road ends at $X = -9.46$.
+  - **Parallel Orientation**: Removed the artificial $dz$ tilt on the terminal chevron ($dz = 0.0$); all avenue chevrons now point perfectly straight and parallel along $-X$ ($\text{rotation.y} = 90^\circ$).
+  - **Uniform Spacing**: Balanced chevron intervals to a consistent $2.0\text{m} \dots 2.1\text{m}$ throughout the straightaway.
+
+
+---
+
+### Log : 23
+**Title**: Museum Entrance Final Approach Road 90° Turn & Doorway Threshold Extension  
+**Description**: Fully mapped and extended the holographic floor chevrons along the final branching section of the dark asphalt road that turns $90^\circ$ and leads straight into the museum entrance doorway:
+- **Geometry & Architectural Analysis ([media_1794654000365_344f1573.jpg](file:///Users/arnabbiswas/.gemini/antigravity/brain/73192dd4-6b59-453c-aab9-5cb0f7083de7/.user_uploaded/media_1794654000365_344f1573.jpg))**:
+  - As revealed in the user's overhead perspective, the dark road does not terminate at the horizontal avenue; it curves $90^\circ$ around the corner of the beige platform and runs straight along the entrance corridor ($X \in [-9.46, -7.39]$, width $2.07\text{m}$) directly into the museum entrance archway at $Z = 22.81$.
+  - Previous chevrons stopped short at the corner ($X = -8.30, Z = 30.11$), leaving the entire turning arc and the final entrance corridor empty.
+- **22-Waypoint Full-Route Trajectory ([dirrection-arrow.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dirrection-arrow.js))**:
+  - **Entrance Curve Transition**: Smoothly rounds the corner between inner curb ($R \approx 2.5\text{m}$) and outer island rim:
+    $$(-4.50, 30.11) \to (-6.40, 29.80) \to (-7.70, 28.20)$$
+  - **Straight Entrance Corridor to Threshold**: Perfectly centered on $X = -8.42$ with equal $34\text{cm}$ clearance from both the museum wall and platform curb:
+    $$(-8.35, 26.30) \to (-8.42, 24.50) \to (-8.42, 22.90)$$
+  - **Dynamic Tangent Alignment**:
+    - Smooth angular transition through the final curve: $90.0^\circ \to 80.7^\circ \to 39.1^\circ \to 18.9^\circ \to 2.2^\circ \to 0.0^\circ$.
+    - The terminal chevron at $(-8.42, 22.90)$ sits directly on the museum threshold and points along $-Z$ ($0.0^\circ$) straight into the main exhibition gallery.
+  - **Proportional Geometry**: Chevron size calibrated to $1.4\text{m} \times 1.4\text{m}$ to maintain clean margins in the $2.07\text{m}$ wide entrance corridor.
+  - **Wave Propagation**: Wave phase adjusted to `idx * 0.35` for a continuous light sweep across all 22 chevrons.
+
+
+
+
+
+
+

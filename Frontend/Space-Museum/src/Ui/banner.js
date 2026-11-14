@@ -4,5 +4,5 @@ export class GuidanceBanner {
     this.scene = scene;
   }
 
-  update(delta) {}
+  update(delta) { }
 }

@@ -7,6 +7,7 @@ import { loadMuseumIsland } from './Logic/loa_modle.js';
 import { IntroSequence } from './Logic/intro.js';
 import { FirstPersonController } from './Logic/AI/ME/nevigation.js';
 import { DirectionArrows } from './Ui/dirrection-arrow.js';
+import { FloorMapSelector } from './Logic/map-selector.js';
 
 /*/ Canvas & Rendering Setup /*/
 const canvas = document.getElementById('webgl-canvas');
@@ -66,6 +67,9 @@ const fpController = new FirstPersonController(camera, canvas, controls);
 /*/ Approach Road Infrastructure: Direction Chevrons /*/
 const directionArrows = new DirectionArrows(scene);
 
+/*/ Interactive Floor Map & Landing Point Selector /*/
+const mapSelector = new FloorMapSelector(scene, camera, controls, fpController, () => museumIslandModel);
+
 /*/ Museum Island 3D Model Reference /*/
 let museumIslandModel = null;
 loadMuseumIsland(scene)
@@ -84,6 +88,12 @@ let raycastPending = false;
 
 /*/ Track Mouse Position for Raycasting with Frame Throttling /*/
 function onPointerMove(event) {
+  /*/ Pass to Floor Map Selector if active /*/
+  if (mapSelector.isActive) {
+    mapSelector.handlePointerMove(event);
+    return;
+  }
+
   /*/ Only raycast when in Orbit Mode (not while in First Person or during landing) /*/
   if (fpController.isFirstPerson || fpController.isLanding || fpController.isAscending) {
     if (isHovered) {
@@ -137,7 +147,13 @@ function onPointerMove(event) {
 window.addEventListener('pointermove', onPointerMove);
 
 /*/ Click to Land Inside Museum in First-Person POV /*/
-function onCanvasClick() {
+function onCanvasClick(event) {
+  /*/ Handle Floor Map Selection if active /*/
+  if (mapSelector.isActive) {
+    const handled = mapSelector.handleClick(event);
+    if (handled) return;
+  }
+
   if (isHovered && !fpController.isFirstPerson && !fpController.isLanding && !fpController.isAscending) {
     /*/ Clear hover highlights /*/
     isHovered = false;
@@ -163,6 +179,9 @@ function onWindowResize() {
 }
 window.addEventListener('resize', onWindowResize);
 
+/*/ Dynamic Atmospheric Transition: Cold Blue Outside in Space <-> Warm European Inside Museum /*/
+let currentAtmosphereFactor = 0.0;
+
 /*/ Main Render & Animation Loop /*/
 function animate(timestamp) {
   requestAnimationFrame(animate);
@@ -180,9 +199,22 @@ function animate(timestamp) {
     controls.update();
   }
 
+  /*/ Smoothly blend between Cold Cosmic Blue (Orbit) and Warm Classical European (Inside) /*/
+  const isInside = fpController.isFirstPerson || fpController.isLanding;
+  const targetTransition = isInside ? 1.0 : 0.0;
+  const transitionSpeed = fpController.isLanding ? 1.1 : 2.2;
+  currentAtmosphereFactor += (targetTransition - currentAtmosphereFactor) * Math.min(1.0, delta * transitionSpeed);
+
+  if (museumIslandModel?.userData?.setInsideTransition) {
+    museumIslandModel.userData.setInsideTransition(currentAtmosphereFactor);
+  }
+  biodome.setInsideTransition(currentAtmosphereFactor);
+  directionArrows.setInsideTransition(currentAtmosphereFactor);
+
   spaceEnv.update(delta);
   biodome.update(delta);
   directionArrows.update(delta);
+  mapSelector.update(delta);
 
   renderer.render(scene, camera);
 }
