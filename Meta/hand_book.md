@@ -515,6 +515,70 @@
 - **Clean UI & Hidden Debug Panels**:
   - The `lil-gui` panels for both the Movie Theatre and the Outer Wall Poster are now hidden during normal gameplay for a pristine, uncluttered museum view. They can be re-invoked at any time by appending `#gui` to the URL.
 
+---
+
+### Log : 35
+**Title**: Seat Selection & Screen POV View Integration  
+**Description**: Fully ported and integrated the direct seat-clicking, proximity detection, and seated POV camera mechanics from the prototype into the main application:
+- Direct raycast clicking on any of the 15 luxury theatre chairs transitions the player directly into that seat.
+- Smooth camera interpolation snaps eye height to $+0.85\text{m}$ above the cushion and locks the viewing angle directly toward the center of the 16:9 projection screen.
+- Cinema HUD badge displays current row and column coordinates with smooth sit/stand controls (`[E]` / `[Space]`).
+
+---
+
+### Log : 36
+**Title**: Acoustic Blackout Roof Slab Restoration & Sound-Lock Walkway Coverage  
+**Description**: Restored and expanded the solid acoustic blackout ceiling slab over the theatre auditorium and sound-lock entry corridor:
+- Constructed an acoustic blackout roof slab (`#070b14`, roughness $0.95$, width $12.40\text{m}$, depth $13.80\text{m}$, $Y = 0.35\text{m}$) spanning $X \in [-2.10, 10.30]$ and $Z \in [10.95, 24.75]$.
+- Encloses the entire sound-lock vestibule and cinema room from above to block direct sky light.
+
+---
+
+### Log : 37
+**Title**: Procedural Walking & Sprinting Sound Engine Integration  
+**Description**: Ported and implemented the zero-dependency Web Audio API procedural sound engine into `src/Logic/soundfx.js`, connected directly into `FirstPersonController`:
+- Synthesizes organic walking ($105\text{Hz}$, $380\text{ms}$ cadence) and sprinting ($120\text{Hz}$, $240\text{ms}$ cadence) footstep clicks with pitch jitter and damping.
+- Synthesizes jump sweeps, landing thumps, and interactive 4-note exhibit chimes.
+- Footsteps play automatically during locomotion in First Person POV and automatically silence when seated or in flight mode.
+
+---
+
+### Log : 38
+**Title**: Dynamic Cinema Mode Seated-Only Blackout (Matching Experiments Prototype)  
+**Description**: Refactored the cinematic dimming mechanics to match the exact logic from the `/Experiments` prototype (`src/museum.js` & `src/theatre.js`):
+- **Seated-Only Blackout Trigger ([main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js))**:
+  - Removed all artificial bounding-box and corridor proximity zone triggers.
+  - Cinema dimming is now strictly and exclusively triggered by sitting in a theatre seat (`fpController.isSeated`).
+  - When walking anywhere throughout the museum, sound-lock corridor, or cinema room, all lighting remains at normal gallery brightness.
+  - Once the user clicks any luxury chair or presses `[E]` to sit down, `currentCinemaDarkFactor` smoothly ramps to $1.0$, dimming the entire room into blackout with only the projector beam and 16:9 documentary canvas active.
+  - Pressing `[E]` or `[Space]` to stand up immediately restores full gallery lighting.
+- **Unified Lighting Interpolation ([loa_modle.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/loa_modle.js))**:
+  - Implemented `applyAtmosphere()` coordinating inside gallery transition with seated cinema dimming.
+  - When seated: ambient light drops to $0.0$, hemisphere to $0.0$, directional sunlight to $0.0$, fill to $0.0$, and gallery accent point lights to $0.0$.
+  - When standing: lights smoothly restore to $1.05$ ambient, $0.95$ hemi, $2.2$ dir, $0.85$ fill, and $20.0$ accent point lights.
+- **Player Aura Light Synchronization ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js))**:
+  - Player lantern aura (`playerLight`) is active ($2.0$) while walking and silences to $0.0$ only when seated in a chair.
+- **Clean Architectural Geometry ([theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js))**:
+  - Retained authentic limestone architecture under the acoustic blackout ceiling slab (`#070b14`).
+
+---
+
+### Log : 39
+**Title**: Fix Theatre Seating Event Conflict, Proximity Radius & Total Blackout  
+**Issue**: Pressing `[E]` near theatre seats failed to lock the player in the seated position, and lights did not turn off.  
+**Root Cause Analysis**:
+1. **Duplicate Keydown Event Listeners & Immediate Deselection**: Both `nevigation.js` and `theatre.js` registered global `window.addEventListener('keydown')` handlers. When the visitor pressed `[E]`, `nevigation.js` called `sitInSeat(seat)`, setting `currentSeatedSeat`. Instantly within the *same* event tick, `theatre.js`'s second listener saw `currentSeatedSeat !== null` and immediately executed `standUp()`. The player sat and stood in zero milliseconds, keeping `isSeated = false` and preventing cinema dark mode from ever activating.
+2. **Constrained Proximity Distance**: In `theatre.js`, `checkSeatProximity` required `minDistance = 1.25m` on chairs scaled up by $1.8\times$. Approaching visitors were often $1.3\text{m} - 1.5\text{m}$ from the seat origin, causing the proximity check to return `null`.
+3. **Pointer-Locked Raycast Inaccuracy**: In `main.js`, `onCanvasClick` computed screen UVs using `(event.clientX, event.clientY)` which become static/arbitrary during pointer lock, instead of using the reticle screen center `(0, 0)`.
+**Fix & Resolution**:
+- **Eliminated Duplicate Listener ([theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js))**: Removed `initInteractionListeners()` from `theatre.js`. All seating and standing keyboard interactions (`[E]`, `[Space]`, `[Esc]`) are now cleanly and centrally handled by `nevigation.js`.
+- **Expanded Interaction Radius ([theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js))**: Increased `minDistance` to $2.2\text{m}$ with a generous vertical tolerance ($|dy| < 2.5\text{m}$), ensuring reliable seat detection and prompt display.
+- **Center-Screen Pointer Lock Raycasting ([main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js))**: When pointer lock is active, clicking uses `new THREE.Vector2(0, 0)` so clicking any chair in front of the crosshair immediately sits down.
+- **Total Cinema Blackout ([loa_modle.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/loa_modle.js))**: When seated (`currentCinema = 1.0`), ambient, hemisphere, directional sunlight, fill, core rotunda, and gallery accent lights all smoothly dim to **0.0** (100% total room blackout).
+
+
+
+
 
 
 

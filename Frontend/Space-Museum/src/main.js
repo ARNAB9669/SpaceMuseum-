@@ -78,6 +78,20 @@ const outerWallPoster = new OuterWallPoster(scene);
 
 /*/ NASA Space Apps Documentary Movie Theatre /*/
 const theatre = new TheatreRoom(scene, camera, fpController);
+fpController.theatre = theatre;
+
+/*/ UI Interactive Elements /*/
+const interactPrompt = document.getElementById('interact-prompt');
+const btnCinemaStand = document.getElementById('btn-cinema-stand');
+
+if (btnCinemaStand) {
+  btnCinemaStand.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (theatre.currentSeatedSeat) {
+      theatre.standUp();
+    }
+  });
+}
 
 /*/ Museum Island 3D Model Reference /*/
 let museumIslandModel = null;
@@ -155,12 +169,39 @@ function onPointerMove(event) {
 }
 window.addEventListener('pointermove', onPointerMove);
 
-/*/ Click to Land Inside Museum in First-Person POV /*/
+/*/ Click to Land Inside Museum in First-Person POV or Select Cinema Seat /*/
 function onCanvasClick(event) {
   /*/ Handle Floor Map Selection if active /*/
   if (mapSelector.isActive) {
     const handled = mapSelector.handleClick(event);
     if (handled) return;
+  }
+
+  /*/ Direct Raycast Selection for Theatre Seats /*/
+  const seatMeshes = theatre.getSeatMeshes();
+  if (seatMeshes.length > 0) {
+    const clickRay = new THREE.Raycaster();
+    const clickMouse = (document.pointerLockElement === canvas)
+      ? new THREE.Vector2(0, 0)
+      : new THREE.Vector2(
+          (event.clientX / window.innerWidth) * 2 - 1,
+          -(event.clientY / window.innerHeight) * 2 + 1
+        );
+    clickRay.setFromCamera(clickMouse, camera);
+    const seatHits = clickRay.intersectObjects(seatMeshes, true);
+    if (seatHits.length > 0) {
+      const clickedSeat = seatHits[0].object.userData.seatData;
+      if (clickedSeat) {
+        if (fpController.isFirstPerson) {
+          theatre.sitInSeat(clickedSeat);
+        } else {
+          fpController.landInside(() => {
+            theatre.sitInSeat(clickedSeat);
+          });
+        }
+        return;
+      }
+    }
   }
 
   if (isHovered && !fpController.isFirstPerson && !fpController.isLanding && !fpController.isAscending) {
@@ -190,6 +231,7 @@ window.addEventListener('resize', onWindowResize);
 
 /*/ Dynamic Atmospheric Transition: Cold Blue Outside in Space <-> Warm European Inside Museum /*/
 let currentAtmosphereFactor = 0.0;
+let currentCinemaDarkFactor = 0.0;
 
 /*/ Main Render & Animation Loop /*/
 function animate(timestamp) {
@@ -220,6 +262,14 @@ function animate(timestamp) {
   biodome.setInsideTransition(currentAtmosphereFactor);
   directionArrows.setInsideTransition(currentAtmosphereFactor);
 
+  /*/ Dynamic Cinema Dark Mode: Only activates when seated in a theatre chair (Matching Experiments Prototype) /*/
+  const targetCinemaDark = (fpController.isFirstPerson && fpController.isSeated) ? 1.0 : 0.0;
+  currentCinemaDarkFactor += (targetCinemaDark - currentCinemaDarkFactor) * Math.min(1.0, delta * 3.0);
+
+  if (museumIslandModel?.userData?.setCinemaMode) {
+    museumIslandModel.userData.setCinemaMode(currentCinemaDarkFactor);
+  }
+
   spaceEnv.update(delta);
   biodome.update(delta);
   directionArrows.update(delta);
@@ -227,6 +277,26 @@ function animate(timestamp) {
   welcomeSign.update(delta);
   outerWallPoster.update(delta);
   theatre.update(delta);
+
+  /*/ Check proximity to cinema seats when in First-Person POV /*/
+  if (fpController.isFirstPerson && !fpController.isLanding && !fpController.isAscending) {
+    if (fpController.isSeated) {
+      if (interactPrompt) interactPrompt.classList.add('hidden');
+    } else {
+      const nearbySeat = theatre.checkSeatProximity(camera.position);
+      if (nearbySeat) {
+        if (interactPrompt) {
+          interactPrompt.classList.remove('hidden');
+          const promptText = interactPrompt.querySelector('.prompt-text');
+          if (promptText) promptText.textContent = `Sit in Seat (${nearbySeat.name})`;
+        }
+      } else {
+        if (interactPrompt) interactPrompt.classList.add('hidden');
+      }
+    }
+  } else {
+    if (interactPrompt) interactPrompt.classList.add('hidden');
+  }
 
   renderer.render(scene, camera);
 }

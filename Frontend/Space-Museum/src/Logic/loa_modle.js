@@ -209,47 +209,63 @@ export async function loadMuseumIsland(scene, onProgress) {
 
   scene.add(islandLights);
 
-  /*/ Dynamic Outside/Inside Transition State /*/
+  /*/ Dynamic Outside/Inside Transition State & Cinema Darkness /*/
   let currentFactor = 0.0; /*/ 0 = Outside Cold Blue, 1 = Inside Warm Classical /*/
+  let currentCinema = 0.0; /*/ 0 = Regular Bright Gallery, 1 = Cinema Blackout /*/
   let isHighlighted = false;
+
+  function applyAtmosphere() {
+    /*/ Interpolate Architectural Materials /*/
+    structureMaterial.color.lerpColors(coldStructureColor, warmStructureColor, currentFactor);
+    structureMaterial.roughness = THREE.MathUtils.lerp(0.65, 0.72, currentFactor);
+    structureMaterial.metalness = THREE.MathUtils.lerp(0.20, 0.05, currentFactor);
+
+    platformMaterial.color.lerpColors(coldPlatformColor, warmPlatformColor, currentFactor);
+    platformMaterial.roughness = THREE.MathUtils.lerp(0.30, 0.38, currentFactor);
+    platformMaterial.metalness = THREE.MathUtils.lerp(0.35, 0.16, currentFactor);
+
+    /*/ Interpolate Core Lights Colors /*/
+    ambientLight.color.lerpColors(coldAmbientColor, warmAmbientColor, currentFactor);
+    hemiLight.color.lerpColors(coldHemiSky, warmHemiSky, currentFactor);
+    hemiLight.groundColor.lerpColors(coldHemiGround, warmHemiGround, currentFactor);
+    dirLight.color.lerpColors(coldDirColor, warmDirColor, currentFactor);
+    fillLight.color.lerpColors(coldFillColor, warmFillColor, currentFactor);
+    coreLight.color.lerpColors(coldCoreColor, warmCoreColor, currentFactor);
+
+    /*/ Base Intensities for Museum Island /*/
+    const baseAmbient = THREE.MathUtils.lerp(0.85, 1.05, currentFactor);
+    const baseHemi = THREE.MathUtils.lerp(0.85, 0.95, currentFactor);
+    const baseDir = THREE.MathUtils.lerp(1.8, 2.2, currentFactor);
+    const baseFill = THREE.MathUtils.lerp(0.9, 0.85, currentFactor);
+    const baseCore = THREE.MathUtils.lerp(2.5, 3.2, currentFactor);
+
+    /*/ Cinema Dimming: Smoothly dims when seated in a cinema chair (currentCinema: 0.0 -> 1.0) /*/
+    ambientLight.intensity = THREE.MathUtils.lerp(baseAmbient, 0.0, currentCinema);
+    hemiLight.intensity = THREE.MathUtils.lerp(baseHemi, 0.0, currentCinema);
+    dirLight.intensity = THREE.MathUtils.lerp(baseDir, 0.0, currentCinema);
+    fillLight.intensity = THREE.MathUtils.lerp(baseFill, 0.0, currentCinema);
+    coreLight.intensity = THREE.MathUtils.lerp(baseCore, 0.0, currentCinema);
+
+    pointLights.forEach((pLight, idx) => {
+      pLight.color.lerpColors(accentColdColors[idx], accentWarmColors[idx], currentFactor);
+      pLight.intensity = THREE.MathUtils.lerp(20.0, 0.0, currentCinema);
+    });
+
+    fixtureMat.color.lerpColors(coldFixtureColor, warmFixtureColor, currentFactor);
+    fixtureMat.emissive.lerpColors(coldFixtureEmissive, warmFixtureEmissive, currentFactor);
+  }
 
   obj.userData = {
     isMuseumIsland: true,
     setInsideTransition: (factor) => {
       currentFactor = THREE.MathUtils.clamp(factor, 0.0, 1.0);
+      applyAtmosphere();
+    },
 
-      /*/ Interpolate Architectural Materials /*/
-      structureMaterial.color.lerpColors(coldStructureColor, warmStructureColor, currentFactor);
-      structureMaterial.roughness = THREE.MathUtils.lerp(0.65, 0.72, currentFactor);
-      structureMaterial.metalness = THREE.MathUtils.lerp(0.20, 0.05, currentFactor);
-
-      platformMaterial.color.lerpColors(coldPlatformColor, warmPlatformColor, currentFactor);
-      platformMaterial.roughness = THREE.MathUtils.lerp(0.30, 0.38, currentFactor);
-      platformMaterial.metalness = THREE.MathUtils.lerp(0.35, 0.16, currentFactor);
-
-      /*/ Interpolate Core Lights /*/
-      ambientLight.color.lerpColors(coldAmbientColor, warmAmbientColor, currentFactor);
-      ambientLight.intensity = THREE.MathUtils.lerp(0.85, 1.05, currentFactor);
-
-      hemiLight.color.lerpColors(coldHemiSky, warmHemiSky, currentFactor);
-      hemiLight.groundColor.lerpColors(coldHemiGround, warmHemiGround, currentFactor);
-      hemiLight.intensity = THREE.MathUtils.lerp(0.85, 0.95, currentFactor);
-
-      dirLight.color.lerpColors(coldDirColor, warmDirColor, currentFactor);
-      dirLight.intensity = THREE.MathUtils.lerp(1.8, 2.2, currentFactor);
-
-      fillLight.color.lerpColors(coldFillColor, warmFillColor, currentFactor);
-      fillLight.intensity = THREE.MathUtils.lerp(0.9, 0.85, currentFactor);
-
-      coreLight.color.lerpColors(coldCoreColor, warmCoreColor, currentFactor);
-      coreLight.intensity = THREE.MathUtils.lerp(2.5, 3.2, currentFactor);
-
-      /*/ Interpolate Accent Lights & Ceiling Fixtures /*/
-      pointLights.forEach((pLight, idx) => {
-        pLight.color.lerpColors(accentColdColors[idx], accentWarmColors[idx], currentFactor);
-      });
-      fixtureMat.color.lerpColors(coldFixtureColor, warmFixtureColor, currentFactor);
-      fixtureMat.emissive.lerpColors(coldFixtureEmissive, warmFixtureEmissive, currentFactor);
+    /*/ Smooth Cinema & Sound-Lock Atmospheric Dark Mode /*/
+    setCinemaMode: (cinemaFactor) => {
+      currentCinema = THREE.MathUtils.clamp(cinemaFactor, 0.0, 1.0);
+      applyAtmosphere();
     },
 
     setHighlight: (active) => {
@@ -275,7 +291,7 @@ export async function loadMuseumIsland(scene, onProgress) {
         structureMaterial.emissiveIntensity = 0.0;
         platformMaterial.emissive.setHex(0x000000);
         platformMaterial.emissiveIntensity = 0.0;
-        coreLight.intensity = THREE.MathUtils.lerp(2.5, 3.2, currentFactor);
+        applyAtmosphere();
       }
     }
   };

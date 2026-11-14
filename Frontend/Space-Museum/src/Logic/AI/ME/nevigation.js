@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
+import { SoundEffects } from '../../soundfx.js';
 
 /*/ Synthesized Atmospheric Entry & Docking Audio Engine /*/
 class LandingAudioEngine {
@@ -65,6 +66,28 @@ class LandingAudioEngine {
       chime.stop(now + 2.6);
     } catch (e) {}
   }
+
+  /*/ Soft Melodic Chime for Seat Selection & Interaction /*/
+  playChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.setValueAtTime(659.25, now + 0.07);
+      osc.frequency.setValueAtTime(783.99, now + 0.14);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.7);
+    } catch (e) {}
+  }
 }
 
 /*/ First-Person POV Controller with smooth landing, WASD movement and exact experimental flight mode /*/
@@ -79,6 +102,15 @@ export class FirstPersonController {
     this.isFirstPerson = false;
     this.isLanding = false;
     this.isAscending = false;
+
+    /*/ Audio & Sound FX Engine (Procedural Footsteps & Chimes) /*/
+    this.soundfx = new SoundEffects();
+
+    /*/ Theatre Seated POV Mode /*/
+    this.isSeated = false;
+    this.currentSeat = null;
+    this.seatedEyePos = new THREE.Vector3();
+    this.theatre = null;
 
     /*/ Human Eye Height calibrated to grand monumental architectural scale (Floor Y = -1.87) /*/
     this.baseEyeHeight = -1.32;
@@ -130,6 +162,22 @@ export class FirstPersonController {
     this.initEventListeners();
     this.initHUD();
     this.initCameraGui();
+  }
+
+  /*/ Seated Mode State Synchronizer /*/
+  setSeated(isSeated, seatData = null, eyePos = null) {
+    this.isSeated = isSeated;
+    this.currentSeat = seatData;
+    if (eyePos) {
+      this.seatedEyePos.copy(eyePos);
+    }
+    this.velocity.set(0, 0, 0);
+  }
+
+  /*/ Melodic UI Chime Audio /*/
+  playChime() {
+    this.soundfx?.playExhibitChime();
+    this.audio?.playChime();
   }
 
   /*/ Backward compatibility getter /*/
@@ -222,6 +270,10 @@ export class FirstPersonController {
 
   /*/ Exact toggleFlyMode logic from Experiment player.js /*/
   toggleFlyMode() {
+    if (this.isSeated && this.theatre) {
+      this.theatre.standUp();
+    }
+
     this.isFlying = !this.isFlying;
     this.velocity.set(0, 0, 0);
 
@@ -267,6 +319,9 @@ export class FirstPersonController {
     /*/ Keyboard Listeners /*/
     window.addEventListener('keydown', (e) => {
       if (e.code === 'KeyG') {
+        if (this.isSeated && this.theatre) {
+          this.theatre.standUp();
+        }
         if (!this.isFirstPerson && !this.isLanding && !this.isAscending) {
           /*/ Smoothly enter First-Person and activate flight mode /*/
           this.landInside(() => {
@@ -281,6 +336,25 @@ export class FirstPersonController {
       }
 
       if (!this.isFirstPerson) return;
+
+      /*/ Handle Seated Interaction (Press E, Space, or Escape to stand up) /*/
+      if (this.isSeated) {
+        if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Escape') {
+          if (this.theatre) {
+            this.theatre.standUp();
+          }
+          return;
+        }
+      }
+
+      /*/ Ground interaction key (Sit in Seat when near one) /*/
+      if (e.code === 'KeyE' && !this.isSeated && this.theatre) {
+        const nearbySeat = this.theatre.checkSeatProximity(this.camera.position);
+        if (nearbySeat) {
+          this.theatre.sitInSeat(nearbySeat);
+          return;
+        }
+      }
 
       switch (e.code) {
         case 'KeyW':
@@ -351,6 +425,7 @@ export class FirstPersonController {
 
     /*/ Pointer Lock Support /*/
     this.domElement.addEventListener('click', () => {
+      this.soundfx?.init();
       if (this.isFirstPerson && !this.isLanding && !this.isAscending) {
         if (document.pointerLockElement !== this.domElement) {
           try {
@@ -408,6 +483,9 @@ export class FirstPersonController {
   landInside(onComplete, customTargetPos, customTargetLook) {
     if (this.isLanding || this.isFirstPerson) return;
     this.isLanding = true;
+
+    /*/ Initialize procedural sound engine on user interaction /*/
+    this.soundfx?.init();
 
     /*/ Trigger synthesized entry audio /*/
     this.audio.play();
@@ -495,6 +573,9 @@ export class FirstPersonController {
   /*/ Return smoothly from First Person to Orbit View /*/
   returnToOrbit(onComplete) {
     if (this.isAscending || !this.isFirstPerson) return;
+    if (this.isSeated && this.theatre) {
+      this.theatre.standUp();
+    }
     this.isAscending = true;
     this.isFirstPerson = false;
     this.isFlying = false;
@@ -551,6 +632,23 @@ export class FirstPersonController {
     const euler = new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ');
     this.camera.quaternion.setFromEuler(euler);
     this.camera.updateMatrixWorld();
+
+    /*/ Dynamic Player Ambient Aura Light (Silenced only when seated in theatre chair) /*/
+    if (this.playerLight) {
+      const targetPlayerLight = this.isSeated ? 0.0 : 2.0;
+      this.playerLight.intensity = THREE.MathUtils.lerp(this.playerLight.intensity, targetPlayerLight, delta * 4.0);
+    }
+
+    /*/ --- SEATED IN THEATRE CHAIR --- /*/
+    if (this.isSeated) {
+      this.velocity.set(0, 0, 0);
+      this.camera.position.copy(this.seatedEyePos);
+      const coordEl = this.hudElement?.querySelector('#fp-coord-display');
+      if (coordEl) {
+        coordEl.textContent = `SEATED: ${this.currentSeat?.name || 'THEATRE'}`;
+      }
+      return;
+    }
 
     /*/ Update Real-Time Player Coordinates in HUD /*/
     const coordEl = this.hudElement?.querySelector('#fp-coord-display');
@@ -638,12 +736,17 @@ export class FirstPersonController {
       this.camera.position.z = Math.sin(angle) * this.islandRadiusLimit;
     }
 
-    /*/ Subtle head bobbing while walking /*/
-    if (isMoving && Math.hypot(this.velocity.x, this.velocity.z) > 0.5) {
+    /*/ Subtle head bobbing & rhythmic procedural footstep audio while walking /*/
+    if (isMoving && Math.hypot(this.velocity.x, this.velocity.z) > 0.4) {
       const bobFreq = isSprinting ? 14.0 : 9.5;
       this.headBobTimer += delta * bobFreq;
       const bobAmount = Math.sin(this.headBobTimer) * this.bobAmount;
       this.camera.position.y = this.baseEyeHeight + bobAmount;
+
+      /*/ Play procedural footsteps (walk / sprint) /*/
+      if (this.soundfx && !this.isSeated && !this.isFlying) {
+        this.soundfx.playFootstep(isSprinting);
+      }
     } else {
       this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, this.baseEyeHeight, delta * 6.0);
     }

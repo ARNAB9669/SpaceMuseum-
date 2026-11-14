@@ -18,6 +18,12 @@
       <span>Station Targeted &bull; Click to Land & Enter</span>
     </div>
 
+    <!-- Center Interaction Prompt (Seats & Exhibits) -->
+    <div id="interact-prompt" class="hidden">
+      <div class="prompt-key">E</div>
+      <div class="prompt-text">Sit in Seat</div>
+    </div>
+
     <!-- Cinema Auditorium Seated HUD -->
     <div id="cinema-hud" class="hidden">
       <div class="cinema-hud-badge">🎬 MOVIE THEATRE AUDITORIUM</div>
@@ -28,7 +34,9 @@
         <span class="cinema-hud-state">POV View Mode</span>
       </div>
       <div class="cinema-hud-controls">
-        <span>Press <kbd>E</kbd> or <kbd>Space</kbd> to Stand Up</span>
+        <button id="btn-cinema-stand" class="btn-cinema-stand">STAND UP [E]</button>
+        <span>•</span>
+        <span>Press <kbd>E</kbd> or <kbd>Space</kbd> to Stand</span>
         <span>•</span>
         <span>Mouse to Look Around</span>
       </div>

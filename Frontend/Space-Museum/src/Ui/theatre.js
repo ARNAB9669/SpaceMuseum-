@@ -30,6 +30,9 @@ export class TheatreRoom {
     this.collidableMeshes = [];
     this.sconceLights = [];
     this.ceilingLights = [];
+    this.walkLights = [];
+    this.roofGroup = null;
+    this.screenBounceLight = null;
     this.isDimmed = false;
     this.currentSeatedSeat = null;
     this.baseSeatModel = null;
@@ -61,22 +64,32 @@ export class TheatreRoom {
       seatSpacing: 0.68,
       seatScale: 1.80,
 
-      /*/ Lighting Atmosphere /*/
-      sconceIntensity: 8.0,
-      downlightIntensity: 5.0,
+      /*/ Movie Theatre & Walkthrough Corridor Blackout Roof /*/
+      roofVisible: true,
+      roofPosX: 4.10,
+      roofPosY: 0.35,
+      roofPosZ: 17.85,
+      roofWidth: 12.40,
+      roofDepth: 13.80,
+      roofThickness: 0.14,
+      roofColor: '#070b14',
+
+      /*/ Dim Atmospheric Lighting (Dark walking environment & complete blackout when seated) /*/
+      sconceIntensity: 1.2,
+      downlightIntensity: 0.0,
       projectorIntensity: 12.0,
 
       copyToClipboard: () => this.copyValues()
     };
 
-    /*/ Initialize All Architectural Subsystems (Roof removed per user request for open sky view) /*/
+    /*/ Initialize All Architectural Subsystems /*/
     this.initCanvasPlayer();
     this.initScreen();
     this.initRisers();
     this.initLighting();
+    this.initRoofAndCorridor();
     this.loadSeatAsset();
     this.initGui();
-    this.initInteractionListeners();
     this.applyMasterTransforms();
   }
 
@@ -191,6 +204,11 @@ export class TheatreRoom {
     this.group.add(this.projTarget);
     this.projectorLight.target = this.projTarget;
     this.group.add(this.projectorLight);
+
+    /*/ 5. Dynamic Screen Bounce Light (illuminates the dark cinema room with the movie glow) /*/
+    this.screenBounceLight = new THREE.PointLight(0x38bdf8, 0.6, 12, 1.3);
+    this.screenBounceLight.position.set(0, this.params.screenElevation, 0.5);
+    this.screenGroup.add(this.screenBounceLight);
 
     this.group.add(this.screenGroup);
   }
@@ -356,6 +374,14 @@ export class TheatreRoom {
           radius: 0.85
         };
 
+        /*/ Tag seat meshes for raycaster hover and click selection /*/
+        seatClone.traverse((child) => {
+          if (child.isMesh) {
+            child.userData.seatData = seatData;
+            child.userData.isTheatreSeat = true;
+          }
+        });
+
         this.seats.push(seatData);
       }
     });
@@ -403,8 +429,84 @@ export class TheatreRoom {
     this.group.add(this.sconceGroup);
   }
 
+  /*/ --- 5B. BLACKOUT ROOF SLAB & CORRIDOR ENCLOSURE --- /*/
+  initRoofAndCorridor() {
+    if (this.roofGroup) {
+      this.scene.remove(this.roofGroup);
+      this.roofGroup.traverse((child) => {
+        if (child.isMesh) {
+          if (child.geometry) child.geometry.dispose();
+          if (child.material) {
+            if (Array.isArray(child.material)) child.material.forEach((m) => m.dispose());
+            else child.material.dispose();
+          }
+        }
+      });
+      this.roofGroup = null;
+    }
+
+    if (!this.params.roofVisible) return;
+
+    this.roofGroup = new THREE.Group();
+    this.roofGroup.name = 'TheatreBlackoutRoof';
+
+    /*/ 1. Solid Acoustic Blackout Ceiling Slab covering theatre & walkthrough corridor /*/
+    const roofGeo = new THREE.BoxGeometry(
+      this.params.roofWidth,
+      this.params.roofThickness,
+      this.params.roofDepth
+    );
+
+    const roofMat = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(this.params.roofColor),
+      roughness: 0.95,
+      metalness: 0.1,
+      side: THREE.DoubleSide
+    });
+
+    this.roofMesh = new THREE.Mesh(roofGeo, roofMat);
+    this.roofMesh.position.set(
+      this.params.roofPosX,
+      this.params.roofPosY,
+      this.params.roofPosZ
+    );
+    this.roofMesh.castShadow = true;
+    this.roofMesh.receiveShadow = true;
+    this.roofGroup.add(this.roofMesh);
+
+    /*/ 2. Architectural Ceiling Perimeter Edges /*/
+    const edgeGeo = new THREE.EdgesGeometry(roofGeo);
+    const edgeMat = new THREE.LineBasicMaterial({
+      color: 0x1e293b,
+      transparent: true,
+      opacity: 0.75
+    });
+    const edgeLines = new THREE.LineSegments(edgeGeo, edgeMat);
+    this.roofMesh.add(edgeLines);
+
+    this.scene.add(this.roofGroup);
+  }
+
   /*/ --- 6. PROXIMITY CHECK & SEATING INTERACTION --- /*/
+  getSeatMeshes() {
+    const meshes = [];
+    this.seats.forEach((seat) => {
+      if (seat.container) {
+        seat.container.traverse((child) => {
+          if (child.isMesh) {
+            meshes.push(child);
+          }
+        });
+      }
+    });
+    return meshes;
+  }
+
   checkSeatProximity(playerPos) {
+    if (!playerPos) return null;
+    let closestSeat = null;
+    let minDistance = 2.2; /*/ Generous 2.2m radius for 1.8x scale luxury cinema seats /*/
+
     for (const seat of this.seats) {
       if (!seat.container) continue;
 
@@ -415,13 +517,14 @@ export class TheatreRoom {
       const dx = playerPos.x - worldGround.x;
       const dz = playerPos.z - worldGround.z;
       const dy = Math.abs(playerPos.y - worldGround.y);
-      const dist2D = Math.sqrt(dx * dx + dz * dz);
+      const dist2D = Math.hypot(dx, dz);
 
-      if (dist2D < seat.radius && dy < 1.0) {
-        return seat;
+      if (dist2D < minDistance && dy < 2.5) {
+        minDistance = dist2D;
+        closestSeat = seat;
       }
     }
-    return null;
+    return closestSeat;
   }
 
   sitInSeat(seat) {
@@ -435,21 +538,37 @@ export class TheatreRoom {
     worldEye.y += 0.85;
 
     this.screenGroup.getWorldPosition(worldScreen);
+    worldScreen.y += this.params.screenHeight * 0.42;
 
-    /*/ Turn camera towards screen /*/
+    /*/ Turn camera directly towards the center of the projection screen /*/
     const dx = worldScreen.x - worldEye.x;
     const dz = worldScreen.z - worldEye.z;
+    const dy = worldScreen.y - worldEye.y;
+    const distXZ = Math.hypot(dx, dz);
+
     this.fpController.yaw = Math.atan2(-dx, -dz);
-    this.fpController.pitch = 0.06;
+    this.fpController.pitch = Math.atan2(dy, distXZ);
 
     if (this.camera) {
       this.camera.position.copy(worldEye);
+      const euler = new THREE.Euler(this.fpController.pitch, this.fpController.yaw, 0, 'YXZ');
+      this.camera.quaternion.setFromEuler(euler);
+      this.camera.updateMatrixWorld();
     }
+
+    this.fpController.setSeated(true, seat, worldEye);
 
     const hud = document.getElementById('cinema-hud');
     const label = document.getElementById('cinema-seat-label');
     if (hud) hud.classList.remove('hidden');
     if (label) label.textContent = `Row ${seat.row} • Seat ${seat.col}`;
+
+    if (this.fpController.showNotification) {
+      this.fpController.showNotification(`🎬 Seated in ${seat.name} • POV View Mode`);
+    }
+    if (this.fpController.playChime) {
+      this.fpController.playChime();
+    }
   }
 
   standUp() {
@@ -467,34 +586,25 @@ export class TheatreRoom {
     const forwardDir = new THREE.Vector3().subVectors(worldScreen, worldGround).setY(0).normalize();
 
     if (this.camera) {
-      this.camera.position.copy(worldGround).addScaledVector(forwardDir, 0.45);
-      this.camera.position.y = this.fpController.baseEyeHeight;
+      this.camera.position.copy(worldGround).addScaledVector(forwardDir, 0.55);
+      this.camera.position.y = worldGround.y + 0.68;
+    }
+
+    if (this.fpController) {
+      this.fpController.setSeated(false);
+      this.fpController.velocity.set(0, 0, 0);
     }
 
     const hud = document.getElementById('cinema-hud');
     if (hud) hud.classList.add('hidden');
+
+    if (this.fpController?.showNotification) {
+      this.fpController.showNotification('🚶 Stood up from cinema seat');
+    }
   }
 
   setDimmed(dimmed) {
     this.isDimmed = dimmed;
-  }
-
-  initInteractionListeners() {
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'KeyE' || e.code === 'Space') {
-        if (this.currentSeatedSeat) {
-          this.standUp();
-          return;
-        }
-
-        if (this.camera && this.fpController && this.fpController.isFirstPerson) {
-          const seat = this.checkSeatProximity(this.camera.position);
-          if (seat) {
-            this.sitInSeat(seat);
-          }
-        }
-      }
-    });
   }
 
   /*/ --- 7. FRAME UPDATE (DOCUMENTARY CANVAS ANIMATION) --- /*/
@@ -510,23 +620,28 @@ export class TheatreRoom {
     this.renderCanvasFrame();
     this.screenTexture.needsUpdate = true;
 
-    /*/ Smooth cinematic lighting transitions /*/
-    const targetSconce = this.isDimmed ? 0.3 : this.params.sconceIntensity;
-    const targetDownlight = this.isDimmed ? 0.0 : this.params.downlightIntensity;
-    const targetProjector = this.isDimmed ? 18.0 : this.params.projectorIntensity;
+    /*/ Smooth cinematic lighting transitions (Pitch black when seated, subtle dim when walking) /*/
+    const targetSconce = this.isDimmed ? 0.0 : this.params.sconceIntensity;
+    const targetWalkLight = this.isDimmed ? 0.0 : 0.7;
+    const targetProjector = this.isDimmed ? 22.0 : this.params.projectorIntensity;
+    const targetScreenBounce = this.isDimmed ? 4.2 : 0.6;
 
     this.sconceLights.forEach((light) => {
-      light.intensity = THREE.MathUtils.lerp(light.intensity, targetSconce, delta * 3.0);
+      light.intensity = THREE.MathUtils.lerp(light.intensity, targetSconce, delta * 3.5);
     });
 
-    this.ceilingLights.forEach((light) => {
-      light.intensity = THREE.MathUtils.lerp(light.intensity, targetDownlight, delta * 3.0);
+    this.walkLights.forEach((light) => {
+      light.intensity = THREE.MathUtils.lerp(light.intensity, targetWalkLight, delta * 3.5);
     });
+
+    if (this.screenBounceLight) {
+      this.screenBounceLight.intensity = THREE.MathUtils.lerp(this.screenBounceLight.intensity, targetScreenBounce, delta * 3.5);
+    }
 
     /*/ Subtle projector flicker matching cinematic documentary footage /*/
     if (this.projectorLight) {
       const flicker = 0.95 + Math.sin(this.docTime * 18.0) * 0.05 + Math.cos(this.docTime * 7.3) * 0.03;
-      this.projectorLight.intensity = THREE.MathUtils.lerp(this.projectorLight.intensity, targetProjector * flicker, delta * 3.0);
+      this.projectorLight.intensity = THREE.MathUtils.lerp(this.projectorLight.intensity, targetProjector * flicker, delta * 3.5);
     }
   }
 
@@ -877,6 +992,17 @@ export class TheatreRoom {
       layoutFolder.add(this.params, 'seatSpacing', 0.4, 1.2, 0.02).name('Seat Spacing').onChange(() => this.rebuildSeats());
       layoutFolder.add(this.params, 'seatScale', 0.8, 3.0, 0.05).name('Seat Scale').onChange(() => this.rebuildSeats());
 
+      /*/ Blackout Roof & Walkthrough Enclosure Controls /*/
+      const roofFolder = this.gui.addFolder('🏠 Blackout Roof & Corridor');
+      roofFolder.add(this.params, 'roofVisible').name('Roof Active').onChange(() => this.initRoofAndCorridor());
+      roofFolder.add(this.params, 'roofPosX', -4, 12, 0.05).name('X (Center)').onChange(() => this.initRoofAndCorridor());
+      roofFolder.add(this.params, 'roofPosY', -1, 3, 0.02).name('Y (Height)').onChange(() => this.initRoofAndCorridor());
+      roofFolder.add(this.params, 'roofPosZ', 12, 28, 0.05).name('Z (Center)').onChange(() => this.initRoofAndCorridor());
+      roofFolder.add(this.params, 'roofWidth', 6, 16, 0.1).name('Width (X)').onChange(() => this.initRoofAndCorridor());
+      roofFolder.add(this.params, 'roofDepth', 6, 16, 0.1).name('Depth (Z)').onChange(() => this.initRoofAndCorridor());
+      roofFolder.add(this.params, 'roofThickness', 0.04, 0.5, 0.01).name('Thickness').onChange(() => this.initRoofAndCorridor());
+      roofFolder.addColor(this.params, 'roofColor').name('Roof Color').onChange(() => this.initRoofAndCorridor());
+
       /*/ Lighting Controls /*/
       const lightFolder = this.gui.addFolder('💡 Auditorium Lights');
       lightFolder.add(this.params, 'sconceIntensity', 0, 30, 0.5).name('Sconces').onChange((val) => {
@@ -938,7 +1064,14 @@ export class TheatreRoom {
   stepHeight: ${this.params.stepHeight.toFixed(2)},
   seatCols: ${this.params.seatCols},
   seatSpacing: ${this.params.seatSpacing.toFixed(2)},
-  seatScale: ${this.params.seatScale.toFixed(2)}
+  seatScale: ${this.params.seatScale.toFixed(2)},
+  roofVisible: ${this.params.roofVisible},
+  roofPosX: ${this.params.roofPosX.toFixed(2)},
+  roofPosY: ${this.params.roofPosY.toFixed(2)},
+  roofPosZ: ${this.params.roofPosZ.toFixed(2)},
+  roofWidth: ${this.params.roofWidth.toFixed(2)},
+  roofDepth: ${this.params.roofDepth.toFixed(2)},
+  roofThickness: ${this.params.roofThickness.toFixed(2)}
 };`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
