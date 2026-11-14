@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import GUI from 'three/addons/libs/lil-gui.module.min.js';
 
 /*/ Creates procedural soft round texture for star particles /*/
 function createStarTexture() {
@@ -281,6 +282,9 @@ export class Biodome {
     this.initBaseRimRing();
     this.initFresnelShieldGlow();
 
+    /*/ Entrance Holographic Banner with Real-time lil-gui Editor /*/
+    this.entranceBanner = new EntranceBanner(this.scene);
+
     this.setInsideTransition(0.0);
 
     this.group.position.set(0, this.floorY, 0);
@@ -441,6 +445,359 @@ export class Biodome {
     /*/ Outer Holographic Shield Glow /*/
     if (this.glowMat) {
       this.glowMat.opacity = 0.06 + this.highlightFactor * 0.22;
+    }
+
+    /*/ Update Entrance Banner /*/
+    if (this.entranceBanner) {
+      this.entranceBanner.update(delta);
+    }
+  }
+}
+
+/*/ -------------------------------------------------------------
+    Entrance Holographic Exhibition Banner with 3D Bezel Frame
+    Displays /banner.png with frame, support mount & lil-gui controls
+    ------------------------------------------------------------- /*/
+export class EntranceBanner {
+  constructor(scene) {
+    this.scene = scene;
+    this.group = new THREE.Group();
+    this.group.name = 'EntranceBanner';
+    this.glowTime = 0;
+
+    /*/ Final Calibrated Parameters (Calibrated by user via GUI) /*/
+    this.params = {
+      posX: -14.90,
+      posY: 0.30,
+      posZ: 28.20,
+      rotX: 0.0,
+      rotY: 90.0,
+      rotZ: 0.0,
+      width: 5.50,
+      height: 3.07, /*/ 16:9 native aspect ratio matching 2752x1536 banner.png /*/
+      scale: 1.0,
+      opacity: 1.0,
+      toneMapped: true,
+      visible: true,
+
+      /*/ 3D Physical Frame & Mounting Options /*/
+      frameVisible: true,
+      frameThickness: 0.12,   /*/ Bezel width surrounding image in meters /*/
+      frameDepth: 0.14,       /*/ Frame extrusion depth in meters /*/
+      frameColor: '#1e293b',  /*/ Dark slate / titanium finish /*/
+      frameMetalness: 0.85,
+      frameRoughness: 0.25,
+      showBacking: true,      /*/ Solid back enclosure plate /*/
+      showLegs: true,         /*/ Vertical support gantry posts /*/
+      legHeight: 2.15,        /*/ Support legs height down to platform floor /*/
+      showGlowTrim: true,     /*/ Sci-fi neon accent trim /*/
+      glowColor: '#38bdf8',   /*/ Luminous cyan accent /*/
+
+      copyToClipboard: () => this.copyValues()
+    };
+
+    this.initBanner();
+    this.initGui();
+    this.applyTransforms();
+
+    this.scene.add(this.group);
+  }
+
+  initBanner() {
+    const loader = new THREE.TextureLoader();
+    this.texture = loader.load('/banner.png');
+    this.texture.colorSpace = THREE.SRGBColorSpace;
+
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.material = new THREE.MeshBasicMaterial({
+      map: this.texture,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: this.params.opacity,
+      toneMapped: this.params.toneMapped
+    });
+
+    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.position.set(0, 0, 0.005);
+    this.group.add(this.mesh);
+
+    /*/ Frame container /*/
+    this.frameGroup = new THREE.Group();
+    this.frameGroup.name = 'BannerFrameGroup';
+    this.group.add(this.frameGroup);
+
+    this.rebuildFrame();
+  }
+
+  clearFrame() {
+    if (!this.frameGroup) return;
+    while (this.frameGroup.children.length > 0) {
+      const child = this.frameGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+      this.frameGroup.remove(child);
+    }
+  }
+
+  rebuildFrame() {
+    this.clearFrame();
+    if (!this.params.frameVisible) return;
+
+    const W = this.params.width;
+    const H = this.params.height;
+    const T = this.params.frameThickness;
+    const D = this.params.frameDepth;
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: this.params.frameColor,
+      metalness: this.params.frameMetalness,
+      roughness: this.params.frameRoughness
+    });
+
+    /*/ 1. Top Bezel Bar /*/
+    const topGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const topMesh = new THREE.Mesh(topGeo, frameMat);
+    topMesh.position.set(0, H / 2 + T / 2, 0);
+    this.frameGroup.add(topMesh);
+
+    /*/ 2. Bottom Bezel Bar /*/
+    const bottomGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const bottomMesh = new THREE.Mesh(bottomGeo, frameMat);
+    bottomMesh.position.set(0, -H / 2 - T / 2, 0);
+    this.frameGroup.add(bottomMesh);
+
+    /*/ 3. Left Bezel Bar /*/
+    const leftGeo = new THREE.BoxGeometry(T, H, D);
+    const leftMesh = new THREE.Mesh(leftGeo, frameMat);
+    leftMesh.position.set(-W / 2 - T / 2, 0, 0);
+    this.frameGroup.add(leftMesh);
+
+    /*/ 4. Right Bezel Bar /*/
+    const rightGeo = new THREE.BoxGeometry(T, H, D);
+    const rightMesh = new THREE.Mesh(rightGeo, frameMat);
+    rightMesh.position.set(W / 2 + T / 2, 0, 0);
+    this.frameGroup.add(rightMesh);
+
+    /*/ 5. Solid Back Enclosure Plate /*/
+    if (this.params.showBacking) {
+      const backGeo = new THREE.BoxGeometry(W + 2 * T, H + 2 * T, 0.02);
+      const backMat = new THREE.MeshStandardMaterial({
+        color: this.params.frameColor,
+        metalness: this.params.frameMetalness * 0.9,
+        roughness: Math.min(1.0, this.params.frameRoughness * 1.2)
+      });
+      const backMesh = new THREE.Mesh(backGeo, backMat);
+      backMesh.position.set(0, 0, -D / 2);
+      this.frameGroup.add(backMesh);
+    }
+
+    /*/ 6. Vertical Support Gantry Posts (Legs) /*/
+    if (this.params.showLegs) {
+      const L = this.params.legHeight;
+      const legGeo = new THREE.BoxGeometry(T, L, D);
+
+      const leftLeg = new THREE.Mesh(legGeo, frameMat);
+      leftLeg.position.set(-W / 2 - T / 2, -H / 2 - T - L / 2, 0);
+      this.frameGroup.add(leftLeg);
+
+      const rightLeg = new THREE.Mesh(legGeo, frameMat);
+      rightLeg.position.set(W / 2 + T / 2, -H / 2 - T - L / 2, 0);
+      this.frameGroup.add(rightLeg);
+
+      /*/ Heavy base mounting foot pads /*/
+      const footGeo = new THREE.BoxGeometry(T * 1.7, 0.05, D * 1.7);
+      const leftFoot = new THREE.Mesh(footGeo, frameMat);
+      leftFoot.position.set(-W / 2 - T / 2, -H / 2 - T - L + 0.025, 0);
+      this.frameGroup.add(leftFoot);
+
+      const rightFoot = new THREE.Mesh(footGeo, frameMat);
+      rightFoot.position.set(W / 2 + T / 2, -H / 2 - T - L + 0.025, 0);
+      this.frameGroup.add(rightFoot);
+    }
+
+    /*/ 7. Luminous Holographic LED Accent Trim /*/
+    if (this.params.showGlowTrim) {
+      /*/ Inner image border glow /*/
+      const innerTrimGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H));
+      this.trimMat = new THREE.LineBasicMaterial({
+        color: this.params.glowColor,
+        transparent: true,
+        opacity: 0.85
+      });
+      const innerLine = new THREE.LineSegments(innerTrimGeo, this.trimMat);
+      innerLine.position.set(0, 0, D / 2 + 0.003);
+      this.frameGroup.add(innerLine);
+
+      /*/ Outer frame border glow /*/
+      const outerTrimGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(W + 2 * T, H + 2 * T));
+      const outerTrimMat = new THREE.LineBasicMaterial({
+        color: this.params.glowColor,
+        transparent: true,
+        opacity: 0.45
+      });
+      const outerLine = new THREE.LineSegments(outerTrimGeo, outerTrimMat);
+      outerLine.position.set(0, 0, D / 2 + 0.003);
+      this.frameGroup.add(outerLine);
+    }
+  }
+
+  rebuildGeometry() {
+    if (this.geometry) this.geometry.dispose();
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.mesh.geometry = this.geometry;
+
+    this.rebuildFrame();
+  }
+
+  applyTransforms() {
+    this.group.position.set(this.params.posX, this.params.posY, this.params.posZ);
+    this.group.rotation.set(
+      THREE.MathUtils.degToRad(this.params.rotX),
+      THREE.MathUtils.degToRad(this.params.rotY),
+      THREE.MathUtils.degToRad(this.params.rotZ)
+    );
+    this.group.scale.setScalar(this.params.scale);
+    this.mesh.visible = this.params.visible;
+    if (this.frameGroup) this.frameGroup.visible = this.params.frameVisible && this.params.visible;
+    this.material.opacity = this.params.opacity;
+    this.material.toneMapped = this.params.toneMapped;
+    this.material.needsUpdate = true;
+  }
+
+  initGui() {
+    /*/ The banner coordinates and frame parameters are finalized.
+        To re-open the live calibration GUI, add #gui to the URL in the browser /*/
+    if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_BANNER) {
+      return;
+    }
+
+    try {
+      this.gui = new GUI({ title: '🏛️ Banner Position, Size & Frame' });
+      this.gui.domElement.style.position = 'fixed';
+      this.gui.domElement.style.top = '20px';
+      this.gui.domElement.style.right = '20px';
+      this.gui.domElement.style.zIndex = '99999';
+
+      /*/ Prevent canvas clicks or pointer lock from stealing focus /*/
+      ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((evt) => {
+        this.gui.domElement.addEventListener(evt, (e) => e.stopPropagation());
+      });
+
+      const posFolder = this.gui.addFolder('📍 Position (X, Y, Z)');
+      posFolder.add(this.params, 'posX', -35, 35, 0.05).name('X (Left/Right)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posY', -5, 25, 0.05).name('Y (Height)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posZ', -20, 45, 0.05).name('Z (Depth)').onChange(() => this.applyTransforms());
+      posFolder.open();
+
+      const rotFolder = this.gui.addFolder('🔄 Rotation (Degrees)');
+      rotFolder.add(this.params, 'rotX', -180, 180, 1).name('Pitch X').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotY', -180, 180, 1).name('Yaw Y').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotZ', -180, 180, 1).name('Roll Z').onChange(() => this.applyTransforms());
+      rotFolder.open();
+
+      const sizeFolder = this.gui.addFolder('📐 Dimensions & Scale');
+      sizeFolder.add(this.params, 'width', 0.5, 30, 0.1).name('Width (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'height', 0.5, 20, 0.1).name('Height (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'scale', 0.1, 5.0, 0.05).name('Overall Scale').onChange(() => this.applyTransforms());
+      sizeFolder.open();
+
+      const frameFolder = this.gui.addFolder('🖼️ 3D Frame & Mount');
+      frameFolder.add(this.params, 'frameVisible').name('Frame Active').onChange(() => {
+        this.rebuildFrame();
+        this.applyTransforms();
+      });
+      frameFolder.add(this.params, 'frameThickness', 0.02, 0.40, 0.01).name('Thickness (m)').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'frameDepth', 0.02, 0.50, 0.01).name('Depth (m)').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'frameColor').name('Frame Color').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'frameMetalness', 0.0, 1.0, 0.05).name('Metalness').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'frameRoughness', 0.0, 1.0, 0.05).name('Roughness').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'showBacking').name('Backing Plate').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'showLegs').name('Support Legs').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'legHeight', 0.2, 8.0, 0.05).name('Leg Height (m)').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'showGlowTrim').name('LED Trim Glow').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'glowColor').name('Glow Color').onChange(() => this.rebuildFrame());
+      frameFolder.open();
+
+      const appFolder = this.gui.addFolder('✨ Appearance');
+      appFolder.add(this.params, 'opacity', 0.0, 1.0, 0.05).name('Opacity').onChange(() => this.applyTransforms());
+      appFolder.add(this.params, 'toneMapped').name('Tone Mapping').onChange(() => this.applyTransforms());
+      appFolder.add(this.params, 'visible').name('Visible').onChange(() => this.applyTransforms());
+
+      this.gui.add(this.params, 'copyToClipboard').name('📋 Copy Values to Chat');
+    } catch (err) {
+      console.warn('[EntranceBanner] Failed to initialize lil-gui:', err);
+    }
+  }
+
+  copyValues() {
+    const formatted = `BANNER_CONFIG = {
+  posX: ${this.params.posX.toFixed(2)},
+  posY: ${this.params.posY.toFixed(2)},
+  posZ: ${this.params.posZ.toFixed(2)},
+  rotX: ${this.params.rotX.toFixed(1)},
+  rotY: ${this.params.rotY.toFixed(1)},
+  rotZ: ${this.params.rotZ.toFixed(1)},
+  width: ${this.params.width.toFixed(2)},
+  height: ${this.params.height.toFixed(2)},
+  scale: ${this.params.scale.toFixed(2)},
+  frameVisible: ${this.params.frameVisible},
+  frameThickness: ${this.params.frameThickness.toFixed(2)},
+  frameDepth: ${this.params.frameDepth.toFixed(2)},
+  frameColor: '${this.params.frameColor}',
+  frameMetalness: ${this.params.frameMetalness.toFixed(2)},
+  frameRoughness: ${this.params.frameRoughness.toFixed(2)},
+  showBacking: ${this.params.showBacking},
+  showLegs: ${this.params.showLegs},
+  legHeight: ${this.params.legHeight.toFixed(2)},
+  showGlowTrim: ${this.params.showGlowTrim},
+  glowColor: '${this.params.glowColor}'
+};`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formatted).catch(() => {});
+    }
+    console.log('[EntranceBanner] Current Settings:\n' + formatted);
+
+    /*/ User-facing notification toast /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '85px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #38bdf8';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#38bdf8';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(56, 189, 248, 0.35)';
+    toast.innerHTML = '📋 <b>Banner coordinates & frame settings copied!</b> Paste in chat.';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  update(delta) {
+    if (this.trimMat && this.params.showGlowTrim) {
+      this.glowTime += delta * 2.5;
+      this.trimMat.opacity = 0.55 + 0.35 * Math.sin(this.glowTime);
     }
   }
 }

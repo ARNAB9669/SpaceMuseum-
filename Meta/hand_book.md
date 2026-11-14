@@ -336,6 +336,43 @@
   - **Wave Propagation**: Wave phase adjusted to `idx * 0.35` for a continuous light sweep across all 22 chevrons.
 
 
+---
+
+### Log : 24
+**Title**: Entrance Exhibition Banner & 3D Architectural Bezel Frame with Live lil-gui Calibration  
+**Description**: Implemented the entrance exhibition banner loading `/banner.png` with a procedural 3D architectural bezel frame, support mounting gantry, and integrated `lil-gui` controls for browser calibration:
+- **Banner Graphic & Surface ([dome.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dome.js))**:
+  - Placed `EntranceBanner` directly inside `dome.js` as requested.
+  - Loads `/banner.png` ($2752 \times 1536$, native 16:9 aspect ratio) with `SRGBColorSpace`, `DoubleSide`, and `toneMapped: false` for vivid color reproduction.
+- **3D Architectural Bezel Frame & Mount**:
+  - **4-Sided Bezel Border**: Surrounds the image with top, bottom, left, and right extruded bars using `MeshStandardMaterial` (dark titanium/slate `#1e293b`, `metalness: 0.85, roughness: 0.25`).
+  - **Solid Back Enclosure**: Adds a backing panel behind the banner plane for a realistic billboard construction.
+  - **Support Gantry Legs**: Optional vertical support posts extending downward to the pavement, with heavy base mounting foot pads.
+  - **Luminous LED Trim Glow**: Pulsing sci-fi neon edge line (`#38bdf8`) hugging the perimeter of the image and outer frame.
+  - **Dynamic Rebuild**: Adjusting width, height, scale, frame thickness, or depth instantly rebuilds the entire frame geometry to match.
+- **Real-Time lil-gui Tuning & One-Click Clipboard Export**:
+  - Sliders for Position ($X, Y, Z$), Rotation ($X, Y, Z$ in degrees), Dimensions ($W, H, \text{scale}$), 3D Frame Options (Thickness, Depth, Color, Metalness, Roughness, Backing, Legs, Leg Height, Glow Trim), and Appearance.
+  - Added `[📋 Copy Values to Chat]` button that copies the complete Javascript configuration object to the clipboard and displays an on-screen toast.
+
+
+---
+
+### Log : 25
+**Title**: Finalization of Entrance Exhibition Banner & 3D Mounting Structure  
+**Description**: Locked in the final user-calibrated transform and physical 3D frame parameters for the entrance banner, and removed debug GUI clutter:
+- **Finalized Parameters ([dome.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/dome.js))**:
+  - **Position**: $(-14.90, 0.30, 28.20)$ — situated at the terminus of the horizontal approach avenue, directly facing visitors moving forward down the road.
+  - **Rotation**: `Pitch: 0.0°, Yaw: 90.0°, Roll: 0.0°` — rotated $90^\circ$ around the Y-axis to face straight down the roadway toward $+X$.
+  - **Dimensions & Scale**: Width $5.50\text{m}$, Height $3.07\text{m}$, Scale $1.0$.
+  - **3D Bezel Frame**: Thickness $0.12\text{m}$, Depth $0.14\text{m}$, Color `#1e293b` (slate titanium, metalness $0.85$, roughness $0.25$).
+  - **Mounting Support Gantry**: Vertical support posts enabled (`legHeight: 2.15m`) standing directly on the disc pavement with heavy foot pads.
+  - **Enclosure & Lighting**: Solid rear backing plate active, luminous cyan LED trim glow active (`#38bdf8`), `toneMapped: true`, `opacity: 1.0`.
+- **Clean UI & Hidden Debug Panel**:
+  - Pinned `lil-gui` is now hidden during normal gameplay to present an immersive, clutter-free viewport. Can be re-invoked anytime by appending `#gui` to the URL.
+
+
+
+
 
 
 
