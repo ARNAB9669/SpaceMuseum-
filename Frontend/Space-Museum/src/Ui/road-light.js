@@ -3,11 +3,11 @@ import GUI from 'three/addons/libs/lil-gui.module.min.js';
 
 /*/ =============================================================
     road-light.js — Architectural Sci-Fi Road Luminaires
-    Procedural museum streetlights positioned along the outer curb
-    of the curved approach road. Features tapered dark titanium masts,
-    cantilever luminaire heads, warm recessed LED diffusers, soft
-    asphalt pool lighting, adaptive atmospheric transitions, and
-    physical collision posts for first-person navigation.
+    Procedural museum streetlights positioned strictly along the
+    outer perimeter pavement and inner building sidewalks.
+    Features automatic physical ground snapping, tapered dark titanium
+    masts, cantilever luminaire heads, warm recessed LED diffusers,
+    soft road pool lighting, and physical collision posts.
     ============================================================= /*/
 
 export class RoadLights {
@@ -34,7 +34,7 @@ export class RoadLights {
     this.params = {
       visible: true,
       mastHeight: 3.20,
-      armLength: 1.35,
+      armLength: 1.30,
       lightIntensity: 2.80,
       lightDistance: 9.50,
       lightDecay: 1.60,
@@ -49,30 +49,41 @@ export class RoadLights {
   }
 
   initLamps() {
-    const floorY = -1.87;
+    /*/ Precise Waypoints strictly placed outside the roadway on sidewalks & perimeter pavement:
+        The surrounding platform sits at Y = -2.42m; setting bases at Y = -2.45m
+        embeds the base flange 3cm into the concrete so it firmly anchors with zero gap.
+        Cantilever arms reach gracefully inward toward the road. /*/
+    const floorY = -2.45;
 
-    /*/ Road Outer Curb Waypoints [X, Y, Z, Yaw (radians)]
-        Placed on the outer white pavement along the perimeter of the road,
-        with cantilever luminaire arms extending inward over the curb. /*/
     const lampDefinitions = [
-      /*/ Section 1: Straight Runway (Near Landing Spot, Along Z-axis) /*/
-      { x: 18.40, y: floorY, z: 11.50, yaw: -Math.PI / 2 },
-      { x: 18.60, y: floorY, z: 17.20, yaw: -Math.PI / 2 },
-      { x: 18.90, y: floorY, z: 22.80, yaw: -Math.PI / 2 },
+      /*/ === ROW 1: OUTER PERIMETER PAVEMENT (LEFT SIDE OF ROADWAY) === /*/
+      /*/ Straight Runway Section (Near Landing Spot, Along Z-axis) /*/
+      { x: 18.20, y: floorY, z: 11.50, yaw: -Math.PI / 2, side: 'outer' },
+      { x: 18.20, y: floorY, z: 17.20, yaw: -Math.PI / 2, side: 'outer' },
+      { x: 18.50, y: floorY, z: 22.80, yaw: -Math.PI / 2, side: 'outer' },
 
-      /*/ Section 2: Outer Curved Arc (Shifted outward onto white pavement) /*/
-      { x: 19.30, y: floorY, z: 28.20, yaw: -1.65 },
-      { x: 16.90, y: floorY, z: 34.00, yaw: -2.35 },
-      { x: 11.90, y: floorY, z: 34.90, yaw: -2.55 },
+      /*/ Corner Curve Section (Shifted fully outside the curve onto outer pavement) /*/
+      { x: 19.00, y: floorY, z: 28.00, yaw: -1.70, side: 'outer' },
+      { x: 16.20, y: floorY, z: 33.60, yaw: -2.30, side: 'outer' },
+      { x: 11.50, y: floorY, z: 34.60, yaw: -2.60, side: 'outer' },
 
-      /*/ Section 3: Horizontal Avenue (Along X-axis, clear of road curb) /*/
-      { x: 6.20, y: floorY, z: 34.40, yaw: Math.PI },
-      { x: 1.20, y: floorY, z: 34.40, yaw: Math.PI },
-      { x: -3.80, y: floorY, z: 34.40, yaw: Math.PI },
+      /*/ Horizontal Avenue Section (Along outer perimeter pavement) /*/
+      { x:  6.00, y: floorY, z: 34.40, yaw: Math.PI, side: 'outer' },
+      { x:  0.50, y: floorY, z: 34.40, yaw: Math.PI, side: 'outer' },
+      { x: -5.50, y: floorY, z: 34.20, yaw: Math.PI, side: 'outer' },
 
-      /*/ Section 4: Entrance Bend (Leading to museum doorway) /*/
-      { x: -10.90, y: floorY, z: 32.80, yaw: 2.50 },
-      { x: -12.40, y: floorY, z: 25.20, yaw: Math.PI / 2 }
+      /*/ === ROW 2: INNER SIDEWALK / BUILDING FACADE (RIGHT SIDE OF ROADWAY) === /*/
+      /*/ Straight Runway Section (Along building facade, facing +X towards road) /*/
+      { x: 11.85, y: floorY, z: 11.50, yaw: Math.PI / 2, side: 'inner' },
+      { x: 11.85, y: floorY, z: 17.20, yaw: Math.PI / 2, side: 'inner' },
+      { x: 11.85, y: floorY, z: 22.80, yaw: Math.PI / 2, side: 'inner' },
+
+      /*/ Inner Corner Facade (Rounding building corner, clear of the road) /*/
+      { x: 10.20, y: floorY, z: 25.20, yaw: Math.PI * 0.40, side: 'inner' },
+
+      /*/ Horizontal Avenue Inner Sidewalk (Facing +Z towards road, clear of entrance) /*/
+      { x:  6.00, y: floorY, z: 26.50, yaw: 0.0, side: 'inner' },
+      { x:  0.50, y: floorY, z: 26.50, yaw: 0.0, side: 'inner' }
     ];
 
     /*/ Shared Materials for Optimal Performance (Single Draw Batch) /*/
@@ -110,11 +121,11 @@ export class RoadLights {
 
     lampDefinitions.forEach((def, index) => {
       const lampContainer = new THREE.Group();
-      lampContainer.name = `RoadLuminaire_${index + 1}`;
+      lampContainer.name = `RoadLuminaire_${def.side}_${index + 1}`;
       lampContainer.position.set(def.x, def.y, def.z);
       lampContainer.rotation.y = def.yaw;
 
-      /*/ 1. Flanged Base Mount /*/
+      /*/ 1. Flanged Base Mount (Bottom sits exactly at local y = 0) /*/
       const baseMesh = new THREE.Mesh(baseGeo, jointMaterial);
       baseMesh.position.y = 0.04;
       baseMesh.receiveShadow = true;
@@ -150,7 +161,7 @@ export class RoadLights {
       emitterMesh.position.set(0, H + 0.01, armL);
       lampContainer.add(emitterMesh);
 
-      /*/ 7. Strategic Real-Time Downward Road Pool Light (Every other lamp for high 60fps performance) /*/
+      /*/ 7. Strategic Real-Time Downward Road Pool Light /*/
       if (index % 2 === 0 || index === lampDefinitions.length - 1) {
         const light = new THREE.PointLight(
           this.coldLightColor.clone(),
@@ -165,6 +176,28 @@ export class RoadLights {
 
       this.group.add(lampContainer);
       this.lamps.push(lampContainer);
+    });
+  }
+
+  /*/ Automatically Snap Every Lamp Base Flush onto the 3D Island Surface /*/
+  snapToGround(islandMesh) {
+    if (!islandMesh) return;
+    const raycaster = new THREE.Raycaster();
+    const downDir = new THREE.Vector3(0, -1, 0);
+
+    this.lamps.forEach((lamp) => {
+      const rayOrigin = new THREE.Vector3(lamp.position.x, 2.0, lamp.position.z);
+      raycaster.set(rayOrigin, downDir);
+      raycaster.far = 10.0;
+
+      const hits = raycaster.intersectObject(islandMesh, true);
+      for (const hit of hits) {
+        if (hit.point.y <= -1.80 && hit.point.y >= -2.60) {
+          /*/ Embed flange 3cm into concrete for solid anchoring with zero gap /*/
+          lamp.position.y = hit.point.y - 0.03;
+          break;
+        }
+      }
     });
   }
 

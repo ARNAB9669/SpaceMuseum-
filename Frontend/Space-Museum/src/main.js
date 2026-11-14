@@ -110,6 +110,9 @@ loadMuseumIsland(scene)
     if (roadLights.getCollidableMeshes) {
       fpController.addCollidableMeshes(roadLights.getCollidableMeshes());
     }
+    if (roadLights.snapToGround) {
+      roadLights.snapToGround(obj);
+    }
   })
   .catch((err) => {
     console.error('[main] Failed to load Space Museum Island:', err);

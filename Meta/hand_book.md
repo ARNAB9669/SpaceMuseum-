@@ -662,6 +662,34 @@
 - Relocated curve posts from $X = 14.60, Z = 31.80 \to X = 16.90, Z = 34.00$ and $X = 17.20, Z = 27.60 \to X = 19.30, Z = 28.20$, placing bases firmly on the outer white pavement between the road and golden railing.
 - Extended the cantilever luminaire arm from $1.05\text{m} \to 1.35\text{m}$, allowing the overhead head to reach gracefully over the curb while leaving the walking road completely unobstructed.
 
+---
+
+### Log : 46
+**Title**: Dual-Row Avenue Luminaires Across Both Sides of Approach Road  
+**Description**: Expanded the roadway lighting into a dual-row boulevard layout lining both sides of the museum approach road:
+- Added 10 inner curb luminaires along the building facade and entrance corridor, paired symmetrically with the 11 outer perimeter luminaires (total 21 streetlights).
+- Inner luminaires face inward ($+X$ and $+Z$) with cantilever arms extending toward the road centerline, framing the exhibition wall poster and entrance pathway.
+- Distributed real-time point lights along both curbs with full collision detection for all 21 mast posts.
+
+---
+
+### Log : 47
+**Title**: Fix Floating Streetlights via Vertical Mesh Raycasting & Clear Entrance Roadway  
+**Description**: Resolved floating streetlights and cleared unwanted lamps blocking the roadway:
+- **Root Cause 1 (Floating Lamps)**: The dark asphalt roadway is elevated at $Y = -1.87\text{m}$, whereas the surrounding white sidewalk and outer perimeter platform step down to $Y = -2.42\text{m}$ (a $0.55\text{m}$ vertical drop). A hardcoded $Y = -1.87$ caused any lamp on the sidewalk to hover in mid-air.
+- **Root Cause 2 (Lamps in Middle of Road)**: Erroneous inner waypoints near $X \in [-6, -3]$ intersected the turn into the entrance in front of the Welcome Sign.
+- **Resolution**:
+  - Implemented `snapToGround(islandMesh)` in `road-light.js`: automatically fires a vertical downward raycast against the physical 3D island polygons to snap every lamp base flush to the ground ($Y = -2.42$ on sidewalks, $Y = -1.87$ on road curb).
+  - Cleaned the layout into a refined 15-lamp avenue, completely removing lamps that cluttered the entrance turn and Welcome Sign. All lamps are strictly $> 3.0\text{m}$ from the road centerline.
+
+---
+
+### Log : 48
+**Title**: Lower Inner Sidewalk Luminaires & 3cm Concrete Embed Anchoring  
+**Description**: Fully lowered and anchored the inner sidewalk luminaires to sit flush on the pavement:
+- **Sidewalk Elevation Calibration**: Calibrated the default elevation of all inner sidewalk and outer perimeter luminaires to $Y = -2.45\text{m}$, embedding the circular metal base flange $3\text{cm}$ into the white concrete platform ($Y = -2.42\text{m}$) to eliminate any micro-gaps or floating visual artifacts.
+- **Narrowed Raycast Height Filter**: Tuned `snapToGround()` vertical raycast threshold to strictly match the walkable sidewalk band ($Y \in [-2.60, -1.80]\text{m}$), preventing false positive ray hits against building cornices or ledges above $-1.80\text{m}$.
+
 
 
 
