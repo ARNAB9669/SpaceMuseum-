@@ -7,6 +7,7 @@ import { loadMuseumIsland } from './Logic/loa_modle.js';
 import { IntroSequence } from './Logic/intro.js';
 import { FirstPersonController } from './Logic/AI/ME/nevigation.js';
 import { DirectionArrows } from './Ui/dirrection-arrow.js';
+import { RoadLights } from './Ui/road-light.js';
 import { FloorMapSelector } from './Logic/map-selector.js';
 import { WelcomeSign, OuterWallPoster } from './Ui/posters.js';
 import { TheatreRoom } from './Ui/theatre.js';
@@ -44,12 +45,13 @@ const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.rotateSpeed = 0.6;
-controls.zoomSpeed = 0.8;
-controls.minDistance = 8;
-controls.maxDistance = 350;
+controls.enableZoom = false; /*/ Mouse scroll zoom disabled as requested /*/
 controls.target.set(0, 2, 0);
 controls.autoRotate = true;
 controls.autoRotateSpeed = 0.2;
+
+/*/ Prevent default page scroll on canvas wheel event /*/
+canvas.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
 
 /*/ Initialize Procedural Deep Space Environment /*/
 const spaceEnv = new SpaceEnvironment(scene);
@@ -66,8 +68,9 @@ const intro = new IntroSequence(camera, controls);
 /*/ First-Person POV Controller (Perspective Camera) /*/
 const fpController = new FirstPersonController(camera, canvas, controls);
 
-/*/ Approach Road Infrastructure: Direction Chevrons /*/
+/*/ Approach Road Infrastructure: Direction Chevrons & Road Luminaires /*/
 const directionArrows = new DirectionArrows(scene);
+const roadLights = new RoadLights(scene);
 
 /*/ Interactive Floor Map & Landing Point Selector /*/
 const mapSelector = new FloorMapSelector(scene, camera, controls, fpController, () => museumIslandModel);
@@ -103,6 +106,9 @@ loadMuseumIsland(scene)
     }
     if (theatre.getCollidableMeshes) {
       fpController.addCollidableMeshes(theatre.getCollidableMeshes());
+    }
+    if (roadLights.getCollidableMeshes) {
+      fpController.addCollidableMeshes(roadLights.getCollidableMeshes());
     }
   })
   .catch((err) => {
@@ -267,6 +273,7 @@ function animate(timestamp) {
   }
   biodome.setInsideTransition(currentAtmosphereFactor);
   directionArrows.setInsideTransition(currentAtmosphereFactor);
+  roadLights.setInsideTransition(currentAtmosphereFactor);
 
   /*/ Dynamic Cinema Dark Mode: Only activates when seated in a theatre chair (Matching Experiments Prototype) /*/
   const targetCinemaDark = (fpController.isFirstPerson && fpController.isSeated) ? 1.0 : 0.0;
@@ -275,10 +282,12 @@ function animate(timestamp) {
   if (museumIslandModel?.userData?.setCinemaMode) {
     museumIslandModel.userData.setCinemaMode(currentCinemaDarkFactor);
   }
+  roadLights.setCinemaMode(currentCinemaDarkFactor);
 
   spaceEnv.update(delta);
   biodome.update(delta);
   directionArrows.update(delta);
+  roadLights.update(delta);
   mapSelector.update(delta);
   welcomeSign.update(delta);
   outerWallPoster.update(delta);

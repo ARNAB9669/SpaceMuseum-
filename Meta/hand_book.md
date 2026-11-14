@@ -632,6 +632,36 @@
   - **Triggers & Bumpers**: Right Trigger (`RT`) / Bumper (`RB`) activates sprint boost; Left Bumper / Trigger descends/ascends during drone flight.
   - **Tactile Haptic Feedback**: Delivers subtle rumble pulses upon touchdown, seat transitions, and flight toggle.
 
+---
+
+### Log : 43
+**Title**: Architectural Sci-Fi Road Luminaires Along Curved Approach Walkway  
+**Description**: Designed and implemented high-performance procedural streetlights along the outer curb of the museum's curved approach road:
+- **Procedural Mast & Luminaire Design ([road-light.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/road-light.js))**:
+  - Engineered 11 architectural sci-fi light poles with flanged mounts, $3.2\text{m}$ tapered titanium masts (`#1e293b`), cantilever overhang arms, and downward-facing recessed LED diffuser panels.
+  - Placed along the outer curb waypoints following the exact roadway arc from touchdown ($Z = 11.50$), through the main $90^\circ$ curve, across the horizontal avenue, and around the entrance bend.
+- **Lighting & Atmospheric Transitions**:
+  - Downward point lights cast soft, warm circular light pools onto the dark asphalt pathway.
+  - Integrated with `setInsideTransition()`: luminaires transition from crisp cosmic blue (`#38bdf8`) in space orbit to warm golden gallery light (`#fde68a` / `#ffedd5`) during approach.
+  - Integrated with `setCinemaMode()`: streetlights softly dim when seated in the theatre while maintaining subtle outdoor ambiance.
+- **Physical Collision & Performance**:
+  - Mast posts registered in `fpController.addCollidableMeshes()`, preventing player clipping through lamp posts.
+  - Built with shared geometries and materials for single-pass WebGL batching, running at solid 60 FPS.
+
+---
+
+### Log : 44
+**Title**: Disable Mouse Scroll / Wheel Zoom in Orbit Mode  
+**Description**: Disabled mouse scroll and pinch zooming in OrbitControls as requested (`controls.enableZoom = false`), preventing accidental camera zooming during mouse navigation while preserving smooth orbital rotation and auto-rotation. Added canvas wheel event cancellation to avoid page scroll bounces.
+
+---
+
+### Log : 45
+**Title**: Recalibrate Road Lamp Waypoints Outside Asphalt Curve  
+**Description**: Adjusted the position of all 11 roadway luminaires around the perimeter curve to eliminate asphalt intrusion:
+- Relocated curve posts from $X = 14.60, Z = 31.80 \to X = 16.90, Z = 34.00$ and $X = 17.20, Z = 27.60 \to X = 19.30, Z = 28.20$, placing bases firmly on the outer white pavement between the road and golden railing.
+- Extended the cantilever luminaire arm from $1.05\text{m} \to 1.35\text{m}$, allowing the overhead head to reach gracefully over the curb while leaving the walking road completely unobstructed.
+
 
 
 
