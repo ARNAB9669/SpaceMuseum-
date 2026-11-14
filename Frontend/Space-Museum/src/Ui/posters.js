@@ -571,6 +571,12 @@ export class OuterWallPoster {
   }
 
   initGui() {
+    /*/ The outer wall poster coordinates and dimensions are finalized.
+        To re-open the live calibration GUI, add #gui to the URL in the browser /*/
+    if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_OUTER_POSTER) {
+      return;
+    }
+
     try {
       this.gui = new GUI({ title: '🖼️ Outer Wall Poster' });
       this.gui.domElement.style.position = 'fixed';

@@ -468,6 +468,56 @@
 2. **Correct Forward Facing Orientation (`Yaw: 90°`)**: Oriented `rotY: 90.0°` so the poster face points toward $+X$ directly facing approaching visitors, with the backing enclosure positioned behind against the concrete wall.
 3. **Interactive lil-gui Coexistence**: Retained the live `lil-gui` panel active on screen so the user can immediately observe the loaded artwork in full color and fine-tune if desired.
 
+---
+
+### Log : 32
+**Title**: NASA Space Apps Documentary Movie Theatre Implementation  
+**Description**: Fully ported and integrated the complete cinematic Movie Theatre auditorium from `/Experiments` into the designated west museum room behind the outer wall:
+- **Dedicated Theatre Subsystem ([theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js))**:
+  - Implemented `TheatreRoom` class accurately scaled and positioned inside the rectangular wing ($X \in [-1.87, 10.05], Z \in [16, 24]$):
+    - **Cinema Screen**: Mounted at $X = 2.75, Y = 0.85, Z = 18.36$ with dimensions $4.30\text{m} \times 2.40\text{m}$, enclosed in an architectural bezel frame with cyan perimeter LED backlight.
+    - **16:9 Dynamic Canvas Documentary**: Real-time $1280 \times 720$ canvas projection cycling through 4 NASA Space Apps documentary chapters (Opportunity/Spirit MER, Apollo LM Descent Stages, Curiosity/Perseverance/Ingenuity, Voyager Golden Record) with rotating 3D mathematical wireframe schematics, radar sweeps, audio visualizers, and mission telemetry stats.
+    - **3-Tier Stepped Risers**: Platforms stepping up towards rows 2 and 3 with glowing cyan LED edge strips.
+    - **15 Luxury Theatre Seats**: 3 rows $\times$ 5 seats loaded from `theatre-seat.glb` with rich crimson velvet and metallic hardware finishes, oriented facing the screen.
+    - **Cinematic Atmosphere & Lighting**: Warm golden wall sconces, dimmable ceiling canister downlights, acoustic charcoal blackout ceiling slab, velvet doorway light baffles, and dynamic flickering projector spotlight.
+- **First-Person POV & Seating Interactivity ([index.html](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/index.html) & [style.css](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/style.css))**:
+  - Implemented proximity-based seat detection with `[E]` key: sitting down snaps the camera to the luxury seat eye level, smoothly turns the view toward the screen, dims auditorium lights, and displays the `#cinema-hud` badge showing Row/Seat info. Pressing `[E]` or `[Space]` stands up and restores ambient lights.
+- **Real-Time lil-gui Calibration Panel**:
+  - Pinned `🎬 Movie Theatre Calibration` GUI with full 3-axis rotation (Pitch X, Yaw Y, Roll Z) and position for the cinema screen, master whole-auditorium room transform controls (X/Y/Z offsets and Pitch/Yaw/Roll rotations), lighting intensities, and a `[📋 Copy Theatre Config]` button.
+- **Main Pipeline Wiring ([main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js))**:
+  - Imported, instantiated, and wired `theatre.update(delta)` into the main render loop.
+
+---
+
+### Log : 33
+**Title**: Synchronized Auditorium Orientation & Screen-Locked Seating Architecture  
+**Description**: Refactored the Movie Theatre auditorium in `src/Ui/theatre.js` so that all 15 luxury theatre chairs, 3-tier stepped risers, projector lighting, wall sconces, and ceiling slab are mathematically constructed in a local coordinate frame locked to the screen:
+- **Screen-Locked Local Coordinate Frame ([theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js))**:
+  - The cinema screen sits at the local origin $(0, \text{elevation}, 0)$ facing $+Z$.
+  - All 15 luxury seats and 3 stepped platforms are generated along $+Z$ directly in front of the screen, facing local $-Z$ (straight at the screen).
+  - The cinema projector spotlight, ceiling downlights, and wall sconces are anchored in the same local frame.
+  - Rotating `yawY: 90.0°` or translating `posX, posY, posZ` automatically orients and moves the entire auditorium in unison — chairs, risers, projector, and ceiling stay 100% aligned with the screen without any manual re-alignment.
+- **Enhanced Interactive lil-gui Controls**:
+  - Pinned controls for master Position ($X, Y, Z$) and 3-axis Rotation (Pitch X, Yaw Y, Roll Z) at the root level.
+  - Dedicated sliders for Screen Elevation, Row Distance, Row Spacing, Seat Spacing, Seat Scale, and Lighting intensities with dynamic rebuild and one-click clipboard export (`[📋 Copy Theatre Config]`).
+
+---
+
+### Log : 34
+**Title**: Finalization of Movie Theatre Configuration & Roof Slab Removal  
+**Description**: Locked in the final user-calibrated transform and layout for the NASA Space Apps Documentary Movie Theatre in `src/Ui/theatre.js` and removed the ceiling roof slab per user request:
+- **Finalized Parameters ([theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js))**:
+  - **Screen Position**: $(-0.55, -2.00, 21.70)$ — mounted flush on the end wall.
+  - **Auditorium Rotation**: `Pitch: 0.0°, Yaw: 90.0°, Roll: 0.0°` — oriented along the room axis with chairs directly facing the screen.
+  - **Screen Dimensions & Elevation**: Width $3.90\text{m}$, Height $2.10\text{m}$, Elevation $1.00\text{m}$ above floor.
+  - **Seating & Riser Geometry**: Riser width $3.60\text{m}$, Row 1 distance $3.15\text{m}$, Row spacing $1.45\text{m}$, Step elevation gain $0.18\text{m}$, Seat scale $1.80$, Seat spacing $0.68\text{m}$ (3 rows $\times$ 5 seats = 15 luxury chairs).
+  - **Roof Removal**: Deleted the acoustic charcoal ceiling slab and overhead canister fixtures, providing an open, monumental vertical view up to the transparent biodome and cosmic starfield.
+- **Clean UI & Hidden Debug Panels**:
+  - The `lil-gui` panels for both the Movie Theatre and the Outer Wall Poster are now hidden during normal gameplay for a pristine, uncluttered museum view. They can be re-invoked at any time by appending `#gui` to the URL.
+
+
+
+
 
 
 

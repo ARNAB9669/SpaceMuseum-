@@ -9,6 +9,7 @@ import { FirstPersonController } from './Logic/AI/ME/nevigation.js';
 import { DirectionArrows } from './Ui/dirrection-arrow.js';
 import { FloorMapSelector } from './Logic/map-selector.js';
 import { WelcomeSign, OuterWallPoster } from './Ui/posters.js';
+import { TheatreRoom } from './Ui/theatre.js';
 
 /*/ Canvas & Rendering Setup /*/
 const canvas = document.getElementById('webgl-canvas');
@@ -74,6 +75,9 @@ const mapSelector = new FloorMapSelector(scene, camera, controls, fpController, 
 /*/ Wall Paintings, Signs & Surface Artworks /*/
 const welcomeSign = new WelcomeSign(scene);
 const outerWallPoster = new OuterWallPoster(scene);
+
+/*/ NASA Space Apps Documentary Movie Theatre /*/
+const theatre = new TheatreRoom(scene, camera, fpController);
 
 /*/ Museum Island 3D Model Reference /*/
 let museumIslandModel = null;
@@ -222,6 +226,7 @@ function animate(timestamp) {
   mapSelector.update(delta);
   welcomeSign.update(delta);
   outerWallPoster.update(delta);
+  theatre.update(delta);
 
   renderer.render(scene, camera);
 }
