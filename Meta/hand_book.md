@@ -690,6 +690,155 @@
 - **Sidewalk Elevation Calibration**: Calibrated the default elevation of all inner sidewalk and outer perimeter luminaires to $Y = -2.45\text{m}$, embedding the circular metal base flange $3\text{cm}$ into the white concrete platform ($Y = -2.42\text{m}$) to eliminate any micro-gaps or floating visual artifacts.
 - **Narrowed Raycast Height Filter**: Tuned `snapToGround()` vertical raycast threshold to strictly match the walkable sidewalk band ($Y \in [-2.60, -1.80]\text{m}$), preventing false positive ray hits against building cornices or ledges above $-1.80\text{m}$.
 
+---
+
+### Log : 49
+**Title**: Entrance Corridor Framed Photo Installation & Real-Time Calibration GUI  
+**Description**: Added the framed user artwork (`CV-M-ALM.png`) to the entrance corridor wall with an active, on-screen calibration GUI:
+- **Corridor Wall Poster Class (`EntranceCorridorPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bevel frame, optional backing plate, and animated neon LED trim.
+- **Initial Alignment**: Positioned squarely in the entrance corridor opening facing $+Z$ at $X = -7.68$, $Y = -0.30$, $Z = 17.50$, matching the user's camera viewpoint in `media_1794691848854_cc45f6ba.jpg`.
+- **Calibration GUI (`lil-gui`)**: Configured to display immediately on screen with full position ($X, Y, Z$), rotation ($X, Y, Z$), dimension ($W, H, \text{scale}$), and frame styling controls.
+- **One-Click Clipboard Export**: Includes `📋 Copy Final Coordinates` button in the GUI to instantly copy calibrated values and display an in-game sci-fi toast.
+
+---
+
+### Log : 50
+**Title**: Entrance Corridor Photo Permanent Coordinates & GUI Clean-up  
+**Description**: Permanently locked in the user-calibrated transform and frame aesthetics for the entrance corridor photo:
+- **Locked Parameters**:
+  - `Position`: $X = -13.10$, $Y = -0.88$, $Z = 20.62$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = 90.0^\circ$, $\text{Roll } Z = 0.0^\circ$ (flush on side wall facing along the corridor)
+  - `Dimensions & Scale`: Width $2.80\text{m}$, Height $2.22\text{m}$, Scale $0.60$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, slate frame color `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Defaulted calibration GUI behind `#gui` hash parameter / `window.DEBUG_CORRIDOR_POSTER` flag to keep the museum interface clean during standard walkthroughs while retaining easy debug accessibility.
+
+---
+
+### Log : 51
+**Title**: Display Refresh Rate Hardware Synchronization & Delta-Time Hardening  
+**Description**: Fully verified and hardened the core animation loop, perspective POV movement, and visual shaders across variable screen refresh rates (60Hz, 120Hz ProMotion, 144Hz+):
+- **Display V-Sync Synchronization**: Core `animate(timestamp)` loop is driven directly by browser `requestAnimationFrame()`, synchronizing execution to the hardware display refresh rate.
+- **High-Precision Delta Timing**: `timer.update(timestamp)` and `delta = Math.min(timer.getDelta(), 0.1)` calculate exact wall-clock frame duration in seconds, clamped to $100\text{ms}$ to prevent physics/collision tunneling during tab switching or background throttling.
+- **Mathematical Frame-Rate Independence**: Replaced discrete per-frame drag multipliers with exponential decay equations ($e^{-\lambda \cdot \Delta t}$) for both ground walking deceleration ($\lambda = 17.26$) and 3D drone flight glide ($\lambda = 11.9$), ensuring identical motion, momentum, and camera damping whether running at 30, 60, 120, or 240 FPS.
+
+---
+
+### Log : 52
+**Title**: Clock-Polled Animation Loop & Page Visibility Connection  
+**Description**: Fully confirmed and structured the animation loop to poll directly from the clock via `THREE.Timer`:
+- **Clock Polling**: Connected `timer.connect(document)` to hook into the Page Visibility API, ensuring clock updates pause automatically when tabs blur to prevent delta time surges.
+- **Pure Clock-Driven Animation**: All POV locomotion, physics deceleration, procedural head-bobs, audio triggers, and shader modulations poll their simulation step from `timer.getDelta()`, entirely decoupling game progression and animation rates from the screen frame rate.
+
+---
+
+### Log : 53
+**Title**: Apollo 15 Lunar Module Artwork Installation & Calibration GUI  
+**Description**: Added the second framed artwork (`CV-M-A15-LM.png`) to the museum walls with real-time on-screen `lil-gui` calibration controls:
+- **Apollo 15 Poster Class (`Apollo15Poster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and neon LED accent trim.
+- **Initial Placement**: Mounted along the corridor wall at $X = -13.10$, $Y = -0.88$, $Z = 17.50$, rotation $\text{Yaw } Y = 90^\circ$, matching the native $1000 \times 954$ aspect ratio ($2.10\text{m} \times 2.00\text{m}$, scale $0.60$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Apollo 15 Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Clipboard Output**: Includes `📋 Copy Final Coordinates` button formatting `APOLLO15_POSTER_CONFIG` with an in-game sci-fi toast.
+
+---
+
+### Log : 54
+**Title**: Reset to Defaults Button in Poster Calibration GUIs  
+**Description**: Added a dedicated `🔄 Reset to Defaults` button to the poster calibration GUIs:
+- **Default State Caching**: Cached `this.defaultParams` upon instantiation for both `Apollo15Poster` and `EntranceCorridorPoster`.
+- **One-Click Reversion**: Clicking `🔄 Reset to Defaults` resets all position, rotation, dimension, and frame parameters, refreshes all `lil-gui` slider displays via `gui.controllersRecursive()`, rebuilds the 3D geometry and frame, and applies the original transforms.
+- **Amber Sci-Fi Toast**: Displays an in-game confirmation toast (`🔄 Poster reset to default coordinates!`) with gold/amber glow styling.
+
+---
+
+### Log : 55
+**Title**: Apollo 15 Poster Permanent Placement & GUI Clean-up  
+**Description**: Permanently locked in the user-calibrated transform and aesthetics for the Apollo 15 Lunar Module artwork:
+- **Locked Parameters**:
+  - `Position`: $X = -13.10$, $Y = -0.88$, $Z = 15.00$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = 90.0^\circ$, $\text{Roll } Z = 0.0^\circ$ (flush along the corridor side wall)
+  - `Dimensions & Scale`: Width $2.10\text{m}$, Height $2.00\text{m}$, Scale $0.60$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, slate frame `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_APOLLO15_POSTER` to maintain a distraction-free museum visit.
+
+---
+
+### Log : 56
+**Title**: Apollo 12 Lunar Module Artwork Installation & Calibration GUI  
+**Description**: Added the third framed artwork (`CV-M-A12LM.png`) with live on-screen `lil-gui` calibration controls:
+- **Apollo 12 Poster Class (`Apollo12Poster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and neon LED accent trim.
+- **Initial Placement**: Mounted along the corridor wall at $X = -13.10$, $Y = -0.88$, $Z = 10.00$, rotation $\text{Yaw } Y = 90^\circ$, matching the native $1826 \times 1692$ aspect ratio ($2.16\text{m} \times 2.00\text{m}$, scale $0.60$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Apollo 12 Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `APOLLO12_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 57
+**Title**: Apollo 12 Poster Permanent Coordinates & GUI Clean-up  
+**Description**: Permanently locked in the user-confirmed coordinates and framing aesthetics for the Apollo 12 Lunar Module artwork:
+- **Locked Parameters**:
+  - `Position`: $X = -13.10$, $Y = -0.88$, $Z = 10.00$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = 90.0^\circ$, $\text{Roll } Z = 0.0^\circ$ (flush along the corridor side wall)
+  - `Dimensions & Scale`: Width $2.16\text{m}$, Height $2.00\text{m}$, Scale $0.60$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, slate frame `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_APOLLO12_POSTER` to maintain a distraction-free museum visit.
+
+---
+
+### Log : 58
+**Title**: Surveyor 3 Lunar Probe Artwork Installation & Calibration GUI  
+**Description**: Added the fourth framed artwork (`CV-M-SRV3.png`) with real-time on-screen `lil-gui` calibration controls:
+- **Surveyor 3 Poster Class (`Surveyor3Poster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and neon LED accent trim.
+- **Initial Placement**: Mounted along the corridor wall past Apollo 12 at $X = -13.10$, $Y = -0.88$, $Z = 5.00$, rotation $\text{Yaw } Y = 90^\circ$, matching the native $1842 \times 1778$ aspect ratio ($2.07\text{m} \times 2.00\text{m}$, scale $0.60$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Surveyor 3 Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `SURVEYOR3_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 59
+**Title**: Surveyor 3 Poster Permanent Placement on Opposite Wall & GUI Clean-up  
+**Description**: Permanently locked in the user-calibrated transform and frame aesthetics for the Surveyor 3 artwork on the opposite corridor wall:
+- **Locked Parameters**:
+  - `Position`: $X = -10.38$, $Y = -0.88$, $Z = 12.78$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = -90.0^\circ$, $\text{Roll } Z = 0.0^\circ$ (flush along the opposite corridor wall facing inward)
+  - `Dimensions & Scale`: Width $2.07\text{m}$, Height $2.00\text{m}$, Scale $0.60$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, slate frame `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_SURVEYOR3_POSTER` for a clean presentation.
+
+---
+
+### Log : 60
+**Title**: Mars Pathfinder Sojourner Rover Artwork Installation & Calibration GUI  
+**Description**: Added the panoramic fifth framed artwork (`CV-Ma-SojournerRover.png`) with real-time on-screen `lil-gui` calibration controls:
+- **Sojourner Rover Poster Class (`SojournerRoverPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and neon LED accent trim.
+- **Initial Placement**: Mounted along the corridor wall opposite side at $X = -10.38$, $Y = -0.88$, $Z = 17.50$, rotation $\text{Yaw } Y = -90^\circ$, matching the native $2834 \times 1076$ aspect ratio ($3.16\text{m} \times 1.20\text{m}$, scale $0.60$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Sojourner Rover Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `SOJOURNER_ROVER_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 61
+**Title**: Sojourner Rover Poster Permanent Placement & GUI Clean-up  
+**Description**: Permanently locked in the user-calibrated transform and frame aesthetics for the Mars Pathfinder Sojourner Rover artwork:
+- **Locked Parameters**:
+  - `Position`: $X = -10.38$, $Y = -0.98$, $Z = 17.50$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = -90.0^\circ$, $\text{Roll } Z = 0.0^\circ$ (flush along the opposite corridor wall)
+  - `Dimensions & Scale`: Width $3.16\text{m}$, Height $1.36\text{m}$, Scale $0.60$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, slate frame `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_SOJOURNER_ROVER_POSTER` for a clean presentation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

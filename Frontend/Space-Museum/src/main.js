@@ -9,7 +9,7 @@ import { FirstPersonController } from './Logic/AI/ME/nevigation.js';
 import { DirectionArrows } from './Ui/dirrection-arrow.js';
 import { RoadLights } from './Ui/road-light.js';
 import { FloorMapSelector } from './Logic/map-selector.js';
-import { WelcomeSign, OuterWallPoster } from './Ui/posters.js';
+import { WelcomeSign, OuterWallPoster, EntranceCorridorPoster, Apollo15Poster, Apollo12Poster, Surveyor3Poster, SojournerRoverPoster } from './Ui/posters.js';
 import { TheatreRoom } from './Ui/theatre.js';
 
 /*/ Canvas & Rendering Setup /*/
@@ -56,8 +56,9 @@ canvas.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
 /*/ Initialize Procedural Deep Space Environment /*/
 const spaceEnv = new SpaceEnvironment(scene);
 
-/*/ Precision High-Performance Core Timer /*/
+/*/ Precision High-Performance Core Clock & Timer (Decoupled from screen refresh rate) /*/
 const timer = new THREE.Timer();
+timer.connect(document);
 
 /*/ Transparent White Biodome Covering Museum Island /*/
 const biodome = new Biodome(scene);
@@ -78,6 +79,11 @@ const mapSelector = new FloorMapSelector(scene, camera, controls, fpController, 
 /*/ Wall Paintings, Signs & Surface Artworks /*/
 const welcomeSign = new WelcomeSign(scene);
 const outerWallPoster = new OuterWallPoster(scene);
+const corridorPoster = new EntranceCorridorPoster(scene);
+const apollo15Poster = new Apollo15Poster(scene);
+const apollo12Poster = new Apollo12Poster(scene);
+const surveyor3Poster = new Surveyor3Poster(scene);
+const sojournerRoverPoster = new SojournerRoverPoster(scene);
 
 /*/ NASA Space Apps Documentary Movie Theatre /*/
 const theatre = new TheatreRoom(scene, camera, fpController);
@@ -248,13 +254,13 @@ window.addEventListener('resize', onWindowResize);
 let currentAtmosphereFactor = 0.0;
 let currentCinemaDarkFactor = 0.0;
 
-/*/ Main Render & Animation Loop /*/
+/*/ Main Render & Animation Loop: Polled from Clock via THREE.Timer /*/
 function animate(timestamp) {
   requestAnimationFrame(animate);
 
-  /*/ Update Timer & High-Precision Delta /*/
+  /*/ Poll Clock via THREE.Timer for Real-World Elapsed Time Delta (Decoupled from Screen Frame Rate) /*/
   timer.update(timestamp);
-  const delta = timer.getDelta();
+  const delta = Math.min(timer.getDelta(), 0.1);
 
   /*/ Update Intro Cutscene, Controls, First Person & Biodome /*/
   intro.update(delta);
@@ -294,6 +300,11 @@ function animate(timestamp) {
   mapSelector.update(delta);
   welcomeSign.update(delta);
   outerWallPoster.update(delta);
+  corridorPoster.update(delta);
+  apollo15Poster.update(delta);
+  apollo12Poster.update(delta);
+  surveyor3Poster.update(delta);
+  sojournerRoverPoster.update(delta);
   theatre.update(delta);
 
   /*/ Check proximity to cinema seats when in First-Person POV /*/

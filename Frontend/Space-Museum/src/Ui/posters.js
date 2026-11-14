@@ -685,3 +685,1709 @@ export class OuterWallPoster {
     }
   }
 }
+
+/*/ -------------------------------------------------------------
+    Entrance Corridor Poster / Wall Painting Frame
+    Displays the user-specified framed artwork (CV-M-ALM.png) on the
+    back wall of the entrance corridor with a 3D bezel frame and
+    real-time lil-gui calibration for perfect user alignment.
+    ------------------------------------------------------------- /*/
+export class EntranceCorridorPoster {
+  constructor(scene) {
+    this.scene = scene;
+    this.group = new THREE.Group();
+    this.group.name = 'EntranceCorridorPoster';
+    this.glowTime = 0;
+
+    /*/ Final Calibrated Parameters (Calibrated by user via GUI) /*/
+    this.params = {
+      posX: -13.10,
+      posY: -0.88,
+      posZ: 20.62,
+      rotX: 0.0,
+      rotY: 90.0,
+      rotZ: 0.0,
+      width: 2.80,
+      height: 2.22,
+      scale: 0.60,
+      visible: true,
+      opacity: 1.0,
+      toneMapped: false,
+
+      /*/ Frame Properties /*/
+      frameVisible: true,
+      frameThickness: 0.12,
+      frameDepth: 0.18,
+      frameColor: '#1e293b',
+      frameMetalness: 0.85,
+      frameRoughness: 0.25,
+      showBacking: true,
+      showGlowTrim: true,
+      glowColor: '#00b3ff',
+
+      /*/ Actions /*/
+      copyToClipboard: () => this.copyValues(),
+      resetToDefaults: () => this.resetDefaults()
+    };
+    this.defaultParams = Object.assign({}, this.params);
+
+    this.initPoster();
+    this.applyTransforms();
+    this.scene.add(this.group);
+    this.initGui();
+  }
+
+  initPoster() {
+    const loader = new THREE.TextureLoader();
+
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+      transparent: false,
+      opacity: this.params.opacity,
+      toneMapped: this.params.toneMapped
+    });
+
+    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.position.set(0, 0, 0.005);
+    this.group.add(this.mesh);
+
+    /*/ Load high-resolution user-uploaded photo texture /*/
+    const onTextureLoaded = (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      this.material.map = tex;
+      this.material.needsUpdate = true;
+    };
+
+    loader.load(
+      '/CV-M-ALM.png',
+      onTextureLoaded,
+      undefined,
+      (err) => {
+        console.warn('[EntranceCorridorPoster] Error loading /CV-M-ALM.png, trying fallback:', err);
+        loader.load('/models/CV-M-ALM.png', onTextureLoaded);
+      }
+    );
+
+    this.frameGroup = new THREE.Group();
+    this.frameGroup.name = 'EntranceCorridorPosterFrame';
+    this.group.add(this.frameGroup);
+
+    this.rebuildFrame();
+  }
+
+  rebuildFrame() {
+    /*/ Clear previous frame parts /*/
+    while (this.frameGroup.children.length > 0) {
+      const child = this.frameGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+      this.frameGroup.remove(child);
+    }
+
+    if (!this.params.frameVisible) return;
+
+    const W = this.params.width;
+    const H = this.params.height;
+    const T = this.params.frameThickness;
+    const D = this.params.frameDepth;
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: this.params.frameColor,
+      metalness: this.params.frameMetalness,
+      roughness: this.params.frameRoughness
+    });
+
+    /*/ Top Bar /*/
+    const topGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const topMesh = new THREE.Mesh(topGeo, frameMat);
+    topMesh.position.set(0, H / 2 + T / 2, 0);
+    this.frameGroup.add(topMesh);
+
+    /*/ Bottom Bar /*/
+    const bottomGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const bottomMesh = new THREE.Mesh(bottomGeo, frameMat);
+    bottomMesh.position.set(0, -H / 2 - T / 2, 0);
+    this.frameGroup.add(bottomMesh);
+
+    /*/ Left Bar /*/
+    const leftGeo = new THREE.BoxGeometry(T, H, D);
+    const leftMesh = new THREE.Mesh(leftGeo, frameMat);
+    leftMesh.position.set(-W / 2 - T / 2, 0, 0);
+    this.frameGroup.add(leftMesh);
+
+    /*/ Right Bar /*/
+    const rightGeo = new THREE.BoxGeometry(T, H, D);
+    const rightMesh = new THREE.Mesh(rightGeo, frameMat);
+    rightMesh.position.set(W / 2 + T / 2, 0, 0);
+    this.frameGroup.add(rightMesh);
+
+    /*/ Backing Plate /*/
+    if (this.params.showBacking) {
+      const backGeo = new THREE.BoxGeometry(W + 2 * T, H + 2 * T, 0.02);
+      const backMesh = new THREE.Mesh(backGeo, frameMat);
+      backMesh.position.set(0, 0, -D / 2);
+      this.frameGroup.add(backMesh);
+    }
+
+    /*/ Neon LED Trim Glow /*/
+    if (this.params.showGlowTrim) {
+      const trimGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H));
+      this.trimMat = new THREE.LineBasicMaterial({
+        color: this.params.glowColor,
+        transparent: true,
+        opacity: 0.85
+      });
+      const trimLine = new THREE.LineSegments(trimGeo, this.trimMat);
+      trimLine.position.set(0, 0, D / 2 + 0.003);
+      this.frameGroup.add(trimLine);
+    }
+  }
+
+  rebuildGeometry() {
+    if (this.geometry) this.geometry.dispose();
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.mesh.geometry = this.geometry;
+
+    this.rebuildFrame();
+  }
+
+  applyTransforms() {
+    this.group.position.set(this.params.posX, this.params.posY, this.params.posZ);
+    this.group.rotation.set(
+      THREE.MathUtils.degToRad(this.params.rotX),
+      THREE.MathUtils.degToRad(this.params.rotY),
+      THREE.MathUtils.degToRad(this.params.rotZ)
+    );
+    this.group.scale.setScalar(this.params.scale);
+    this.mesh.visible = this.params.visible;
+    if (this.frameGroup) this.frameGroup.visible = this.params.frameVisible && this.params.visible;
+    this.material.opacity = this.params.opacity;
+    this.material.toneMapped = this.params.toneMapped;
+    this.material.needsUpdate = true;
+  }
+
+  initGui() {
+    /*/ The corridor poster coordinates and dimensions are finalized.
+        To re-open the live calibration GUI, add #gui to the URL in the browser /*/
+    if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_CORRIDOR_POSTER) {
+      return;
+    }
+
+    try {
+      this.gui = new GUI({ title: '🖼️ Corridor Wall Photo Calibration' });
+      this.gui.domElement.style.position = 'fixed';
+      this.gui.domElement.style.top = '20px';
+      this.gui.domElement.style.right = '20px';
+      this.gui.domElement.style.zIndex = '999999';
+
+      /*/ Prevent canvas pointer lock from interfering with slider drag /*/
+      ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((evt) => {
+        this.gui.domElement.addEventListener(evt, (e) => e.stopPropagation());
+      });
+
+      const posFolder = this.gui.addFolder('📍 Position (X, Y, Z)');
+      posFolder.add(this.params, 'posX', -25, 25, 0.02).name('X (Left/Right)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posY', -5, 10, 0.02).name('Y (Height)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posZ', 5, 35, 0.02).name('Z (Depth)').onChange(() => this.applyTransforms());
+      posFolder.open();
+
+      const rotFolder = this.gui.addFolder('🔄 Rotation (Degrees)');
+      rotFolder.add(this.params, 'rotX', -180, 180, 0.5).name('Pitch X').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotY', -180, 180, 0.5).name('Yaw Y').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotZ', -180, 180, 0.5).name('Roll Z').onChange(() => this.applyTransforms());
+      rotFolder.open();
+
+      const sizeFolder = this.gui.addFolder('📐 Dimensions & Scale');
+      sizeFolder.add(this.params, 'width', 0.5, 12, 0.02).name('Width (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'height', 0.5, 10, 0.02).name('Height (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'scale', 0.1, 4.0, 0.02).name('Scale').onChange(() => this.applyTransforms());
+      sizeFolder.open();
+
+      const frameFolder = this.gui.addFolder('🖼️ 3D Frame Options');
+      frameFolder.add(this.params, 'frameVisible').name('Frame Active').onChange(() => {
+        this.rebuildFrame();
+        this.applyTransforms();
+      });
+      frameFolder.add(this.params, 'frameThickness', 0.01, 0.25, 0.01).name('Thickness (m)').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'frameDepth', 0.01, 0.25, 0.01).name('Depth (m)').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'frameColor').name('Frame Color').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'showGlowTrim').name('LED Glow Trim').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'glowColor').name('LED Color').onChange(() => this.rebuildFrame());
+
+      this.gui.add(this.params, 'copyToClipboard').name('📋 Copy Final Coordinates');
+      this.gui.add(this.params, 'resetToDefaults').name('🔄 Reset to Defaults');
+    } catch (err) {
+      console.warn('[EntranceCorridorPoster] Failed to initialize lil-gui:', err);
+    }
+  }
+
+  resetDefaults() {
+    Object.assign(this.params, this.defaultParams);
+    if (this.gui) {
+      if (typeof this.gui.reset === 'function') {
+        this.gui.reset();
+      } else if (typeof this.gui.controllersRecursive === 'function') {
+        this.gui.controllersRecursive().forEach((c) => c.updateDisplay());
+      }
+    }
+    this.rebuildGeometry();
+    this.applyTransforms();
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #f59e0b';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#fbbf24';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(245, 158, 11, 0.35)';
+    toast.innerHTML = '🔄 <b>Corridor Photo reset to default coordinates!</b>';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  copyValues() {
+    const formatted = `CORRIDOR_POSTER_CONFIG = {
+  posX: ${this.params.posX.toFixed(2)},
+  posY: ${this.params.posY.toFixed(2)},
+  posZ: ${this.params.posZ.toFixed(2)},
+  rotX: ${this.params.rotX.toFixed(1)},
+  rotY: ${this.params.rotY.toFixed(1)},
+  rotZ: ${this.params.rotZ.toFixed(1)},
+  width: ${this.params.width.toFixed(2)},
+  height: ${this.params.height.toFixed(2)},
+  scale: ${this.params.scale.toFixed(2)},
+  frameThickness: ${this.params.frameThickness.toFixed(2)},
+  frameDepth: ${this.params.frameDepth.toFixed(2)},
+  frameColor: '${this.params.frameColor}',
+  showGlowTrim: ${this.params.showGlowTrim},
+  glowColor: '${this.params.glowColor}'
+};`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formatted).catch(() => {});
+    }
+    console.log('[EntranceCorridorPoster] Calibrated Configuration:\n', formatted);
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #38bdf8';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#38bdf8';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(56, 189, 248, 0.35)';
+    toast.innerHTML = '📋 <b>Corridor Photo coordinates copied!</b> Paste in chat.';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  update(delta) {
+    if (this.trimMat && this.params.showGlowTrim) {
+      this.glowTime += delta * 2.2;
+      this.trimMat.opacity = 0.55 + 0.35 * Math.sin(this.glowTime);
+    }
+  }
+}
+
+/*/ -------------------------------------------------------------
+    Apollo 15 Lunar Module Artwork (CV-M-A15-LM.png)
+    Displays the Apollo 15 Lunar Module artwork with 3D bezel frame
+    and real-time lil-gui calibration for user placement.
+    ------------------------------------------------------------- /*/
+export class Apollo15Poster {
+  constructor(scene) {
+    this.scene = scene;
+    this.group = new THREE.Group();
+    this.group.name = 'Apollo15Poster';
+    this.glowTime = 0;
+
+    /*/ Final Calibrated Parameters (Calibrated by user via GUI) /*/
+    this.params = {
+      posX: -13.10,
+      posY: -0.88,
+      posZ: 15.00,
+      rotX: 0.0,
+      rotY: 90.0,
+      rotZ: 0.0,
+      width: 2.10,
+      height: 2.00,
+      scale: 0.60,
+      visible: true,
+      opacity: 1.0,
+      toneMapped: false,
+
+      /*/ Frame Properties /*/
+      frameVisible: true,
+      frameThickness: 0.12,
+      frameDepth: 0.18,
+      frameColor: '#1e293b',
+      frameMetalness: 0.85,
+      frameRoughness: 0.25,
+      showBacking: true,
+      showGlowTrim: true,
+      glowColor: '#00b3ff',
+
+      /*/ Actions /*/
+      copyToClipboard: () => this.copyValues(),
+      resetToDefaults: () => this.resetDefaults()
+    };
+    this.defaultParams = Object.assign({}, this.params);
+
+    this.initPoster();
+    this.applyTransforms();
+    this.scene.add(this.group);
+    this.initGui();
+  }
+
+  initPoster() {
+    const loader = new THREE.TextureLoader();
+
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+      transparent: false,
+      opacity: this.params.opacity,
+      toneMapped: this.params.toneMapped
+    });
+
+    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.position.set(0, 0, 0.005);
+    this.group.add(this.mesh);
+
+    /*/ Load high-resolution Apollo 15 LM artwork texture /*/
+    const onTextureLoaded = (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      this.material.map = tex;
+      this.material.needsUpdate = true;
+    };
+
+    loader.load(
+      '/CV-M-A15-LM.png',
+      onTextureLoaded,
+      undefined,
+      (err) => {
+        console.warn('[Apollo15Poster] Error loading /CV-M-A15-LM.png, trying fallback:', err);
+        loader.load('/models/CV-M-A15-LM.png', onTextureLoaded);
+      }
+    );
+
+    this.frameGroup = new THREE.Group();
+    this.frameGroup.name = 'Apollo15PosterFrame';
+    this.group.add(this.frameGroup);
+
+    this.rebuildFrame();
+  }
+
+  rebuildFrame() {
+    /*/ Clear previous frame parts /*/
+    while (this.frameGroup.children.length > 0) {
+      const child = this.frameGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+      this.frameGroup.remove(child);
+    }
+
+    if (!this.params.frameVisible) return;
+
+    const W = this.params.width;
+    const H = this.params.height;
+    const T = this.params.frameThickness;
+    const D = this.params.frameDepth;
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: this.params.frameColor,
+      metalness: this.params.frameMetalness,
+      roughness: this.params.frameRoughness
+    });
+
+    /*/ Top Bar /*/
+    const topGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const topMesh = new THREE.Mesh(topGeo, frameMat);
+    topMesh.position.set(0, H / 2 + T / 2, 0);
+    this.frameGroup.add(topMesh);
+
+    /*/ Bottom Bar /*/
+    const bottomGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const bottomMesh = new THREE.Mesh(bottomGeo, frameMat);
+    bottomMesh.position.set(0, -H / 2 - T / 2, 0);
+    this.frameGroup.add(bottomMesh);
+
+    /*/ Left Bar /*/
+    const leftGeo = new THREE.BoxGeometry(T, H, D);
+    const leftMesh = new THREE.Mesh(leftGeo, frameMat);
+    leftMesh.position.set(-W / 2 - T / 2, 0, 0);
+    this.frameGroup.add(leftMesh);
+
+    /*/ Right Bar /*/
+    const rightGeo = new THREE.BoxGeometry(T, H, D);
+    const rightMesh = new THREE.Mesh(rightGeo, frameMat);
+    rightMesh.position.set(W / 2 + T / 2, 0, 0);
+    this.frameGroup.add(rightMesh);
+
+    /*/ Backing Plate /*/
+    if (this.params.showBacking) {
+      const backGeo = new THREE.BoxGeometry(W + 2 * T, H + 2 * T, 0.02);
+      const backMesh = new THREE.Mesh(backGeo, frameMat);
+      backMesh.position.set(0, 0, -D / 2);
+      this.frameGroup.add(backMesh);
+    }
+
+    /*/ Neon LED Trim Glow /*/
+    if (this.params.showGlowTrim) {
+      const trimGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H));
+      this.trimMat = new THREE.LineBasicMaterial({
+        color: this.params.glowColor,
+        transparent: true,
+        opacity: 0.85
+      });
+      const trimLine = new THREE.LineSegments(trimGeo, this.trimMat);
+      trimLine.position.set(0, 0, D / 2 + 0.003);
+      this.frameGroup.add(trimLine);
+    }
+  }
+
+  rebuildGeometry() {
+    if (this.geometry) this.geometry.dispose();
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.mesh.geometry = this.geometry;
+
+    this.rebuildFrame();
+  }
+
+  applyTransforms() {
+    this.group.position.set(this.params.posX, this.params.posY, this.params.posZ);
+    this.group.rotation.set(
+      THREE.MathUtils.degToRad(this.params.rotX),
+      THREE.MathUtils.degToRad(this.params.rotY),
+      THREE.MathUtils.degToRad(this.params.rotZ)
+    );
+    this.group.scale.setScalar(this.params.scale);
+    this.mesh.visible = this.params.visible;
+    if (this.frameGroup) this.frameGroup.visible = this.params.frameVisible && this.params.visible;
+    this.material.opacity = this.params.opacity;
+    this.material.toneMapped = this.params.toneMapped;
+    this.material.needsUpdate = true;
+  }
+
+  initGui() {
+    /*/ The Apollo 15 poster coordinates and dimensions are finalized.
+        To re-open the live calibration GUI, add #gui to the URL in browser /*/
+    if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_APOLLO15_POSTER) {
+      return;
+    }
+
+    try {
+      this.gui = new GUI({ title: '🖼️ Apollo 15 Poster Calibration' });
+      this.gui.domElement.style.position = 'fixed';
+      this.gui.domElement.style.top = '20px';
+      this.gui.domElement.style.right = '20px';
+      this.gui.domElement.style.zIndex = '999999';
+
+      /*/ Prevent canvas pointer lock from interfering with slider drag /*/
+      ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((evt) => {
+        this.gui.domElement.addEventListener(evt, (e) => e.stopPropagation());
+      });
+
+      const posFolder = this.gui.addFolder('📍 Position (X, Y, Z)');
+      posFolder.add(this.params, 'posX', -35, 35, 0.02).name('X (Left/Right)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posY', -5, 15, 0.02).name('Y (Height)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posZ', -10, 45, 0.02).name('Z (Depth)').onChange(() => this.applyTransforms());
+      posFolder.open();
+
+      const rotFolder = this.gui.addFolder('🔄 Rotation (Degrees)');
+      rotFolder.add(this.params, 'rotX', -180, 180, 0.5).name('Pitch X').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotY', -180, 180, 0.5).name('Yaw Y').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotZ', -180, 180, 0.5).name('Roll Z').onChange(() => this.applyTransforms());
+      rotFolder.open();
+
+      const sizeFolder = this.gui.addFolder('📐 Dimensions & Scale');
+      sizeFolder.add(this.params, 'width', 0.5, 12, 0.02).name('Width (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'height', 0.5, 10, 0.02).name('Height (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'scale', 0.1, 4.0, 0.02).name('Scale').onChange(() => this.applyTransforms());
+      sizeFolder.open();
+
+      const frameFolder = this.gui.addFolder('🖼️ 3D Frame Options');
+      frameFolder.add(this.params, 'frameVisible').name('Frame Active').onChange(() => {
+        this.rebuildFrame();
+        this.applyTransforms();
+      });
+      frameFolder.add(this.params, 'frameThickness', 0.01, 0.25, 0.01).name('Thickness (m)').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'frameDepth', 0.01, 0.25, 0.01).name('Depth (m)').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'frameColor').name('Frame Color').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'showGlowTrim').name('LED Glow Trim').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'glowColor').name('LED Color').onChange(() => this.rebuildFrame());
+
+      this.gui.add(this.params, 'copyToClipboard').name('📋 Copy Final Coordinates');
+      this.gui.add(this.params, 'resetToDefaults').name('🔄 Reset to Defaults');
+    } catch (err) {
+      console.warn('[Apollo15Poster] Failed to initialize lil-gui:', err);
+    }
+  }
+
+  resetDefaults() {
+    Object.assign(this.params, this.defaultParams);
+    if (this.gui) {
+      if (typeof this.gui.reset === 'function') {
+        this.gui.reset();
+      } else if (typeof this.gui.controllersRecursive === 'function') {
+        this.gui.controllersRecursive().forEach((c) => c.updateDisplay());
+      }
+    }
+    this.rebuildGeometry();
+    this.applyTransforms();
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #f59e0b';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#fbbf24';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(245, 158, 11, 0.35)';
+    toast.innerHTML = '🔄 <b>Apollo 15 Poster reset to default coordinates!</b>';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  copyValues() {
+    const formatted = `APOLLO15_POSTER_CONFIG = {
+  posX: ${this.params.posX.toFixed(2)},
+  posY: ${this.params.posY.toFixed(2)},
+  posZ: ${this.params.posZ.toFixed(2)},
+  rotX: ${this.params.rotX.toFixed(1)},
+  rotY: ${this.params.rotY.toFixed(1)},
+  rotZ: ${this.params.rotZ.toFixed(1)},
+  width: ${this.params.width.toFixed(2)},
+  height: ${this.params.height.toFixed(2)},
+  scale: ${this.params.scale.toFixed(2)},
+  frameThickness: ${this.params.frameThickness.toFixed(2)},
+  frameDepth: ${this.params.frameDepth.toFixed(2)},
+  frameColor: '${this.params.frameColor}',
+  showGlowTrim: ${this.params.showGlowTrim},
+  glowColor: '${this.params.glowColor}'
+};`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formatted).catch(() => {});
+    }
+    console.log('[Apollo15Poster] Calibrated Configuration:\n', formatted);
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #38bdf8';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#38bdf8';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(56, 189, 248, 0.35)';
+    toast.innerHTML = '📋 <b>Apollo 15 Poster coordinates copied!</b> Paste in chat.';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  update(delta) {
+    if (this.trimMat && this.params.showGlowTrim) {
+      this.glowTime += delta * 2.2;
+      this.trimMat.opacity = 0.55 + 0.35 * Math.sin(this.glowTime);
+    }
+  }
+}
+
+/*/ -------------------------------------------------------------
+    Apollo 12 Lunar Module Artwork (CV-M-A12LM.png)
+    Displays the Apollo 12 Lunar Module artwork with 3D bezel frame
+    and real-time lil-gui calibration for user placement.
+    ------------------------------------------------------------- /*/
+export class Apollo12Poster {
+  constructor(scene) {
+    this.scene = scene;
+    this.group = new THREE.Group();
+    this.group.name = 'Apollo12Poster';
+    this.glowTime = 0;
+
+    /*/ Final Calibrated Parameters (Calibrated by user via GUI) /*/
+    this.params = {
+      posX: -13.10,
+      posY: -0.88,
+      posZ: 10.00,
+      rotX: 0.0,
+      rotY: 90.0,
+      rotZ: 0.0,
+      width: 2.16,
+      height: 2.00,
+      scale: 0.60,
+      visible: true,
+      opacity: 1.0,
+      toneMapped: false,
+
+      /*/ Frame Properties /*/
+      frameVisible: true,
+      frameThickness: 0.12,
+      frameDepth: 0.18,
+      frameColor: '#1e293b',
+      frameMetalness: 0.85,
+      frameRoughness: 0.25,
+      showBacking: true,
+      showGlowTrim: true,
+      glowColor: '#00b3ff',
+
+      /*/ Actions /*/
+      copyToClipboard: () => this.copyValues(),
+      resetToDefaults: () => this.resetDefaults()
+    };
+    this.defaultParams = Object.assign({}, this.params);
+
+    this.initPoster();
+    this.applyTransforms();
+    this.scene.add(this.group);
+    this.initGui();
+  }
+
+  initPoster() {
+    const loader = new THREE.TextureLoader();
+
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+      transparent: false,
+      opacity: this.params.opacity,
+      toneMapped: this.params.toneMapped
+    });
+
+    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.position.set(0, 0, 0.005);
+    this.group.add(this.mesh);
+
+    /*/ Load high-resolution Apollo 12 LM artwork texture /*/
+    const onTextureLoaded = (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      this.material.map = tex;
+      this.material.needsUpdate = true;
+    };
+
+    loader.load(
+      '/CV-M-A12LM.png',
+      onTextureLoaded,
+      undefined,
+      (err) => {
+        console.warn('[Apollo12Poster] Error loading /CV-M-A12LM.png, trying fallback:', err);
+        loader.load('/models/CV-M-A12LM.png', onTextureLoaded);
+      }
+    );
+
+    this.frameGroup = new THREE.Group();
+    this.frameGroup.name = 'Apollo12PosterFrame';
+    this.group.add(this.frameGroup);
+
+    this.rebuildFrame();
+  }
+
+  rebuildFrame() {
+    /*/ Clear previous frame parts /*/
+    while (this.frameGroup.children.length > 0) {
+      const child = this.frameGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+      this.frameGroup.remove(child);
+    }
+
+    if (!this.params.frameVisible) return;
+
+    const W = this.params.width;
+    const H = this.params.height;
+    const T = this.params.frameThickness;
+    const D = this.params.frameDepth;
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: this.params.frameColor,
+      metalness: this.params.frameMetalness,
+      roughness: this.params.frameRoughness
+    });
+
+    /*/ Top Bar /*/
+    const topGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const topMesh = new THREE.Mesh(topGeo, frameMat);
+    topMesh.position.set(0, H / 2 + T / 2, 0);
+    this.frameGroup.add(topMesh);
+
+    /*/ Bottom Bar /*/
+    const bottomGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const bottomMesh = new THREE.Mesh(bottomGeo, frameMat);
+    bottomMesh.position.set(0, -H / 2 - T / 2, 0);
+    this.frameGroup.add(bottomMesh);
+
+    /*/ Left Bar /*/
+    const leftGeo = new THREE.BoxGeometry(T, H, D);
+    const leftMesh = new THREE.Mesh(leftGeo, frameMat);
+    leftMesh.position.set(-W / 2 - T / 2, 0, 0);
+    this.frameGroup.add(leftMesh);
+
+    /*/ Right Bar /*/
+    const rightGeo = new THREE.BoxGeometry(T, H, D);
+    const rightMesh = new THREE.Mesh(rightGeo, frameMat);
+    rightMesh.position.set(W / 2 + T / 2, 0, 0);
+    this.frameGroup.add(rightMesh);
+
+    /*/ Backing Plate /*/
+    if (this.params.showBacking) {
+      const backGeo = new THREE.BoxGeometry(W + 2 * T, H + 2 * T, 0.02);
+      const backMesh = new THREE.Mesh(backGeo, frameMat);
+      backMesh.position.set(0, 0, -D / 2);
+      this.frameGroup.add(backMesh);
+    }
+
+    /*/ Neon LED Trim Glow /*/
+    if (this.params.showGlowTrim) {
+      const trimGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H));
+      this.trimMat = new THREE.LineBasicMaterial({
+        color: this.params.glowColor,
+        transparent: true,
+        opacity: 0.85
+      });
+      const trimLine = new THREE.LineSegments(trimGeo, this.trimMat);
+      trimLine.position.set(0, 0, D / 2 + 0.003);
+      this.frameGroup.add(trimLine);
+    }
+  }
+
+  rebuildGeometry() {
+    if (this.geometry) this.geometry.dispose();
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.mesh.geometry = this.geometry;
+
+    this.rebuildFrame();
+  }
+
+  applyTransforms() {
+    this.group.position.set(this.params.posX, this.params.posY, this.params.posZ);
+    this.group.rotation.set(
+      THREE.MathUtils.degToRad(this.params.rotX),
+      THREE.MathUtils.degToRad(this.params.rotY),
+      THREE.MathUtils.degToRad(this.params.rotZ)
+    );
+    this.group.scale.setScalar(this.params.scale);
+    this.mesh.visible = this.params.visible;
+    if (this.frameGroup) this.frameGroup.visible = this.params.frameVisible && this.params.visible;
+    this.material.opacity = this.params.opacity;
+    this.material.toneMapped = this.params.toneMapped;
+    this.material.needsUpdate = true;
+  }
+
+  initGui() {
+    /*/ The Apollo 12 poster coordinates and dimensions are finalized.
+        To re-open the live calibration GUI, add #gui to the URL in browser /*/
+    if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_APOLLO12_POSTER) {
+      return;
+    }
+
+    try {
+      this.gui = new GUI({ title: '🖼️ Apollo 12 Poster Calibration' });
+      this.gui.domElement.style.position = 'fixed';
+      this.gui.domElement.style.top = '20px';
+      this.gui.domElement.style.right = '20px';
+      this.gui.domElement.style.zIndex = '999999';
+
+      /*/ Prevent canvas pointer lock from interfering with slider drag /*/
+      ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((evt) => {
+        this.gui.domElement.addEventListener(evt, (e) => e.stopPropagation());
+      });
+
+      const posFolder = this.gui.addFolder('📍 Position (X, Y, Z)');
+      posFolder.add(this.params, 'posX', -35, 35, 0.02).name('X (Left/Right)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posY', -5, 15, 0.02).name('Y (Height)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posZ', -10, 45, 0.02).name('Z (Depth)').onChange(() => this.applyTransforms());
+      posFolder.open();
+
+      const rotFolder = this.gui.addFolder('🔄 Rotation (Degrees)');
+      rotFolder.add(this.params, 'rotX', -180, 180, 0.5).name('Pitch X').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotY', -180, 180, 0.5).name('Yaw Y').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotZ', -180, 180, 0.5).name('Roll Z').onChange(() => this.applyTransforms());
+      rotFolder.open();
+
+      const sizeFolder = this.gui.addFolder('📐 Dimensions & Scale');
+      sizeFolder.add(this.params, 'width', 0.5, 12, 0.02).name('Width (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'height', 0.5, 10, 0.02).name('Height (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'scale', 0.1, 4.0, 0.02).name('Scale').onChange(() => this.applyTransforms());
+      sizeFolder.open();
+
+      const frameFolder = this.gui.addFolder('🖼️ 3D Frame Options');
+      frameFolder.add(this.params, 'frameVisible').name('Frame Active').onChange(() => {
+        this.rebuildFrame();
+        this.applyTransforms();
+      });
+      frameFolder.add(this.params, 'frameThickness', 0.01, 0.25, 0.01).name('Thickness (m)').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'frameDepth', 0.01, 0.25, 0.01).name('Depth (m)').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'frameColor').name('Frame Color').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'showGlowTrim').name('LED Glow Trim').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'glowColor').name('LED Color').onChange(() => this.rebuildFrame());
+
+      this.gui.add(this.params, 'copyToClipboard').name('📋 Copy Final Coordinates');
+      this.gui.add(this.params, 'resetToDefaults').name('🔄 Reset to Defaults');
+    } catch (err) {
+      console.warn('[Apollo12Poster] Failed to initialize lil-gui:', err);
+    }
+  }
+
+  resetDefaults() {
+    Object.assign(this.params, this.defaultParams);
+    if (this.gui) {
+      if (typeof this.gui.reset === 'function') {
+        this.gui.reset();
+      } else if (typeof this.gui.controllersRecursive === 'function') {
+        this.gui.controllersRecursive().forEach((c) => c.updateDisplay());
+      }
+    }
+    this.rebuildGeometry();
+    this.applyTransforms();
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #f59e0b';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#fbbf24';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(245, 158, 11, 0.35)';
+    toast.innerHTML = '🔄 <b>Apollo 12 Poster reset to default coordinates!</b>';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  copyValues() {
+    const formatted = `APOLLO12_POSTER_CONFIG = {
+  posX: ${this.params.posX.toFixed(2)},
+  posY: ${this.params.posY.toFixed(2)},
+  posZ: ${this.params.posZ.toFixed(2)},
+  rotX: ${this.params.rotX.toFixed(1)},
+  rotY: ${this.params.rotY.toFixed(1)},
+  rotZ: ${this.params.rotZ.toFixed(1)},
+  width: ${this.params.width.toFixed(2)},
+  height: ${this.params.height.toFixed(2)},
+  scale: ${this.params.scale.toFixed(2)},
+  frameThickness: ${this.params.frameThickness.toFixed(2)},
+  frameDepth: ${this.params.frameDepth.toFixed(2)},
+  frameColor: '${this.params.frameColor}',
+  showGlowTrim: ${this.params.showGlowTrim},
+  glowColor: '${this.params.glowColor}'
+};`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formatted).catch(() => {});
+    }
+    console.log('[Apollo12Poster] Calibrated Configuration:\n', formatted);
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #38bdf8';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#38bdf8';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(56, 189, 248, 0.35)';
+    toast.innerHTML = '📋 <b>Apollo 12 Poster coordinates copied!</b> Paste in chat.';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  update(delta) {
+    if (this.trimMat && this.params.showGlowTrim) {
+      this.glowTime += delta * 2.2;
+      this.trimMat.opacity = 0.55 + 0.35 * Math.sin(this.glowTime);
+    }
+  }
+}
+
+/*/ -------------------------------------------------------------
+    Surveyor 3 Lunar Probe Artwork (CV-M-SRV3.png)
+    Displays the Surveyor 3 artwork with 3D bezel frame
+    and real-time lil-gui calibration for user placement.
+    ------------------------------------------------------------- /*/
+export class Surveyor3Poster {
+  constructor(scene) {
+    this.scene = scene;
+    this.group = new THREE.Group();
+    this.group.name = 'Surveyor3Poster';
+    this.glowTime = 0;
+
+    /*/ Final Calibrated Parameters (Calibrated by user via GUI) /*/
+    this.params = {
+      posX: -10.38,
+      posY: -0.88,
+      posZ: 12.78,
+      rotX: 0.0,
+      rotY: -90.0,
+      rotZ: 0.0,
+      width: 2.07,
+      height: 2.00,
+      scale: 0.60,
+      visible: true,
+      opacity: 1.0,
+      toneMapped: false,
+
+      /*/ Frame Properties /*/
+      frameVisible: true,
+      frameThickness: 0.12,
+      frameDepth: 0.18,
+      frameColor: '#1e293b',
+      frameMetalness: 0.85,
+      frameRoughness: 0.25,
+      showBacking: true,
+      showGlowTrim: true,
+      glowColor: '#00b3ff',
+
+      /*/ Actions /*/
+      copyToClipboard: () => this.copyValues(),
+      resetToDefaults: () => this.resetDefaults()
+    };
+    this.defaultParams = Object.assign({}, this.params);
+
+    this.initPoster();
+    this.applyTransforms();
+    this.scene.add(this.group);
+    this.initGui();
+  }
+
+  initPoster() {
+    const loader = new THREE.TextureLoader();
+
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+      transparent: false,
+      opacity: this.params.opacity,
+      toneMapped: this.params.toneMapped
+    });
+
+    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.position.set(0, 0, 0.005);
+    this.group.add(this.mesh);
+
+    /*/ Load high-resolution Surveyor 3 artwork texture /*/
+    const onTextureLoaded = (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      this.material.map = tex;
+      this.material.needsUpdate = true;
+    };
+
+    loader.load(
+      '/CV-M-SRV3.png',
+      onTextureLoaded,
+      undefined,
+      (err) => {
+        console.warn('[Surveyor3Poster] Error loading /CV-M-SRV3.png, trying fallback:', err);
+        loader.load('/models/CV-M-SRV3.png', onTextureLoaded);
+      }
+    );
+
+    this.frameGroup = new THREE.Group();
+    this.frameGroup.name = 'Surveyor3PosterFrame';
+    this.group.add(this.frameGroup);
+
+    this.rebuildFrame();
+  }
+
+  rebuildFrame() {
+    /*/ Clear previous frame parts /*/
+    while (this.frameGroup.children.length > 0) {
+      const child = this.frameGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+      this.frameGroup.remove(child);
+    }
+
+    if (!this.params.frameVisible) return;
+
+    const W = this.params.width;
+    const H = this.params.height;
+    const T = this.params.frameThickness;
+    const D = this.params.frameDepth;
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: this.params.frameColor,
+      metalness: this.params.frameMetalness,
+      roughness: this.params.frameRoughness
+    });
+
+    /*/ Top Bar /*/
+    const topGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const topMesh = new THREE.Mesh(topGeo, frameMat);
+    topMesh.position.set(0, H / 2 + T / 2, 0);
+    this.frameGroup.add(topMesh);
+
+    /*/ Bottom Bar /*/
+    const bottomGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const bottomMesh = new THREE.Mesh(bottomGeo, frameMat);
+    bottomMesh.position.set(0, -H / 2 - T / 2, 0);
+    this.frameGroup.add(bottomMesh);
+
+    /*/ Left Bar /*/
+    const leftGeo = new THREE.BoxGeometry(T, H, D);
+    const leftMesh = new THREE.Mesh(leftGeo, frameMat);
+    leftMesh.position.set(-W / 2 - T / 2, 0, 0);
+    this.frameGroup.add(leftMesh);
+
+    /*/ Right Bar /*/
+    const rightGeo = new THREE.BoxGeometry(T, H, D);
+    const rightMesh = new THREE.Mesh(rightGeo, frameMat);
+    rightMesh.position.set(W / 2 + T / 2, 0, 0);
+    this.frameGroup.add(rightMesh);
+
+    /*/ Backing Plate /*/
+    if (this.params.showBacking) {
+      const backGeo = new THREE.BoxGeometry(W + 2 * T, H + 2 * T, 0.02);
+      const backMesh = new THREE.Mesh(backGeo, frameMat);
+      backMesh.position.set(0, 0, -D / 2);
+      this.frameGroup.add(backMesh);
+    }
+
+    /*/ Neon LED Trim Glow /*/
+    if (this.params.showGlowTrim) {
+      const trimGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H));
+      this.trimMat = new THREE.LineBasicMaterial({
+        color: this.params.glowColor,
+        transparent: true,
+        opacity: 0.85
+      });
+      const trimLine = new THREE.LineSegments(trimGeo, this.trimMat);
+      trimLine.position.set(0, 0, D / 2 + 0.003);
+      this.frameGroup.add(trimLine);
+    }
+  }
+
+  rebuildGeometry() {
+    if (this.geometry) this.geometry.dispose();
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.mesh.geometry = this.geometry;
+
+    this.rebuildFrame();
+  }
+
+  applyTransforms() {
+    this.group.position.set(this.params.posX, this.params.posY, this.params.posZ);
+    this.group.rotation.set(
+      THREE.MathUtils.degToRad(this.params.rotX),
+      THREE.MathUtils.degToRad(this.params.rotY),
+      THREE.MathUtils.degToRad(this.params.rotZ)
+    );
+    this.group.scale.setScalar(this.params.scale);
+    this.mesh.visible = this.params.visible;
+    if (this.frameGroup) this.frameGroup.visible = this.params.frameVisible && this.params.visible;
+    this.material.opacity = this.params.opacity;
+    this.material.toneMapped = this.params.toneMapped;
+    this.material.needsUpdate = true;
+  }
+
+  initGui() {
+    /*/ The Surveyor 3 poster coordinates and dimensions are finalized.
+        To re-open the live calibration GUI, add #gui to the URL in browser /*/
+    if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_SURVEYOR3_POSTER) {
+      return;
+    }
+
+    try {
+      this.gui = new GUI({ title: '🖼️ Surveyor 3 Poster Calibration' });
+      this.gui.domElement.style.position = 'fixed';
+      this.gui.domElement.style.top = '20px';
+      this.gui.domElement.style.right = '20px';
+      this.gui.domElement.style.zIndex = '999999';
+
+      /*/ Prevent canvas pointer lock from interfering with slider drag /*/
+      ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((evt) => {
+        this.gui.domElement.addEventListener(evt, (e) => e.stopPropagation());
+      });
+
+      const posFolder = this.gui.addFolder('📍 Position (X, Y, Z)');
+      posFolder.add(this.params, 'posX', -35, 35, 0.02).name('X (Left/Right)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posY', -5, 15, 0.02).name('Y (Height)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posZ', -10, 45, 0.02).name('Z (Depth)').onChange(() => this.applyTransforms());
+      posFolder.open();
+
+      const rotFolder = this.gui.addFolder('🔄 Rotation (Degrees)');
+      rotFolder.add(this.params, 'rotX', -180, 180, 0.5).name('Pitch X').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotY', -180, 180, 0.5).name('Yaw Y').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotZ', -180, 180, 0.5).name('Roll Z').onChange(() => this.applyTransforms());
+      rotFolder.open();
+
+      const sizeFolder = this.gui.addFolder('📐 Dimensions & Scale');
+      sizeFolder.add(this.params, 'width', 0.5, 12, 0.02).name('Width (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'height', 0.5, 10, 0.02).name('Height (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'scale', 0.1, 4.0, 0.02).name('Scale').onChange(() => this.applyTransforms());
+      sizeFolder.open();
+
+      const frameFolder = this.gui.addFolder('🖼️ 3D Frame Options');
+      frameFolder.add(this.params, 'frameVisible').name('Frame Active').onChange(() => {
+        this.rebuildFrame();
+        this.applyTransforms();
+      });
+      frameFolder.add(this.params, 'frameThickness', 0.01, 0.25, 0.01).name('Thickness (m)').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'frameDepth', 0.01, 0.25, 0.01).name('Depth (m)').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'frameColor').name('Frame Color').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'showGlowTrim').name('LED Glow Trim').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'glowColor').name('LED Color').onChange(() => this.rebuildFrame());
+
+      this.gui.add(this.params, 'copyToClipboard').name('📋 Copy Final Coordinates');
+      this.gui.add(this.params, 'resetToDefaults').name('🔄 Reset to Defaults');
+    } catch (err) {
+      console.warn('[Surveyor3Poster] Failed to initialize lil-gui:', err);
+    }
+  }
+
+  resetDefaults() {
+    Object.assign(this.params, this.defaultParams);
+    if (this.gui) {
+      if (typeof this.gui.reset === 'function') {
+        this.gui.reset();
+      } else if (typeof this.gui.controllersRecursive === 'function') {
+        this.gui.controllersRecursive().forEach((c) => c.updateDisplay());
+      }
+    }
+    this.rebuildGeometry();
+    this.applyTransforms();
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #f59e0b';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#fbbf24';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(245, 158, 11, 0.35)';
+    toast.innerHTML = '🔄 <b>Surveyor 3 Poster reset to default coordinates!</b>';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  copyValues() {
+    const formatted = `SURVEYOR3_POSTER_CONFIG = {
+  posX: ${this.params.posX.toFixed(2)},
+  posY: ${this.params.posY.toFixed(2)},
+  posZ: ${this.params.posZ.toFixed(2)},
+  rotX: ${this.params.rotX.toFixed(1)},
+  rotY: ${this.params.rotY.toFixed(1)},
+  rotZ: ${this.params.rotZ.toFixed(1)},
+  width: ${this.params.width.toFixed(2)},
+  height: ${this.params.height.toFixed(2)},
+  scale: ${this.params.scale.toFixed(2)},
+  frameThickness: ${this.params.frameThickness.toFixed(2)},
+  frameDepth: ${this.params.frameDepth.toFixed(2)},
+  frameColor: '${this.params.frameColor}',
+  showGlowTrim: ${this.params.showGlowTrim},
+  glowColor: '${this.params.glowColor}'
+};`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formatted).catch(() => {});
+    }
+    console.log('[Surveyor3Poster] Calibrated Configuration:\n', formatted);
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #38bdf8';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#38bdf8';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(56, 189, 248, 0.35)';
+    toast.innerHTML = '📋 <b>Surveyor 3 Poster coordinates copied!</b> Paste in chat.';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  update(delta) {
+    if (this.trimMat && this.params.showGlowTrim) {
+      this.glowTime += delta * 2.2;
+      this.trimMat.opacity = 0.55 + 0.35 * Math.sin(this.glowTime);
+    }
+  }
+}
+
+/*/ -------------------------------------------------------------
+    Mars Pathfinder Sojourner Rover Artwork (CV-Ma-SojournerRover.png)
+    Displays the Sojourner Rover artwork with 3D bezel frame
+    and real-time lil-gui calibration for user placement.
+    ------------------------------------------------------------- /*/
+export class SojournerRoverPoster {
+  constructor(scene) {
+    this.scene = scene;
+    this.group = new THREE.Group();
+    this.group.name = 'SojournerRoverPoster';
+    this.glowTime = 0;
+
+    /*/ Final Calibrated Parameters (Calibrated by user via GUI) /*/
+    this.params = {
+      posX: -10.38,
+      posY: -0.98,
+      posZ: 17.50,
+      rotX: 0.0,
+      rotY: -90.0,
+      rotZ: 0.0,
+      width: 3.16,
+      height: 1.36,
+      scale: 0.60,
+      visible: true,
+      opacity: 1.0,
+      toneMapped: false,
+
+      /*/ Frame Properties /*/
+      frameVisible: true,
+      frameThickness: 0.12,
+      frameDepth: 0.18,
+      frameColor: '#1e293b',
+      frameMetalness: 0.85,
+      frameRoughness: 0.25,
+      showBacking: true,
+      showGlowTrim: true,
+      glowColor: '#00b3ff',
+
+      /*/ Actions /*/
+      copyToClipboard: () => this.copyValues(),
+      resetToDefaults: () => this.resetDefaults()
+    };
+    this.defaultParams = Object.assign({}, this.params);
+
+    this.initPoster();
+    this.applyTransforms();
+    this.scene.add(this.group);
+    this.initGui();
+  }
+
+  initPoster() {
+    const loader = new THREE.TextureLoader();
+
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.material = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      side: THREE.DoubleSide,
+      transparent: false,
+      opacity: this.params.opacity,
+      toneMapped: this.params.toneMapped
+    });
+
+    this.mesh = new THREE.Mesh(this.geometry, this.material);
+    this.mesh.position.set(0, 0, 0.005);
+    this.group.add(this.mesh);
+
+    /*/ Load high-resolution Sojourner Rover artwork texture /*/
+    const onTextureLoaded = (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      this.material.map = tex;
+      this.material.needsUpdate = true;
+    };
+
+    loader.load(
+      '/CV-Ma-SojournerRover.png',
+      onTextureLoaded,
+      undefined,
+      (err) => {
+        console.warn('[SojournerRoverPoster] Error loading /CV-Ma-SojournerRover.png, trying fallback:', err);
+        loader.load('/models/CV-Ma-SojournerRover.png', onTextureLoaded);
+      }
+    );
+
+    this.frameGroup = new THREE.Group();
+    this.frameGroup.name = 'SojournerRoverPosterFrame';
+    this.group.add(this.frameGroup);
+
+    this.rebuildFrame();
+  }
+
+  rebuildFrame() {
+    /*/ Clear previous frame parts /*/
+    while (this.frameGroup.children.length > 0) {
+      const child = this.frameGroup.children[0];
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+      this.frameGroup.remove(child);
+    }
+
+    if (!this.params.frameVisible) return;
+
+    const W = this.params.width;
+    const H = this.params.height;
+    const T = this.params.frameThickness;
+    const D = this.params.frameDepth;
+
+    const frameMat = new THREE.MeshStandardMaterial({
+      color: this.params.frameColor,
+      metalness: this.params.frameMetalness,
+      roughness: this.params.frameRoughness
+    });
+
+    /*/ Top Bar /*/
+    const topGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const topMesh = new THREE.Mesh(topGeo, frameMat);
+    topMesh.position.set(0, H / 2 + T / 2, 0);
+    this.frameGroup.add(topMesh);
+
+    /*/ Bottom Bar /*/
+    const bottomGeo = new THREE.BoxGeometry(W + 2 * T, T, D);
+    const bottomMesh = new THREE.Mesh(bottomGeo, frameMat);
+    bottomMesh.position.set(0, -H / 2 - T / 2, 0);
+    this.frameGroup.add(bottomMesh);
+
+    /*/ Left Bar /*/
+    const leftGeo = new THREE.BoxGeometry(T, H, D);
+    const leftMesh = new THREE.Mesh(leftGeo, frameMat);
+    leftMesh.position.set(-W / 2 - T / 2, 0, 0);
+    this.frameGroup.add(leftMesh);
+
+    /*/ Right Bar /*/
+    const rightGeo = new THREE.BoxGeometry(T, H, D);
+    const rightMesh = new THREE.Mesh(rightGeo, frameMat);
+    rightMesh.position.set(W / 2 + T / 2, 0, 0);
+    this.frameGroup.add(rightMesh);
+
+    /*/ Backing Plate /*/
+    if (this.params.showBacking) {
+      const backGeo = new THREE.BoxGeometry(W + 2 * T, H + 2 * T, 0.02);
+      const backMesh = new THREE.Mesh(backGeo, frameMat);
+      backMesh.position.set(0, 0, -D / 2);
+      this.frameGroup.add(backMesh);
+    }
+
+    /*/ Neon LED Trim Glow /*/
+    if (this.params.showGlowTrim) {
+      const trimGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(W, H));
+      this.trimMat = new THREE.LineBasicMaterial({
+        color: this.params.glowColor,
+        transparent: true,
+        opacity: 0.85
+      });
+      const trimLine = new THREE.LineSegments(trimGeo, this.trimMat);
+      trimLine.position.set(0, 0, D / 2 + 0.003);
+      this.frameGroup.add(trimLine);
+    }
+  }
+
+  rebuildGeometry() {
+    if (this.geometry) this.geometry.dispose();
+    this.geometry = new THREE.PlaneGeometry(this.params.width, this.params.height);
+    this.mesh.geometry = this.geometry;
+
+    this.rebuildFrame();
+  }
+
+  applyTransforms() {
+    this.group.position.set(this.params.posX, this.params.posY, this.params.posZ);
+    this.group.rotation.set(
+      THREE.MathUtils.degToRad(this.params.rotX),
+      THREE.MathUtils.degToRad(this.params.rotY),
+      THREE.MathUtils.degToRad(this.params.rotZ)
+    );
+    this.group.scale.setScalar(this.params.scale);
+    this.mesh.visible = this.params.visible;
+    if (this.frameGroup) this.frameGroup.visible = this.params.frameVisible && this.params.visible;
+    this.material.opacity = this.params.opacity;
+    this.material.toneMapped = this.params.toneMapped;
+    this.material.needsUpdate = true;
+  }
+
+  initGui() {
+    /*/ The Sojourner Rover poster coordinates and dimensions are finalized.
+        To re-open the live calibration GUI, add #gui to the URL in browser /*/
+    if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_SOJOURNER_ROVER_POSTER) {
+      return;
+    }
+
+    try {
+      this.gui = new GUI({ title: '🖼️ Sojourner Rover Poster Calibration' });
+      this.gui.domElement.style.position = 'fixed';
+      this.gui.domElement.style.top = '20px';
+      this.gui.domElement.style.right = '20px';
+      this.gui.domElement.style.zIndex = '999999';
+
+      /*/ Prevent canvas pointer lock from interfering with slider drag /*/
+      ['pointerdown', 'mousedown', 'click', 'touchstart'].forEach((evt) => {
+        this.gui.domElement.addEventListener(evt, (e) => e.stopPropagation());
+      });
+
+      const posFolder = this.gui.addFolder('📍 Position (X, Y, Z)');
+      posFolder.add(this.params, 'posX', -35, 35, 0.02).name('X (Left/Right)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posY', -5, 15, 0.02).name('Y (Height)').onChange(() => this.applyTransforms());
+      posFolder.add(this.params, 'posZ', -10, 45, 0.02).name('Z (Depth)').onChange(() => this.applyTransforms());
+      posFolder.open();
+
+      const rotFolder = this.gui.addFolder('🔄 Rotation (Degrees)');
+      rotFolder.add(this.params, 'rotX', -180, 180, 0.5).name('Pitch X').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotY', -180, 180, 0.5).name('Yaw Y').onChange(() => this.applyTransforms());
+      rotFolder.add(this.params, 'rotZ', -180, 180, 0.5).name('Roll Z').onChange(() => this.applyTransforms());
+      rotFolder.open();
+
+      const sizeFolder = this.gui.addFolder('📐 Dimensions & Scale');
+      sizeFolder.add(this.params, 'width', 0.5, 12, 0.02).name('Width (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'height', 0.5, 10, 0.02).name('Height (m)').onChange(() => {
+        this.rebuildGeometry();
+        this.applyTransforms();
+      });
+      sizeFolder.add(this.params, 'scale', 0.1, 4.0, 0.02).name('Scale').onChange(() => this.applyTransforms());
+      sizeFolder.open();
+
+      const frameFolder = this.gui.addFolder('🖼️ 3D Frame Options');
+      frameFolder.add(this.params, 'frameVisible').name('Frame Active').onChange(() => {
+        this.rebuildFrame();
+        this.applyTransforms();
+      });
+      frameFolder.add(this.params, 'frameThickness', 0.01, 0.25, 0.01).name('Thickness (m)').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'frameDepth', 0.01, 0.25, 0.01).name('Depth (m)').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'frameColor').name('Frame Color').onChange(() => this.rebuildFrame());
+      frameFolder.add(this.params, 'showGlowTrim').name('LED Glow Trim').onChange(() => this.rebuildFrame());
+      frameFolder.addColor(this.params, 'glowColor').name('LED Color').onChange(() => this.rebuildFrame());
+
+      this.gui.add(this.params, 'copyToClipboard').name('📋 Copy Final Coordinates');
+      this.gui.add(this.params, 'resetToDefaults').name('🔄 Reset to Defaults');
+    } catch (err) {
+      console.warn('[SojournerRoverPoster] Failed to initialize lil-gui:', err);
+    }
+  }
+
+  resetDefaults() {
+    Object.assign(this.params, this.defaultParams);
+    if (this.gui) {
+      if (typeof this.gui.reset === 'function') {
+        this.gui.reset();
+      } else if (typeof this.gui.controllersRecursive === 'function') {
+        this.gui.controllersRecursive().forEach((c) => c.updateDisplay());
+      }
+    }
+    this.rebuildGeometry();
+    this.applyTransforms();
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #f59e0b';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#fbbf24';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(245, 158, 11, 0.35)';
+    toast.innerHTML = '🔄 <b>Sojourner Rover Poster reset to default coordinates!</b>';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  copyValues() {
+    const formatted = `SOJOURNER_ROVER_POSTER_CONFIG = {
+  posX: ${this.params.posX.toFixed(2)},
+  posY: ${this.params.posY.toFixed(2)},
+  posZ: ${this.params.posZ.toFixed(2)},
+  rotX: ${this.params.rotX.toFixed(1)},
+  rotY: ${this.params.rotY.toFixed(1)},
+  rotZ: ${this.params.rotZ.toFixed(1)},
+  width: ${this.params.width.toFixed(2)},
+  height: ${this.params.height.toFixed(2)},
+  scale: ${this.params.scale.toFixed(2)},
+  frameThickness: ${this.params.frameThickness.toFixed(2)},
+  frameDepth: ${this.params.frameDepth.toFixed(2)},
+  frameColor: '${this.params.frameColor}',
+  showGlowTrim: ${this.params.showGlowTrim},
+  glowColor: '${this.params.glowColor}'
+};`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(formatted).catch(() => {});
+    }
+    console.log('[SojournerRoverPoster] Calibrated Configuration:\n', formatted);
+
+    /*/ Sci-fi toast notification /*/
+    const toast = document.createElement('div');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '90px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.padding = '12px 24px';
+    toast.style.background = 'rgba(15, 23, 42, 0.95)';
+    toast.style.border = '1px solid #38bdf8';
+    toast.style.borderRadius = '8px';
+    toast.style.color = '#38bdf8';
+    toast.style.fontFamily = 'monospace';
+    toast.style.fontSize = '13px';
+    toast.style.zIndex = '999999';
+    toast.style.boxShadow = '0 8px 32px rgba(56, 189, 248, 0.35)';
+    toast.innerHTML = '📋 <b>Sojourner Rover Poster coordinates copied!</b> Paste in chat.';
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.transition = 'opacity 0.6s';
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 600);
+    }, 2800);
+  }
+
+  update(delta) {
+    if (this.trimMat && this.params.showGlowTrim) {
+      this.glowTime += delta * 2.2;
+      this.trimMat.opacity = 0.55 + 0.35 * Math.sin(this.glowTime);
+    }
+  }
+}
+
+
+
+
+

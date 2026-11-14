@@ -764,7 +764,8 @@ export class FirstPersonController {
     /*/ Dynamic Player Ambient Aura Light (Silenced only when seated in theatre chair) /*/
     if (this.playerLight) {
       const targetPlayerLight = this.isSeated ? 0.0 : 2.0;
-      this.playerLight.intensity = THREE.MathUtils.lerp(this.playerLight.intensity, targetPlayerLight, delta * 4.0);
+      const lightDamp = 1.0 - Math.exp(-4.0 * delta);
+      this.playerLight.intensity = THREE.MathUtils.lerp(this.playerLight.intensity, targetPlayerLight, lightDamp);
     }
 
     /*/ --- SEATED IN THEATRE CHAIR --- /*/
@@ -832,7 +833,8 @@ export class FirstPersonController {
         flyDir.normalize();
         this.velocity.copy(flyDir).multiplyScalar(speed);
       } else {
-        this.velocity.multiplyScalar(0.82); /*/ Smooth aerodynamic glide stop /*/
+        const flyDamp = Math.exp(-11.9 * delta); /*/ Frame-rate independent aerodynamic glide /*/
+        this.velocity.multiplyScalar(flyDamp);
         if (this.velocity.lengthSq() < 0.01) this.velocity.set(0, 0, 0);
       }
 
@@ -874,9 +876,10 @@ export class FirstPersonController {
       this.velocity.x = moveDir.x * currentSpeed;
       this.velocity.z = moveDir.z * currentSpeed;
     } else {
-      /*/ Smooth friction deceleration /*/
-      this.velocity.x *= 0.75;
-      this.velocity.z *= 0.75;
+      /*/ Frame-rate independent smooth friction deceleration /*/
+      const walkDamp = Math.exp(-17.26 * delta);
+      this.velocity.x *= walkDamp;
+      this.velocity.z *= walkDamp;
       if (Math.abs(this.velocity.x) < 0.01) this.velocity.x = 0;
       if (Math.abs(this.velocity.z) < 0.01) this.velocity.z = 0;
     }
@@ -907,7 +910,8 @@ export class FirstPersonController {
         this.soundfx.playFootstep(isSprinting);
       }
     } else {
-      this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, this.baseEyeHeight, delta * 6.0);
+      const eyeDamp = 1.0 - Math.exp(-6.0 * delta);
+      this.camera.position.y = THREE.MathUtils.lerp(this.camera.position.y, this.baseEyeHeight, eyeDamp);
     }
   }
 
