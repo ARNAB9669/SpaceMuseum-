@@ -38,6 +38,17 @@ export class ExhibitionPlatforms {
       tabletTilt: -51
     };
 
+    /*/ Stage Spotlight Configuration (Focuses dramatic stage lighting on each rover) /*/
+    this.stageLightParams = {
+      enabled: true,
+      intensity: 50.0,
+      angle: 65,
+      penumbra: 0.3,
+      color: '#ffffff',
+      distanceRatio: 2.8,
+      targetOffsetY: 1.0
+    };
+
     /*/ Global Arena Base Floor Level (Courtyard ground Y = -2.42) /*/
     this.floorY = -2.42;
 
@@ -428,6 +439,11 @@ export class ExhibitionPlatforms {
       mountPoint.position.set(0, H, 0);
       pGroup.add(mountPoint);
 
+      /*/ 7. Dramatic Architectural Rover Stage Spotlight System /*/
+      const stageLightGroup = new THREE.Group();
+      stageLightGroup.name = `StageLights_${cfg.id}`;
+      pGroup.add(stageLightGroup);
+
       this.group.add(pGroup);
       const platformEntry = {
         group: pGroup,
@@ -437,10 +453,12 @@ export class ExhibitionPlatforms {
         deckMesh: deckMesh,
         mountPoint: mountPoint,
         reticleGroup: reticleGroup,
-        plaqueGroup: plaqueGroup
+        plaqueGroup: plaqueGroup,
+        stageLightGroup: stageLightGroup
       };
       this.platforms.push(platformEntry);
       this.setupPlatformStand(platformEntry, idx);
+      this.setupStageLights(platformEntry, idx);
     });
   }
 
@@ -520,6 +538,9 @@ export class ExhibitionPlatforms {
 
     /*/ 6. Reposition Tablet Stand relative to updated radius /*/
     this.setupPlatformStand(p, idx);
+
+    /*/ 7. Realign Stage Spotlight Fixtures & Focused Beam on deck rim /*/
+    this.setupStageLights(p, idx);
   }
 
   loadInitialModels() {
@@ -759,6 +780,132 @@ export class ExhibitionPlatforms {
     p.plaqueGroup.add(standHolder);
   }
 
+  /*/ Architectural Rover Stage Spotlight System (Focuses dramatic stage light on centerpiece rover) /*/
+  setupStageLights(p, idx) {
+    if (!p || !p.stageLightGroup) return;
+
+    /*/ Clean up existing stage lights and fixtures in stageLightGroup /*/
+    while (p.stageLightGroup.children.length > 0) {
+      const child = p.stageLightGroup.children[0];
+      p.stageLightGroup.remove(child);
+      child.traverse((obj) => {
+        if (obj.isMesh) {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material && !this.sharedMaterials.has(obj.material)) {
+            obj.material.dispose();
+          }
+        }
+      });
+    }
+
+    if (!this.stageLightParams.enabled) return;
+
+    const cfg = this.platformConfigs[idx] || p.config;
+    if (cfg.stageLight === false) return;
+
+    const R = cfg.radius;
+    const H = cfg.height;
+    const standAngle = (cfg.standAngle !== undefined) ? cfg.standAngle : 0;
+    const targetY = H + (cfg.offsetY || 0) + this.stageLightParams.targetOffsetY;
+    const targetVec = new THREE.Vector3(0, targetY, 0);
+
+    /*/ 1. Invisible Target Anchor for SpotLight Tracking /*/
+    const spotTarget = new THREE.Object3D();
+    spotTarget.name = `SpotTarget_${cfg.id}`;
+    spotTarget.position.copy(targetVec);
+    p.stageLightGroup.add(spotTarget);
+
+    /*/ 2. 3-Point Exhibition Stage Spotlight Array (Key, Fill & Rim on Deck Rim) /*/
+    const fixtureDefs = [
+      { name: 'KeySpotlight',  angleOffset: -42, hasBeam: true,  intensityMult: 1.0 },
+      { name: 'FillSpotlight', angleOffset:  42, hasBeam: false, intensityMult: 0.5 },
+      { name: 'RimSpotlight',  angleOffset: 180, hasBeam: false, intensityMult: 0.7 }
+    ];
+
+    const fixtureRadius = R * 0.90;
+    const spotColor = new THREE.Color(this.stageLightParams.color);
+
+    fixtureDefs.forEach((def) => {
+      const angleDeg = standAngle + def.angleOffset;
+      const angleRad = THREE.MathUtils.degToRad(angleDeg);
+      const fx = fixtureRadius * Math.sin(angleRad);
+      const fz = fixtureRadius * Math.cos(angleRad);
+      const fy = H;
+
+      /*/ Physical Miniature Stage Light Fixture Group /*/
+      const fixtureGroup = new THREE.Group();
+      fixtureGroup.name = `StageFixture_${def.name}_${cfg.id}`;
+      fixtureGroup.position.set(fx, fy, fz);
+
+      /*/ A. Bolted Circular Base Flange /*/
+      const flangeGeo = new THREE.CylinderGeometry(0.045, 0.052, 0.014, 16);
+      const flangeMesh = new THREE.Mesh(flangeGeo, this.stanchionMat);
+      flangeMesh.position.y = 0.007;
+      flangeMesh.receiveShadow = true;
+      fixtureGroup.add(flangeMesh);
+
+      /*/ B. Swivel Head & Spotlight Can (Aimed precisely at Rover Center) /*/
+      const headGroup = new THREE.Group();
+      headGroup.position.set(0, 0.042, 0);
+
+      /*/ Vector from fixture head to rover target /*/
+      const localTarget = new THREE.Vector3(0 - fx, targetY - fy - 0.042, 0 - fz);
+      headGroup.lookAt(localTarget);
+
+      /*/ Yoke Bracket Prongs (Left & Right) /*/
+      const yokeArmGeo = new THREE.BoxGeometry(0.008, 0.045, 0.016);
+      const leftYoke = new THREE.Mesh(yokeArmGeo, this.stanchionMat);
+      leftYoke.position.set(-0.042, 0, 0);
+      headGroup.add(leftYoke);
+
+      const rightYoke = new THREE.Mesh(yokeArmGeo, this.stanchionMat);
+      rightYoke.position.set(0.042, 0, 0);
+      headGroup.add(rightYoke);
+
+      /*/ Tapered Cylindrical Spotlight Can /*/
+      const canGeo = new THREE.CylinderGeometry(0.032, 0.040, 0.082, 16);
+      canGeo.rotateX(Math.PI / 2);
+      const canMesh = new THREE.Mesh(canGeo, this.standMat);
+      canMesh.position.set(0, 0.008, 0);
+      canMesh.receiveShadow = true;
+      headGroup.add(canMesh);
+
+      /*/ Glowing Optical Front Lens Diffuser /*/
+      const lensGeo = new THREE.CircleGeometry(0.030, 16);
+      const lensMat = new THREE.MeshBasicMaterial({ color: spotColor });
+      const lensMesh = new THREE.Mesh(lensGeo, lensMat);
+      lensMesh.position.set(0, 0.008, 0.042);
+      headGroup.add(lensMesh);
+
+      /*/ Anti-Glare Snoot Cowl Hood /*/
+      const cowlGeo = new THREE.CylinderGeometry(0.035, 0.032, 0.018, 16, 1, true);
+      cowlGeo.rotateX(Math.PI / 2);
+      const cowlMesh = new THREE.Mesh(cowlGeo, this.stanchionMat);
+      cowlMesh.position.set(0, 0.008, 0.046);
+      headGroup.add(cowlMesh);
+
+      fixtureGroup.add(headGroup);
+      p.stageLightGroup.add(fixtureGroup);
+
+      /*/ C. Real-Time Focused SpotLight (Mounted on Key Stage Fixture) /*/
+      if (def.hasBeam) {
+        const spotLight = new THREE.SpotLight(
+          spotColor,
+          this.stageLightParams.intensity * def.intensityMult,
+          R * this.stageLightParams.distanceRatio,
+          THREE.MathUtils.degToRad(this.stageLightParams.angle),
+          this.stageLightParams.penumbra,
+          1.5
+        );
+        spotLight.name = `RoverSpotLight_${cfg.id}`;
+        spotLight.position.set(fx, fy + 0.08, fz);
+        spotLight.target = spotTarget;
+        spotLight.castShadow = false;
+        p.stageLightGroup.add(spotLight);
+      }
+    });
+  }
+
   applyTransforms() {
     this.group.visible = this.params.visible;
     this.baseMat.color.set(this.params.baseColor);
@@ -822,6 +969,28 @@ export class ExhibitionPlatforms {
         this.platforms.forEach((p, idx) => this.setupPlatformStand(p, idx));
       });
       standFolder.close();
+
+      /*/ Rover Stage Spotlight Settings /*/
+      const spotFolder = this.gui.addFolder('💡 Rover Stage Spotlight Settings');
+      spotFolder.add(this.stageLightParams, 'enabled').name('Enable Stage Lights').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupStageLights(p, idx));
+      });
+      spotFolder.add(this.stageLightParams, 'intensity', 0, 100, 1).name('Beam Intensity').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupStageLights(p, idx));
+      });
+      spotFolder.add(this.stageLightParams, 'angle', 15, 80, 1).name('Beam Angle (Deg)').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupStageLights(p, idx));
+      });
+      spotFolder.add(this.stageLightParams, 'penumbra', 0.1, 1.0, 0.05).name('Beam Penumbra').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupStageLights(p, idx));
+      });
+      spotFolder.addColor(this.stageLightParams, 'color').name('Beam Color').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupStageLights(p, idx));
+      });
+      spotFolder.add(this.stageLightParams, 'targetOffsetY', 0.0, 2.5, 0.05).name('Focus Height Y').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupStageLights(p, idx));
+      });
+      spotFolder.close();
 
       /*/ Dedicated Subfolder for Each Active Platform & 3D Model /*/
       const platformsFolder = this.gui.addFolder('🛸 Active Exhibition Podia');
@@ -918,6 +1087,11 @@ export class ExhibitionPlatforms {
         subFolder.add(cfg, 'turntableSpeed', 0.05, 1.0, 0.05).name('Spin Speed').onChange((val) => {
           const m = this.mountedModels[idx];
           if (m && m.options) m.options.turntableSpeed = val;
+        });
+
+        if (cfg.stageLight === undefined) cfg.stageLight = true;
+        subFolder.add(cfg, 'stageLight').name('Stage Light On').onChange(() => {
+          this.setupStageLights(this.platforms[idx], idx);
         });
 
         subFolder.close();

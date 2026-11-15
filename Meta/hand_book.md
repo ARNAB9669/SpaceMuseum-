@@ -1400,6 +1400,43 @@
   - Expanded `Tablet Height Y` slider range from `[1.00, 1.50]` to `[0.60, 1.40]`, allowing full low-profile pedestal tuning.
 - **Build Verification**: `npx vite build` passed cleanly in 742ms with 0 errors.
 
+---
+### Log : 103
+**Title**: Architectural Rover Stage Spotlight System & Dynamic Deck Lighting Array  
+**Description**: Implemented focused architectural stage lighting fixtures across all 8 exhibition podia to illuminate the rovers and spacecraft centerpieces in [exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js):
+- **3-Point Exhibition Lighting Array**:
+  - Positioned 3 physical miniature stage spotlight fixtures on each platform deck rim ($R \times 0.90$):
+    - **Key Spotlight**: Angled at $\text{standAngle} - 42^\circ$, hosting the real-time focused `THREE.SpotLight`.
+    - **Fill Spotlight**: Angled at $\text{standAngle} + 42^\circ$, providing soft fill balance.
+    - **Rim Spotlight**: Angled at $\text{standAngle} + 180^\circ$ (rear backlight), rim-lighting the spacecraft silhouette against the cosmic void.
+- **Physical Procedural Fixture Details**:
+  - Bolted circular titanium mounting flange on deck surface.
+  - Rotatable U-yoke bracket and tapered spotlight can barrel aimed precisely at the rover centerpiece (`headGroup.lookAt(roverTarget)`).
+  - Glowing optical front lens diffuser with anti-glare snoot cowl hood.
+- **Real-Time Focused SpotLight Optical Beam**:
+  - Added `THREE.SpotLight` with bounded attenuation distance ($R \times 2.8$), $42^\circ$ cone angle, $0.55$ soft penumbra, and warm exhibition gallery white color (`#fff5ea`).
+  - Target anchor tracks the rover center `(0, H + offsetY + targetOffsetY, 0)`.
+  - Non-shadow casting (`castShadow = false`) for silky-smooth 60 FPS performance on tablets and mobile GPUs.
+- **Dedicated lil-gui Controls**:
+  - Added `💡 Rover Stage Spotlight Settings` master folder with sliders for Enable, Intensity, Beam Angle, Penumbra, Color Picker, and Focus Height.
+  - Added per-platform `Stage Light On` toggle switch inside each rover subfolder.
+- **Build Verification**: `npx vite build` passed cleanly in 398ms with 0 errors.
+
+---
+### Log : 104
+**Title**: Rover Stage Spotlight Calibration Lock (50 Intensity, 65° Beam, Pure White)  
+**Description**: Locked user-calibrated stage spotlight parameters permanently into [exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js) matching screenshot `media_1794743505103_063dc15f.jpg`:
+- **Permanently Locked Stage Spotlight Values**:
+  - `Enable Stage Lights`: `true`
+  - `Beam Intensity`: `50.0` (high-impact theatrical illumination)
+  - `Beam Angle`: `65°` (broad stage wash enveloping entire spacecraft geometry)
+  - `Beam Penumbra`: `0.30` (crisp theatrical spotlight cone falloff)
+  - `Beam Color`: `#ffffff` (pure brilliant exhibition daylight white)
+  - `Focus Height Y`: `1.0m` (aimed upwards at $45^\circ$ into rover body and scientific masts)
+- **Expanded lil-gui Slider Headroom**:
+  - Expanded intensity range to `[0, 100]`, beam angle to `[15°, 80°]`, and focus height to `[0.0m, 2.5m]`.
+- **Build Verification**: `npx vite build` passed cleanly in 373ms with 0 errors.
+
 
 
 
