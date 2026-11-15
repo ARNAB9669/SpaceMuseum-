@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
 /*/ =============================================================
     exhibition-platforms.js — Exhibition Rover Display Podia
@@ -32,12 +31,10 @@ export class ExhibitionPlatforms {
     this.gltfLoader.setDRACOLoader(this.dracoLoader);
     this.mountedModels = {};
 
-    /*/ 3D Tablet Stand Model Loader /*/
-    this.objLoader = new OBJLoader();
-    this.standTemplate = null;
+    /*/ 100% Procedural Sci-Fi Tablet Stand Calibration /*/
     this.standParams = {
       offsetZ: 0.24,
-      tabletHeight: 1.24,
+      tabletHeight: 0.98,
       tabletTilt: -51
     };
 
@@ -242,7 +239,6 @@ export class ExhibitionPlatforms {
     this.initSharedMaterials();
     this.buildPlatforms();
     this.loadInitialModels();
-    this.loadTabletStand();
     this.scene.add(this.group);
     this.initGui();
   }
@@ -278,6 +274,21 @@ export class ExhibitionPlatforms {
       metalness: 0.90,
       roughness: 0.20
     });
+
+    this.standMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      metalness: 0.85,
+      roughness: 0.25
+    });
+
+    this.sharedMaterials = new Set([
+      this.baseMat,
+      this.deckMat,
+      this.glowMat,
+      this.reticleMat,
+      this.stanchionMat,
+      this.standMat
+    ]);
   }
 
   createPlaqueTexture(data) {
@@ -597,38 +608,7 @@ export class ExhibitionPlatforms {
     );
   }
 
-  loadTabletStand() {
-    this.objLoader.load(
-      encodeURI('/models/TABLET STAND.obj'),
-      (obj) => {
-        /*/ Apply dark titanium PBR material to stand /*/
-        obj.traverse((child) => {
-          if (child.isMesh) {
-            child.material = new THREE.MeshStandardMaterial({
-              color: 0x1e293b,
-              metalness: 0.85,
-              roughness: 0.25
-            });
-            child.castShadow = false;
-            child.receiveShadow = true;
-          }
-        });
-
-        this.standTemplate = obj;
-
-        /*/ Mount 3D stand on each platform /*/
-        this.platforms.forEach((p, idx) => {
-          this.setupPlatformStand(p, idx);
-        });
-        console.log('[ExhibitionPlatforms] Mounted 3D TABLET STAND.obj on all platforms');
-      },
-      undefined,
-      (err) => {
-        console.error('[ExhibitionPlatforms] Failed to load TABLET STAND.obj:', err);
-      }
-    );
-  }
-
+  /*/ 100% Procedural Sci-Fi Tablet Stand & Mission Plaque Mount /*/
   setupPlatformStand(p, idx) {
     if (!p || !p.plaqueGroup) return;
 
@@ -641,7 +621,9 @@ export class ExhibitionPlatforms {
           if (obj.material) {
             if (obj.material.map) obj.material.map.dispose();
             if (obj.material.emissiveMap) obj.material.emissiveMap.dispose();
-            obj.material.dispose();
+            if (!this.sharedMaterials || !this.sharedMaterials.has(obj.material)) {
+              obj.material.dispose();
+            }
           }
         }
       });
@@ -653,51 +635,127 @@ export class ExhibitionPlatforms {
     const offsetZ = this.standParams.offsetZ;
     const tabletH = this.standParams.tabletHeight;
     const tabletTilt = this.standParams.tabletTilt;
+    const tiltRad = THREE.MathUtils.degToRad(tabletTilt);
     const standAngle = (cfg.standAngle !== undefined) ? cfg.standAngle : 0;
     const angleRad = THREE.MathUtils.degToRad(standAngle);
     const D = R + offsetZ;
     const posX = D * Math.sin(angleRad);
     const posZ = D * Math.cos(angleRad);
+    const missionColor = new THREE.Color(cfg.color || '#38bdf8');
 
-    /*/ 1. Stand Container (Both Stand & Mounted Tablet rotate together) /*/
+    /*/ 1. Stand Container (Rotated towards viewpoint) /*/
     const standHolder = new THREE.Group();
     standHolder.name = `StandHolder_${cfg.id}`;
     standHolder.position.set(posX, 0, posZ);
     standHolder.rotation.y = angleRad;
 
-    if (this.standTemplate) {
-      /*/ Authentic 3D Model Tablet Stand /*/
-      const stand = this.standTemplate.clone(true);
-      stand.name = `TabletStand3D_${cfg.id}`;
-      standHolder.add(stand);
-    } else {
-      /*/ Procedural Fallback while OBJ is loading /*/
-      const postGeo = new THREE.CylinderGeometry(0.03, 0.04, 0.75, 12);
-      const postMesh = new THREE.Mesh(postGeo, this.stanchionMat);
-      postMesh.position.set(0, 0.38, 0);
-      postMesh.rotation.x = THREE.MathUtils.degToRad(-15);
-      standHolder.add(postMesh);
-    }
+    /*/ 2. 100% Code-Generated Sci-Fi Architectural Stanchion Stand /*/
+    const standGroup = new THREE.Group();
+    standGroup.name = `ProceduralStand_${cfg.id}`;
 
-    /*/ 2. Digital Information Plaque Screen Mounted On Top Bracket /*/
+    /*/ A. Weighted Floor Base Plinth & Chamfer /*/
+    const basePlinthGeo = new THREE.BoxGeometry(0.38, 0.018, 0.28);
+    const basePlinth = new THREE.Mesh(basePlinthGeo, this.stanchionMat);
+    basePlinth.position.set(0, 0.009, 0.02);
+    basePlinth.receiveShadow = true;
+    standGroup.add(basePlinth);
+
+    const baseTopChamferGeo = new THREE.BoxGeometry(0.34, 0.010, 0.24);
+    const baseTopChamfer = new THREE.Mesh(baseTopChamferGeo, this.standMat);
+    baseTopChamfer.position.set(0, 0.023, 0.02);
+    baseTopChamfer.receiveShadow = true;
+    standGroup.add(baseTopChamfer);
+
+    /*/ Base Front Neon Status Strip /*/
+    const baseTrimGeo = new THREE.BoxGeometry(0.30, 0.004, 0.008);
+    const baseTrimMat = new THREE.MeshBasicMaterial({ color: missionColor });
+    const baseTrim = new THREE.Mesh(baseTrimGeo, baseTrimMat);
+    baseTrim.position.set(0, 0.027, 0.138);
+    standGroup.add(baseTrim);
+
+    /*/ B. Twin Aerodynamic Curved Stanchion Struts /*/
+    const strutRadius = 0.012;
+    const strutSeparation = 0.13;
+    const cradleY = tabletH - 0.055;
+    const cradleZ = -0.028;
+
+    [-strutSeparation, strutSeparation].forEach((strutX) => {
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(strutX, 0.028, 0.04),
+        new THREE.Vector3(strutX, tabletH * 0.38, 0.035),
+        new THREE.Vector3(strutX, tabletH * 0.72, 0.010),
+        new THREE.Vector3(strutX, tabletH * 0.90, cradleZ * 0.6),
+        new THREE.Vector3(strutX, cradleY, cradleZ)
+      ]);
+      const strutGeo = new THREE.TubeGeometry(curve, 20, strutRadius, 12, false);
+      const strutMesh = new THREE.Mesh(strutGeo, this.standMat);
+      strutMesh.receiveShadow = true;
+      standGroup.add(strutMesh);
+    });
+
+    /*/ C. Horizontal Stiffener Cross-Braces /*/
+    const braceGeo1 = new THREE.CylinderGeometry(0.007, 0.007, strutSeparation * 2, 12);
+    braceGeo1.rotateZ(Math.PI / 2);
+    const brace1 = new THREE.Mesh(braceGeo1, this.stanchionMat);
+    brace1.position.set(0, tabletH * 0.35, 0.035);
+    brace1.receiveShadow = true;
+    standGroup.add(brace1);
+
+    const braceGeo2 = new THREE.CylinderGeometry(0.007, 0.007, strutSeparation * 2, 12);
+    braceGeo2.rotateZ(Math.PI / 2);
+    const brace2 = new THREE.Mesh(braceGeo2, this.stanchionMat);
+    brace2.position.set(0, tabletH * 0.75, 0.010);
+    brace2.receiveShadow = true;
+    standGroup.add(brace2);
+
+    /*/ D. Top Swivel Cradle Mount Bracket /*/
+    const cradleBarGeo = new THREE.BoxGeometry(0.30, 0.024, 0.026);
+    const cradleBar = new THREE.Mesh(cradleBarGeo, this.stanchionMat);
+    cradleBar.position.set(0, cradleY, cradleZ);
+    cradleBar.rotation.x = tiltRad;
+    cradleBar.receiveShadow = true;
+    standGroup.add(cradleBar);
+
+    standHolder.add(standGroup);
+
+    /*/ 3. Digital Information Tablet (Backing Bezel + Screen + Neon Trim) /*/
+    const tabletHolder = new THREE.Group();
+    tabletHolder.name = `TabletHolder_${cfg.id}`;
+    tabletHolder.position.set(0, tabletH, 0);
+    tabletHolder.rotation.x = tiltRad;
+
+    /*/ Bezel Frame Backing Shell /*/
+    const frameGeo = new THREE.BoxGeometry(0.38, 0.20, 0.020);
+    const frameMesh = new THREE.Mesh(frameGeo, this.standMat);
+    frameMesh.position.set(0, 0, -0.004);
+    frameMesh.receiveShadow = true;
+    tabletHolder.add(frameMesh);
+
+    /*/ Interactive Display Canvas Screen /*/
     const plaqueTex = this.createPlaqueTexture(cfg);
-    const tabletGeo = new THREE.BoxGeometry(0.36, 0.18, 0.015);
-    const tabletMat = new THREE.MeshStandardMaterial({
+    const screenGeo = new THREE.BoxGeometry(0.36, 0.18, 0.008);
+    const screenMat = new THREE.MeshStandardMaterial({
       map: plaqueTex,
       metalness: 0.5,
       roughness: 0.3,
-      emissive: new THREE.Color(cfg.color || '#38bdf8'),
+      emissive: missionColor,
       emissiveMap: plaqueTex,
       emissiveIntensity: 0.35
     });
-    const tabletMesh = new THREE.Mesh(tabletGeo, tabletMat);
-    tabletMesh.name = `TabletScreen_${cfg.id}`;
-    tabletMesh.position.set(0, tabletH, 0);
-    tabletMesh.rotation.x = THREE.MathUtils.degToRad(tabletTilt);
-    tabletMesh.castShadow = false;
-    tabletMesh.receiveShadow = true;
-    standHolder.add(tabletMesh);
+    const screenMesh = new THREE.Mesh(screenGeo, screenMat);
+    screenMesh.name = `TabletScreen_${cfg.id}`;
+    screenMesh.position.set(0, 0, 0.007);
+    screenMesh.receiveShadow = true;
+    tabletHolder.add(screenMesh);
 
+    /*/ Screen Lower Accent LED Glow Trim /*/
+    const screenTrimGeo = new THREE.BoxGeometry(0.36, 0.005, 0.004);
+    const screenTrimMat = new THREE.MeshBasicMaterial({ color: missionColor });
+    const screenTrim = new THREE.Mesh(screenTrimGeo, screenTrimMat);
+    screenTrim.position.set(0, -0.092, 0.010);
+    tabletHolder.add(screenTrim);
+
+    standHolder.add(tabletHolder);
     p.plaqueGroup.add(standHolder);
   }
 
@@ -757,7 +815,7 @@ export class ExhibitionPlatforms {
       standFolder.add(this.standParams, 'offsetZ', 0.10, 0.60, 0.01).name('Stand Distance Z').onChange(() => {
         this.platforms.forEach((p, idx) => this.setupPlatformStand(p, idx));
       });
-      standFolder.add(this.standParams, 'tabletHeight', 1.0, 1.5, 0.01).name('Tablet Height Y').onChange(() => {
+      standFolder.add(this.standParams, 'tabletHeight', 0.60, 1.40, 0.01).name('Tablet Height Y').onChange(() => {
         this.platforms.forEach((p, idx) => this.setupPlatformStand(p, idx));
       });
       standFolder.add(this.standParams, 'tabletTilt', -70, -10, 1).name('Tablet Tilt Angle').onChange(() => {
