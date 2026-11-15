@@ -916,16 +916,6 @@ export class TheaterManager {
       this.cssScreenObject.visible = true;
     }
 
-    /*/ Release pointer lock for smooth mouse browsing /*/
-    if (typeof document !== 'undefined' && document.exitPointerLock) {
-      try { document.exitPointerLock(); } catch (e) {}
-    }
-
-    /*/ Enable pointer events on the CSS3D root element so iframe is clickable /*/
-    if (this.cssRenderer?.domElement) {
-      this.cssRenderer.domElement.style.pointerEvents = 'auto';
-    }
-
     /*/ Ensure CSS3D screen object is attached to screenGroup /*/
     if (this.theatre?.screenGroup && this.cssScreenObject && this.cssScreenObject.parent !== this.theatre.screenGroup) {
       this.theatre.screenGroup.add(this.cssScreenObject);
@@ -962,11 +952,6 @@ export class TheaterManager {
     /*/ Reset 3D screen to Standby mode and unmount iframe to silence audio immediately /*/
     if (this.screenDomElement) {
       this.screenDomElement.innerHTML = this.getStandbyScreenHTML();
-    }
-
-    /*/ Re-disable pointer events on CSS3D root so 3D navigation works cleanly /*/
-    if (this.cssRenderer?.domElement) {
-      this.cssRenderer.domElement.style.pointerEvents = 'none';
     }
   }
 

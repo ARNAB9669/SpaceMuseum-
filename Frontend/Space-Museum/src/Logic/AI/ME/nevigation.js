@@ -517,8 +517,8 @@ export class FirstPersonController {
       this.hasPointerLock = (document.pointerLockElement === this.domElement);
     });
 
-    /*/ Mouse Look with Pointer Lock or Dragging /*/
-    window.addEventListener('mousemove', (e) => {
+    /*/ Mouse & Touch Look: Supports both Pointer Lock and Free Dragging (especially when seated) /*/
+    window.addEventListener('pointermove', (e) => {
       if (!this.isFirstPerson || this.isLanding || this.isAscending) return;
 
       if (this.hasPointerLock) {
@@ -537,16 +537,25 @@ export class FirstPersonController {
       }
     });
 
-    /*/ Drag fallback when pointer is not locked /*/
-    this.domElement.addEventListener('pointerdown', (e) => {
-      if (this.isFirstPerson && !this.hasPointerLock) {
-        this.isDragging = true;
-        this.prevPointerX = e.clientX;
-        this.prevPointerY = e.clientY;
+    /*/ Window-level Drag Initiation: Allows looking around anywhere even when seated or on touch devices /*/
+    window.addEventListener('pointerdown', (e) => {
+      if (!this.isFirstPerson || this.hasPointerLock || this.isLanding || this.isAscending) return;
+
+      /*/ Do not start camera drag if interacting with buttons, inputs, dock cards, or video iframe /*/
+      if (e.target && e.target.closest && e.target.closest('button, a, input, select, textarea, #cinema-mission-dock, #cinema-dock-minipill, iframe')) {
+        return;
       }
+
+      this.isDragging = true;
+      this.prevPointerX = e.clientX;
+      this.prevPointerY = e.clientY;
     });
 
     window.addEventListener('pointerup', () => {
+      this.isDragging = false;
+    });
+
+    window.addEventListener('pointercancel', () => {
       this.isDragging = false;
     });
   }

@@ -1537,6 +1537,21 @@
   - Key `[M]` toggles the dock; `[E]` or `[Space]` stands up and tears down the iframe.
 - **Build Verification**: `npx vite build` passed cleanly in 401ms with 0 errors.
 
+---
+### Log : 113
+**Title**: Seated Head-Look Freedom & Non-Blocking Event Propagation  
+**Description**: Restored 360° head-turning freedom when seated in cinema chairs while maintaining walking locks:
+- **Root Cause Analysis**:
+  - `theater.js` was previously executing `document.exitPointerLock()` and setting `this.cssRenderer.domElement.style.pointerEvents = 'auto'`.
+  - The full-screen CSS3D root element swallowed pointerdown and click events, preventing `#webgl-canvas` from receiving input and paralyzing mouse look.
+- **Pointer & Drag Pipeline Overhaul ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js), [theater.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/theater.js))**:
+  - Bound `pointerdown` and `pointermove` at the `window` level with an interactive element filter (`closest('button, a, input, #cinema-mission-dock, iframe')`), allowing seamless click-drag and touch-swipe head turning from anywhere in the auditorium.
+  - Preserved active pointer lock upon sitting down so FPS mouse look remains responsive.
+  - Kept `this.cssRenderer.domElement.style.pointerEvents = 'none'` permanently, allowing mouse clicks and drags on empty auditorium space to pass cleanly to the 3D scene while leaving child iframes clickable.
+  - Ensured position remains locked to the chair eye position while `pitch` and `yaw` rotate freely.
+- **Build Verification**: `npx vite build` passed cleanly in 529ms with 0 errors.
+
+
 
 
 
