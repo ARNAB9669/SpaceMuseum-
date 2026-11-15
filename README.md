@@ -248,11 +248,44 @@ This project reimagines how humanity interacts with space history:
 
 ---
 
-## 👥 Authors & Acknowledgments
+## 👥 Meet the Team
 
-- **Lead Developer & Architect**: Arnab Biswas ([@ARNAB9669](https://github.com/ARNAB9669))
-- **Challenge**: NASA Space Apps Challenge 2026
+### Arnab Biswas
+**Full-Stack Developer**  
+Created the interactive 3D space exploration game for Space Museum.  
+Email: [arnabbiswas9669@gmail.com](mailto:arnabbiswas9669@gmail.com)
+
+### Rajdeep Das
+**Frontend Developer**  
+Builds the front-end of Space Museum, shaping how visitors interact with the project.  
+Email: [das.rajdeepofficial2007@gmail.com](mailto:das.rajdeepofficial2007@gmail.com)
+
+### Tanmay Singh Jadaun
+**Video Editor**  
+Made the Introductory video for Space Museum and tells the project's story.  
+Email: [tanmayjadaun030@gmail.com](mailto:tanmayjadaun030@gmail.com)
+
+### Swayamdeep Pathak
+**Graphic Designer & Content Coordinator**  
+Designed the logo for Space Museum, and researched for spacecraft.  
+Email: [swayam.mission@gmail.com](mailto:swayam.mission@gmail.com)
+
+### Jaideep Singh
+**Data Analyst & Data Manager**  
+Analyzes and organizes mission data to support the museum's stories.  
+Email: [jaideep345r@gmail.com](mailto:jaideep345r@gmail.com)
+
+### Satej Kumar Sen
+**Rover & Space Equipment Researcher**  
+Researches rovers and space equipment for the museum's exhibits.  
+Email: [hyperx44444@gmail.com](mailto:hyperx44444@gmail.com)
+
+---
+
+## 🛰️ Technologies & Acknowledgments
+
 - **Technologies**: Google DeepMind (Gemini 3.8 Multimodal Live API), Three.js, Autodesk Fusion 360, Cloudflare Workers, NASA Open Data & Treks.
+- **Challenge**: NASA Space Apps Challenge 2026 — *"Abandoned but not Forgotten"*
 
 <p align="center">
   <i>"Here Men from the Planet Earth First Set Foot Upon the Moon. We Came in Peace for All Mankind."</i>
