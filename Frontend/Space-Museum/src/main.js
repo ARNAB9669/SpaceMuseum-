@@ -9,7 +9,7 @@ import { FirstPersonController } from './Logic/AI/ME/nevigation.js';
 import { DirectionArrows } from './Ui/dirrection-arrow.js';
 import { RoadLights } from './Ui/road-light.js';
 import { FloorMapSelector } from './Logic/map-selector.js';
-import { WelcomeSign, OuterWallPoster, EntranceCorridorPoster, Apollo15Poster, Apollo12Poster, Surveyor3Poster, SojournerRoverPoster } from './Ui/posters.js';
+import { WelcomeSign, OuterWallPoster, EntranceCorridorPoster, Apollo15Poster, Apollo12Poster, Surveyor3Poster, SojournerRoverPoster, SpiritOpportunityPoster, VikingLanderPoster, InsightLanderPoster, DawnMissionPoster, NearShoemakerPoster, PioneerPoster, IngenuityHelicopterPoster, KeplerK2Poster } from './Ui/posters.js';
 import { TheatreRoom } from './Ui/theatre.js';
 
 /*/ Canvas & Rendering Setup /*/
@@ -84,6 +84,14 @@ const apollo15Poster = new Apollo15Poster(scene);
 const apollo12Poster = new Apollo12Poster(scene);
 const surveyor3Poster = new Surveyor3Poster(scene);
 const sojournerRoverPoster = new SojournerRoverPoster(scene);
+const spiritOpportunityPoster = new SpiritOpportunityPoster(scene);
+const vikingLanderPoster = new VikingLanderPoster(scene);
+const insightLanderPoster = new InsightLanderPoster(scene);
+const dawnMissionPoster = new DawnMissionPoster(scene);
+const nearShoemakerPoster = new NearShoemakerPoster(scene);
+const pioneerPoster = new PioneerPoster(scene);
+const ingenuityHelicopterPoster = new IngenuityHelicopterPoster(scene);
+const keplerK2Poster = new KeplerK2Poster(scene);
 
 /*/ NASA Space Apps Documentary Movie Theatre /*/
 const theatre = new TheatreRoom(scene, camera, fpController);
@@ -305,6 +313,14 @@ function animate(timestamp) {
   apollo12Poster.update(delta);
   surveyor3Poster.update(delta);
   sojournerRoverPoster.update(delta);
+  spiritOpportunityPoster.update(delta);
+  vikingLanderPoster.update(delta);
+  insightLanderPoster.update(delta);
+  dawnMissionPoster.update(delta);
+  nearShoemakerPoster.update(delta);
+  pioneerPoster.update(delta);
+  ingenuityHelicopterPoster.update(delta);
+  keplerK2Poster.update(delta);
   theatre.update(delta);
 
   /*/ Check proximity to cinema seats when in First-Person POV /*/

@@ -826,6 +826,228 @@
   - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, slate frame `#1e293b`, cyan LED glow trim `#00b3ff`
 - **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_SOJOURNER_ROVER_POSTER` for a clean presentation.
 
+---
+
+### Log : 62
+**Title**: Spirit & Opportunity MER Rovers Artwork Installation & Calibration GUI  
+**Description**: Added the sixth framed artwork (`CV-Ma-SandO.png`) celebrating the Spirit and Opportunity twin rovers with real-time on-screen `lil-gui` calibration controls:
+- **Spirit & Opportunity Poster Class (`SpiritOpportunityPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and neon LED accent trim.
+- **Initial Placement**: Mounted facing the feature wall at $X = -7.47$, $Y = -0.50$, $Z = 2.00$, rotation $\text{Yaw } Y = 0.0^\circ$, matching the native $1628 \times 888$ aspect ratio ($3.30\text{m} \times 1.80\text{m}$, scale $0.80$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Spirit & Opportunity Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `SPIRIT_OPPORTUNITY_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 63
+**Title**: Spirit & Opportunity Poster Permanent Placement & GUI Clean-up  
+**Description**: Permanently locked in the user-calibrated transform and frame aesthetics for the Spirit & Opportunity twin rovers artwork:
+- **Locked Parameters**:
+  - `Position`: $X = -7.10$, $Y = -0.92$, $Z = 9.26$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = 180.0^\circ$, $\text{Roll } Z = 0.0^\circ$ (flush along the corridor feature wall facing visitors)
+  - `Dimensions & Scale`: Width $3.30\text{m}$, Height $1.80\text{m}$, Scale $0.80$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, slate frame `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_SPIRIT_OPPORTUNITY_POSTER` for a clean presentation.
+
+---
+
+### Log : 64
+**Title**: Viking Mars Lander Artwork Installation & Calibration GUI  
+**Description**: Added the seventh framed artwork (`CV-Ma-Vk.png`) celebrating the NASA Viking Mars Lander mission with live on-screen `lil-gui` calibration controls:
+- **Viking Lander Poster Class (`VikingLanderPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and neon LED accent trim.
+- **Initial Placement**: Mounted along the corridor gallery at $X = -10.38$, $Y = -0.88$, $Z = 7.50$, rotation $\text{Yaw } Y = -90^\circ$, matching the native $1720 \times 1118$ aspect ratio ($2.77\text{m} \times 1.80\text{m}$, scale $0.60$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Viking Lander Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `VIKING_LANDER_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 65
+**Title**: Viking Mars Lander Poster Permanent Placement & GUI Clean-up  
+**Description**: Permanently locked in the user-calibrated transform and frame aesthetics for the Viking Mars Lander artwork:
+- **Locked Parameters**:
+  - `Position`: $X = -10.94$, $Y = -0.86$, $Z = 6.70$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = 0.0^\circ$, $\text{Roll } Z = 0.0^\circ$ (flush along the wall facing inward)
+  - `Dimensions & Scale`: Width $2.77\text{m}$, Height $1.80\text{m}$, Scale $0.60$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, slate frame `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_VIKING_LANDER_POSTER` for a clean presentation.
+
+---
+
+### Log : 66
+**Title**: InSight Mars Lander Artwork Installation & Calibration GUI  
+**Description**: Added the eighth framed artwork (`CV-ma-InsL.png`) celebrating the NASA InSight Mars Lander mission with live on-screen `lil-gui` calibration controls:
+- **InSight Lander Poster Class (`InsightLanderPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and neon LED accent trim.
+- **Initial Placement**: Mounted along the feature wall gallery at $X = -7.10$, $Y = -0.92$, $Z = 6.70$, rotation $\text{Yaw } Y = 0^\circ$, matching the native $1636 \times 886$ aspect ratio ($3.32\text{m} \times 1.80\text{m}$, scale $0.70$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ InSight Lander Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `INSIGHT_LANDER_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 67
+**Title**: InSight Mars Lander Permanent Wall Mounting & Calibration Lock  
+**Description**: Hardcoded the user-calibrated transform parameters for the InSight Mars Lander framed artwork on the feature wall gallery:
+- **Locked Coordinates**:
+  - `Position`: $X = -4.24$, $Y = -0.92$, $Z = 6.70$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = 0.0^\circ$, $\text{Roll } Z = 0.0^\circ$
+  - `Dimensions`: Width $3.32\text{m}$, Height $1.80\text{m}$, Scale $0.70$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, frame color slate `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_INSIGHT_LANDER_POSTER` to maintain a pristine, clutter-free museum presentation.
+
+---
+
+### Log : 68
+**Title**: Dawn Spacecraft Mission Artwork Installation & Calibration GUI  
+**Description**: Added the ninth framed artwork (`CV-Ma-Dawn.png`) celebrating NASA's Dawn Mission to the asteroids Vesta and Ceres:
+- **Dawn Mission Poster Class (`DawnMissionPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and pulsing cyan LED accent trim.
+- **Initial Placement**: Mounted along the feature gallery wall at $X = -7.59$, $Y = -0.90$, $Z = 6.70$, rotation $\text{Yaw } Y = 0^\circ$, matching the native $1950 \times 1158$ aspect ratio ($3.03\text{m} \times 1.80\text{m}$, scale $0.65$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Dawn Mission Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `DAWN_MISSION_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 69
+**Title**: Dawn Spacecraft Mission Permanent Wall Mounting & Calibration Lock  
+**Description**: Hardcoded the user-calibrated transform parameters for the Dawn Spacecraft framed artwork on the gallery corridor wall:
+- **Locked Coordinates**:
+  - `Position`: $X = -1.70$, $Y = -0.82$, $Z = 8.78$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = -90.0^\circ$, $\text{Roll } Z = 0.0^\circ$
+  - `Dimensions`: Width $3.03\text{m}$, Height $1.80\text{m}$, Scale $0.65$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, frame color slate `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_DAWN_MISSION_POSTER` to maintain a pristine, clutter-free museum presentation.
+
+---
+
+### Log : 70
+**Title**: NEAR Shoemaker Spacecraft Mission Artwork Installation & Calibration GUI  
+**Description**: Added the tenth framed artwork (`CV-Ma-NearSh.png`) celebrating NASA's NEAR Shoemaker (Near Earth Asteroid Rendezvous) mission to asteroid 433 Eros:
+- **NEAR Shoemaker Poster Class (`NearShoemakerPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and pulsing cyan LED accent trim.
+- **Initial Placement**: Mounted along the gallery corridor wall at $X = -1.70$, $Y = -0.82$, $Z = 13.50$, rotation $\text{Yaw } Y = -90.0^\circ$, matching the native $2198 \times 1232$ aspect ratio ($3.21\text{m} \times 1.80\text{m}$, scale $0.65$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ NEAR Shoemaker Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `NEAR_SHOEMAKER_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 71
+**Title**: Pioneer 10 & 11 Twin Spacecraft Artwork Installation & Calibration GUI  
+**Description**: Added the eleventh framed artwork (`CV-Ma-P10and11.png`) honoring the pioneering deep space exploration of twin probes Pioneer 10 and Pioneer 11:
+- **Pioneer Poster Class (`PioneerPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and pulsing cyan LED accent trim.
+- **Initial Placement**: Mounted along the gallery corridor wall at $X = -1.70$, $Y = -0.82$, $Z = 18.00$, rotation $\text{Yaw } Y = -90.0^\circ$, matching the native $1686 \times 1052$ aspect ratio ($2.88\text{m} \times 1.80\text{m}$, scale $0.65$).
+- **Dual Side-by-Side Calibration GUIs**: Offset the NEAR Shoemaker panel to `right: 330px` and placed the Pioneer 10 & 11 panel at `right: 20px`, allowing effortless calibration of both artworks without panel occlusion.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `PIONEER_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 72
+**Title**: Pioneer 10 & 11 Permanent Wall Mounting & Calibration Lock  
+**Description**: Hardcoded the user-calibrated transform parameters for the Pioneer 10 & 11 framed artwork on the corridor wall:
+- **Locked Coordinates**:
+  - `Position`: $X = -1.72$, $Y = -0.82$, $Z = 20.32$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = -90.0^\circ$, $\text{Roll } Z = 0.0^\circ$
+  - `Dimensions`: Width $2.88\text{m}$, Height $1.80\text{m}$, Scale $0.65$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, frame color slate `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_PIONEER_POSTER` to maintain a pristine, clutter-free museum presentation.
+
+---
+
+### Log : 73
+**Title**: NEAR Shoemaker Spacecraft Permanent Wall Mounting & Calibration Lock  
+**Description**: Hardcoded the user-calibrated transform parameters for the NEAR Shoemaker framed artwork on the gallery corridor wall:
+- **Locked Coordinates**:
+  - `Position`: $X = -1.70$, $Y = -0.80$, $Z = 13.08$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = -90.0^\circ$, $\text{Roll } Z = 0.0^\circ$
+  - `Dimensions`: Width $3.21\text{m}$, Height $1.80\text{m}$, Scale $0.65$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, frame color slate `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_NEAR_SHOEMAKER_POSTER` to keep the exhibit visitor-ready.
+
+---
+
+### Log : 74
+**Title**: Ingenuity Mars Helicopter Artwork Installation & Calibration GUI  
+**Description**: Added the twelfth framed artwork (`CV-Ma-Intg-Heli.png`) celebrating NASA's Ingenuity Mars Helicopter, the first aircraft in history to achieve powered, controlled flight on another planet:
+- **Ingenuity Helicopter Poster Class (`IngenuityHelicopterPoster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and pulsing cyan LED accent trim.
+- **Initial Placement**: Mounted along the gallery corridor wall at $X = -1.70$, $Y = -0.82$, $Z = 16.70$, rotation $\text{Yaw } Y = -90.0^\circ$, matching the native $2790 \times 1572$ aspect ratio ($3.19\text{m} \times 1.80\text{m}$, scale $0.65$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Ingenuity Helicopter Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `INGENUITY_HELICOPTER_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 75
+**Title**: Ingenuity Mars Helicopter Permanent Wall Mounting & Calibration Lock  
+**Description**: Hardcoded the user-calibrated transform parameters for the Ingenuity Mars Helicopter framed artwork on the gallery wall:
+- **Locked Coordinates**:
+  - `Position`: $X = -3.86$, $Y = -1.10$, $Z = 14.42$
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = 90.0^\circ$, $\text{Roll } Z = 0.0^\circ$
+  - `Dimensions`: Width $3.19\text{m}$, Height $1.80\text{m}$, Scale $0.94$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, frame color slate `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_INGENUITY_HELICOPTER_POSTER` to keep the exhibit visitor-ready.
+
+---
+
+### Log : 76
+**Title**: Application Favicon Configuration  
+**Description**: Configured the official application favicon in `index.html` using the user's custom museum logo (`logo.png`):
+- Added `<link rel="icon" type="image/png" href="/logo.png" />` inside the `<head>` section of [index.html](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/index.html).
+- Verified across Vite dev server and production builds.
+
+---
+
+### Log : 77
+**Title**: Pioneer 10 & 11 Poster Live Calibration GUI Reopened  
+**Description**: Reopened the live on-screen calibration controls for `PioneerPoster` (`CV-Ma-P10and11.png`) upon user request to allow fine-tuning of its position, scale, and framing:
+- Ungated `initGui()` in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) so the `"🖼️ Pioneer 10 & 11 Poster Calibration"` panel immediately displays on screen.
+
+---
+
+### Log : 78
+**Title**: Pioneer 10 & 11 Permanent Transform Readjustment & Calibration Lock  
+**Description**: Re-calibrated and hardcoded the user-updated transform coordinates for the Pioneer 10 & 11 framed artwork along the corridor wall:
+- **Locked Coordinates**:
+  - `Position`: $X = -1.72$, $Y = -0.82$, $Z = 18.48$ (adjusted from $Z = 20.32$)
+  - `Rotation`: $\text{Pitch } X = 0.0^\circ$, $\text{Yaw } Y = -90.0^\circ$, $\text{Roll } Z = 0.0^\circ$
+  - `Dimensions`: Width $2.88\text{m}$, Height $1.80\text{m}$, Scale $0.65$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, frame color slate `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Re-gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_PIONEER_POSTER` to maintain a pristine, visitor-ready gallery presentation.
+
+---
+
+### Log : 79
+**Title**: Kepler / K2 Space Telescope Artwork Installation & Calibration GUI  
+**Description**: Added the thirteenth framed artwork (`CV-K2.png`) celebrating NASA's legendary planet-hunting Kepler and K2 Space Telescope missions:
+- **Kepler K2 Poster Class (`KeplerK2Poster`)**: Implemented in [posters.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/posters.js) with 3D bezel frame, optional backing plate, and pulsing cyan LED accent trim.
+- **Initial Placement**: Mounted along the gallery wall at $X = -3.86$, $Y = -1.10$, $Z = 19.50$, rotation $\text{Yaw } Y = 90.0^\circ$, matching the native $1914 \times 1084$ aspect ratio ($3.18\text{m} \times 1.80\text{m}$, scale $0.80$).
+- **Active Calibration GUI**: Displays an immediate on-screen calibration panel titled `"🖼️ Kepler K2 Poster Calibration"` with interactive Position ($X, Y, Z$), Rotation ($X, Y, Z$), Dimension & Scale, and 3D Frame customization sliders.
+- **Action Buttons**: Includes both `📋 Copy Final Coordinates` (formatting `KEPLER_K2_POSTER_CONFIG`) and `🔄 Reset to Defaults` buttons with responsive in-game toasts.
+
+---
+
+### Log : 80
+**Title**: Kepler / K2 Space Telescope Permanent Wall Mounting & Calibration Lock  
+**Description**: Hardcoded the user-calibrated transform parameters for the Kepler / K2 Space Telescope framed artwork on the corridor gallery wall:
+- **Locked Coordinates**:
+  - `Position`: $X = -1.76$, $Y = -0.84$, $Z = 21.12$
+  - `Rotation`: $\text{Pitch } X = 1.0^\circ$, $\text{Yaw } Y = -90.0^\circ$, $\text{Roll } Z = 0.0^\circ$
+  - `Dimensions`: Width $3.18\text{m}$, Height $1.80\text{m}$, Scale $0.66$
+  - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, frame color slate `#1e293b`, cyan LED glow trim `#00b3ff`
+- **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_KEPLER_K2_POSTER` to maintain a pristine, visitor-ready gallery presentation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
