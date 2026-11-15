@@ -271,9 +271,6 @@ export class FirstPersonController {
       <div class="fp-instructions" id="fp-instr">
         <span>[W][A][S][D]</span> Move &bull; <span>[SHIFT]</span> Sprint &bull; <span>[G]</span> Fly Mode
       </div>
-      <div class="fp-coord-badge" id="fp-coord-display" title="Click to copy your coordinates to clipboard">
-        POS: X: 4.00 | Y: -0.77 | Z: 28.00
-      </div>
       <button class="btn-flight-mode" id="btn-flight-toggle" title="Toggle Developer Flight Mode [G]">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -306,19 +303,6 @@ export class FirstPersonController {
       flightBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         this.toggleFlyMode();
-      });
-    }
-
-    /*/ Live Coordinates Click-to-Copy Listener /*/
-    const coordEl = this.hudElement.querySelector('#fp-coord-display');
-    if (coordEl) {
-      coordEl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const coordText = `X: ${this.camera.position.x.toFixed(2)}, Y: ${this.camera.position.y.toFixed(2)}, Z: ${this.camera.position.z.toFixed(2)}`;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(coordText);
-        }
-        this.showNotification(`📋 Copied Coordinates: ${coordText}`);
       });
     }
   }
@@ -803,17 +787,31 @@ export class FirstPersonController {
 
       this.velocity.set(0, 0, 0);
       this.camera.position.copy(this.seatedEyePos);
-      const coordEl = this.hudElement?.querySelector('#fp-coord-display');
-      if (coordEl) {
-        coordEl.textContent = `SEATED: ${this.currentSeat?.name || 'THEATRE'}`;
+
+      const modeText = this.hudElement?.querySelector('#fp-mode-text');
+      const instrText = this.hudElement?.querySelector('#fp-instr');
+      if (modeText) modeText.textContent = `SEATED • ${this.currentSeat?.name?.toUpperCase() || 'THEATRE'}`;
+      if (instrText && instrText.dataset.mode !== 'seated') {
+        instrText.dataset.mode = 'seated';
+        instrText.innerHTML = `<span>[E]</span> Stand Up &bull; Mouse Look Around &bull; <span>[M]</span> Stories`;
       }
       return;
     }
 
-    /*/ Update Real-Time Player Coordinates in HUD /*/
-    const coordEl = this.hudElement?.querySelector('#fp-coord-display');
-    if (coordEl) {
-      coordEl.textContent = `POS: X: ${this.camera.position.x.toFixed(2)} | Y: ${this.camera.position.y.toFixed(2)} | Z: ${this.camera.position.z.toFixed(2)}`;
+    const modeText = this.hudElement?.querySelector('#fp-mode-text');
+    const instrText = this.hudElement?.querySelector('#fp-instr');
+    if (modeText) {
+      const targetMode = this.isFlying ? 'DRONE FLIGHT MODE' : 'FIRST-PERSON POV';
+      if (modeText.textContent !== targetMode) modeText.textContent = targetMode;
+    }
+    if (instrText) {
+      const targetType = this.isFlying ? 'fly' : 'walk';
+      if (instrText.dataset.mode !== targetType) {
+        instrText.dataset.mode = targetType;
+        instrText.innerHTML = this.isFlying
+          ? `<span>[W][A][S][D]</span> 3D Thrust &bull; <span>[SPACE]</span> Ascend &bull; <span>[C]</span> Descend`
+          : `<span>[W][A][S][D]</span> Move &bull; <span>[SHIFT]</span> Sprint &bull; <span>[G]</span> Fly Mode`;
+      }
     }
 
     /*/ --- 0. FLY / SPECTATOR DRONE MODE (Exact from Experiment player.js) --- /*/
