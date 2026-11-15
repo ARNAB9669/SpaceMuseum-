@@ -36,6 +36,7 @@ export class TheatreRoom {
     this.isDimmed = false;
     this.currentSeatedSeat = null;
     this.baseSeatModel = null;
+    this.theaterManager = null;
 
     /*/ Final Calibrated Parameters (Calibrated by user via GUI) /*/
     this.params = {
@@ -574,6 +575,11 @@ export class TheatreRoom {
     if (this.fpController.playChime) {
       this.fpController.playChime();
     }
+
+    /*/ Notify Theater Manager to present Story Selector or resume Video /*/
+    if (this.theaterManager) {
+      this.theaterManager.onSeated(seat);
+    }
   }
 
   standUp() {
@@ -581,6 +587,11 @@ export class TheatreRoom {
     const seat = this.currentSeatedSeat;
     this.currentSeatedSeat = null;
     this.setDimmed(false);
+
+    /*/ Notify Theater Manager to stop video playback and tear down iframe /*/
+    if (this.theaterManager) {
+      this.theaterManager.onStandUp();
+    }
 
     const worldGround = new THREE.Vector3();
     seat.container.getWorldPosition(worldGround);
@@ -665,6 +676,11 @@ export class TheatreRoom {
       const flicker = 0.95 + Math.sin(this.docTime * 18.0) * 0.05 + Math.cos(this.docTime * 7.3) * 0.03;
       this.projectorLight.intensity = THREE.MathUtils.lerp(this.projectorLight.intensity, targetProjector * flicker, delta * 3.5);
     }
+
+    /*/ Forward delta update to Theater Manager /*/
+    if (this.theaterManager) {
+      this.theaterManager.update(delta);
+    }
   }
 
   /*/ Renders the 16:9 1280x720 NASA Space Apps Documentary frame /*/
@@ -673,7 +689,29 @@ export class TheatreRoom {
     const w = this.canvas.width;
     const h = this.canvas.height;
     const t = this.docTime;
-    const ch = this.chapters[this.currentChapter];
+
+    /*/ Dynamically mirror the currently playing documentary or rotate ambient chapters /*/
+    const activeStory = (this.theaterManager && this.theaterManager.isPlaying && this.theaterManager.currentStory)
+      ? this.theaterManager.currentStory
+      : null;
+
+    const ch = activeStory
+      ? {
+          title: activeStory.title.toUpperCase(),
+          subtitle: activeStory.subtitle,
+          accentColor: activeStory.targetColor || '#38bdf8',
+          target: activeStory.target,
+          hardware: 'NASA Archival Documentary • YouTube Stream',
+          status: 'Currently Screening in Auditorium',
+          stats: [
+            `Target: ${activeStory.target}`,
+            `Era: ${activeStory.year}`,
+            `Genre: ${activeStory.categoryName}`
+          ],
+          quote: '"Abandoned but not forgotten."',
+          notes: activeStory.description
+        }
+      : this.chapters[this.currentChapter];
 
     /*/ Background gradient with deep void /*/
     const bgGrad = ctx.createLinearGradient(0, 0, w, h);

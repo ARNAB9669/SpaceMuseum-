@@ -11,6 +11,7 @@ import { RoadLights } from './Ui/road-light.js';
 import { FloorMapSelector } from './Logic/map-selector.js';
 import { WelcomeSign, OuterWallPoster, EntranceCorridorPoster, Apollo15Poster, Apollo12Poster, Surveyor3Poster, SojournerRoverPoster, SpiritOpportunityPoster, VikingLanderPoster, InsightLanderPoster, DawnMissionPoster, NearShoemakerPoster, PioneerPoster, IngenuityHelicopterPoster, KeplerK2Poster } from './Ui/posters.js';
 import { TheatreRoom } from './Ui/theatre.js';
+import { TheaterManager } from './Logic/theater.js';
 import { ExhibitionPlatforms } from './Ui/exhibition-platforms.js';
 import { RelicComlink } from './Logic/AI/relic-comlink.js';
 
@@ -134,6 +135,10 @@ fpController.addCollidableMeshes(exhibitionPlatforms.collidableMeshes);
 /*/ NASA Space Apps Documentary Movie Theatre /*/
 const theatre = new TheatreRoom(scene, camera, fpController);
 fpController.theatre = theatre;
+
+/*/ Archival Documentary Selection & YouTube Cinema Player /*/
+const theaterManager = new TheaterManager(theatre, fpController, camera);
+theatre.theaterManager = theaterManager;
 
 /*/ Direct Spacecraft Voice Com-Link (Gemini Multimodal Live Voice Engine) /*/
 const relicComlink = new RelicComlink();

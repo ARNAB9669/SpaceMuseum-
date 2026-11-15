@@ -1483,18 +1483,61 @@
 - **Build Verification**: `npx vite build` passed cleanly in 488ms with 0 errors.
 
 ---
-### Log : 110
-**Title**: Call Stability & WebSocket Connection Lifecycle Hardening  
-**Description**: Resolved random mid-call disconnects and WebSocket state collisions:
-- **Key-Repeat & Click Debouncing ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js), [relic-comlink.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/relic-comlink.js))**:
-  - Filtered OS keyboard repeat (`if (e.repeat) return;`) on `KeyE` to prevent multiple rapid connect/disconnect toggles when pressing the key.
-  - Added `this.isConnecting` guard in `startComlink()` to debounce rapid clicks/taps.
-- **Race Condition & Socket Teardown Hardening**:
-  - Nullified all callbacks (`onopen`, `onmessage`, `onerror`, `onclose`) on old sockets immediately upon disconnection before invoking `.close()`, preventing stale callbacks from cross-firing into a new session.
-  - Added readiness check in `handleGatewayMessage`: waits for `socket.onopen` if `setupComplete` arrives while the client socket is still transitioning from `CONNECTING` to `OPEN`, eliminating `InvalidStateError`.
-- **Protected Audio Streaming Loop**:
-  - Wrapped audio packet transmissions in error-handling guards so intermittent network hiccups never tear down the active audio pipeline.
-- **Build Verification**: `npx vite build` passed cleanly in 427ms with 0 errors.
+### Log : 111
+**Title**: NASA Archival Documentary Movie Theatre System & Story Selection Engine  
+**Description**: Fully implemented the movie theatre documentary playback system with interactive story selection and YouTube iframe embedding:
+- **Archival Documentary Catalog & Selection Logic ([theater.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/theater.js))**:
+  - Implemented `TheaterManager` class with full metadata catalog of all 12 NASA Space Apps archival documentary films:
+    1. `gaM1GDUOO9A`: NEAR Shoemaker (First Landing on Asteroid 433 Eros)
+    2. `Dv9_P2TsoaU`: NASA Dawn Mission (Vesta & Ceres Protoplanets)
+    3. `_2IjXlKj5kw`: Phoenix & InSight (Mars Landers & Marsquakes)
+    4. `BoI1B4_2XnU`: Viking 1 & 2 (First Surface Operations on Mars)
+    5. `KV8etrzverU`: Spirit & Opportunity (15 Years & 45km on Mars)
+    6. `9RhaBzn8yyQ`: Mars Pathfinder & Sojourner (First Mobile Mars Rover)
+    7. `BGJ3oYD4K-k`: ALSEP (Apollo Lunar Surface Experiments Package)
+    8. `q3fE2EbRTEw`: Apollo Lunar Modules (Monuments in Moondust)
+    9. `8Zgv1iVY1kc`: Surveyor Landers (Precursor Lunar Scouts)
+    10. `-YMSF0f8nTI`: Kepler Space Telescope (Hunting Alien Worlds)
+    11. `69FTSCsHybA`: Ingenuity Mars Helicopter (First Flight on Mars)
+    12. `3e8GQDRC7-U`: Pioneer 10 & 11 (Journey into the Deep Unknown)
+  - Built an interactive **Story & Topic Selection Modal** (`#theater-story-modal`) featuring:
+    - Glassmorphism dark cyberpunk design with responsive 3-column card grid
+    - Category filter tabs: *All (12)*, *Mars Surface (5)*, *Lunar Expeditions (3)*, *Asteroids & Ceres (2)*, *Deep Space & Stars (2)*
+    - YouTube high-resolution thumbnails, destination badges, mission eras, and highlights
+    - Direct "Screen Documentary" action and live "Now Playing" indicators
+- **Auditorium YouTube Iframe Packaging**:
+  - Engineered the `#theater-screen-viewport` 16:9 cinema frame with ambient back-glow mounted over the auditorium screen
+  - Integrated privacy-friendly YouTube embed (`youtube-nocookie.com/embed/${id}?autoplay=1&enablejsapi=1&rel=0`)
+  - Floating top controls ribbon: displays current film title, target badge, "Change Story [M]", "Expand/Fit Cinema Size", and "Stand Up [E]"
+  - Automatic pointer lock release on sitting down for smooth mouse interaction with cards and video controls
+- **Auditorium 3D Integration & Synchronized Canvas ([theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js), [main.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/main.js))**:
+  - Hooked `sitInSeat(seat)` to trigger `theaterManager.onSeated(seat)` and open story selection automatically
+  - Hooked `standUp()` to trigger `theaterManager.onStandUp()` which stops playback and unmounts the iframe
+  - Synced 3D screen texture canvas: `renderCanvasFrame()` dynamically mirrors the selected film's title, subtitle, target, and mission stats onto the 3D projection mesh in real time
+  - Added "SELECT STORY [M]" action to `#cinema-hud` in [index.html](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/index.html)
+- **Live Worker Gateway Update ([cw.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Backend/Cloudlfare/cw.js), [wrangler.toml](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Backend/Cloudlfare/wrangler.toml))**:
+  - Re-deployed Cloudflare Worker gateway with confirmed `models/gemini-3.8-live` model configuration
+  - Hardened socket identity binding during setup handshake in [relic-comlink.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/relic-comlink.js)
+- **Build Verification**: `npx vite build` passed cleanly in 543ms with 0 errors.
+
+---
+### Log : 112
+**Title**: Real In-World 3D Cinema Screen Projection & Sleek Mission Dock  
+**Description**: Eliminated the 2D floating popup overlay and clunky full-screen card, replacing them with a true 3D in-world movie theatre experience:
+- **Real 3D Screen Surface Projection via CSS3DRenderer ([theater.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/theater.js))**:
+  - Attached a `CSS3DObject` directly inside `theatre.screenGroup` at $(0, 0, 0.025\text{m})$, automatically inheriting the auditorium's 3D world position, orientation, and elevation.
+  - Sized the DOM container to $1920\text{px} \times 1034\text{px}$ with exact scale factor $0.00203125$ to match the $3.90\text{m} \times 2.10\text{m}$ physical cinema screen bezel.
+  - The YouTube `<iframe>` is rendered directly ON the auditorium wall in genuine 3D perspective, maintaining full perspective parallax when looking around from any seat (Row 1, 2, or 3).
+  - Standby state features a high-tech NASA Space Apps laser projection terminal; playing state streams YouTube documentaries in 1080p with Dolby/stereo audio.
+- **Low-Profile Cinema Mission Dock ([theater.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/theater.js))**:
+  - Replaced the large full-screen modal with a low-profile, horizontal cinema dock (`#cinema-mission-dock`) positioned at the bottom of the viewport.
+  - Leaves the central 80% of the screen completely clear so the visitor sees the entire 3D movie theater (red seats, floor, lighting, and screen).
+  - Features 16:9 widescreen YouTube thumbnails, celestial target tags, era badges, and category pills (*All*, *Mars*, *Moon*, *Asteroids*, *Deep Space*).
+  - Automatically slides down into a minimal floating pill (`[🎬 Change Mission Film]`) upon video selection, providing an unobstructed cinematic view.
+  - Key `[M]` toggles the dock; `[E]` or `[Space]` stands up and tears down the iframe.
+- **Build Verification**: `npx vite build` passed cleanly in 401ms with 0 errors.
+
+
 
 
 

@@ -346,19 +346,22 @@ export class RelicComlink {
         }
       };
 
+      /*/ Capture the socket identity at time of setupComplete to prevent stale sends /*/
+      const currentSocket = this.ws;
       const sendGreeting = () => {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+        /*/ Guard: only send if this socket is still the active one and fully open /*/
+        if (!currentSocket || currentSocket !== this.ws || currentSocket.readyState !== WebSocket.OPEN) return;
         try {
-          this.ws.send(JSON.stringify(greetingTurn));
+          currentSocket.send(JSON.stringify(greetingTurn));
         } catch (e) {
           console.error('[RelicComlink] Error sending greeting turn:', e);
         }
       };
 
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      if (currentSocket && currentSocket.readyState === WebSocket.OPEN) {
         sendGreeting();
-      } else if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
-        this.ws.addEventListener('open', sendGreeting, { once: true });
+      } else if (currentSocket && currentSocket.readyState === WebSocket.CONNECTING) {
+        currentSocket.addEventListener('open', sendGreeting, { once: true });
       }
 
       const statusEl = this.hudElement?.querySelector('#comlink-status');
