@@ -1,13 +1,18 @@
 import * as THREE from 'three';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 
 /*/ =============================================================
-    exhibition-platforms.js — 13 Architectural Rover Display Podia
+    exhibition-platforms.js — Exhibition Rover Display Podia
     Procedural sci-fi museum exhibition pedestals in the central
     open-air courtyard plaza. Features multi-tier chamfered titanium bases,
     polished obsidian decks, pulsing neon LED halo rings, concentric
-    docking target reticles, and high-definition mission plaques.
-    Includes live lil-gui calibration and 3D model mount points.
+    docking target reticles, authentic 3D tablet stands with mission plaques,
+    and loaded 3D NASA rovers / spacecraft.
+    Provides dedicated lil-gui calibration for each individual platform
+    and model (radius, height, coordinates, orientation, scale, hover).
     ============================================================= /*/
 
 export class ExhibitionPlatforms {
@@ -19,46 +24,172 @@ export class ExhibitionPlatforms {
     this.platforms = [];
     this.collidableMeshes = [];
 
-    /*/ Global Arena Base Floor Level (Snapping directly to courtyard ground Y = -2.42) /*/
+    /*/ Initialize DRACO decompression loader for lightweight NASA 3D models /*/
+    this.dracoLoader = new DRACOLoader();
+    this.dracoLoader.setDecoderPath('/draco/');
+
+    this.gltfLoader = new GLTFLoader();
+    this.gltfLoader.setDRACOLoader(this.dracoLoader);
+    this.mountedModels = {};
+
+    /*/ 3D Tablet Stand Model Loader /*/
+    this.objLoader = new OBJLoader();
+    this.standTemplate = null;
+    this.standParams = {
+      offsetZ: 0.26,
+      tabletHeight: 1.24,
+      tabletTilt: -38
+    };
+
+    /*/ Global Arena Base Floor Level (Courtyard ground Y = -2.42) /*/
     this.floorY = -2.42;
 
-    /*/ Mission Metadata for the 13 Historic NASA Exploration Missions /*/
-    this.missionData = [
-      { id: '01', title: 'APOLLO 11 LM', sub: 'LUNAR LANDER • 1969', color: '#38bdf8' },
-      { id: '02', title: 'APOLLO 15 LM', sub: 'LUNAR ROVER MISSION • 1971', color: '#38bdf8' },
-      { id: '03', title: 'APOLLO 12 LM', sub: 'OCEAN OF STORMS • 1969', color: '#38bdf8' },
-      { id: '04', title: 'SURVEYOR 3', sub: 'ROBOTIC MOON PROBE • 1967', color: '#38bdf8' },
-      { id: '05', title: 'SOJOURNER ROVER', sub: 'PATHFINDER MARS • 1997', color: '#f97316' },
-      { id: '06', title: 'SPIRIT & OPPORTUNITY', sub: 'TWIN MER ROVERS • 2004', color: '#f97316' },
-      { id: '07', title: 'VIKING LANDER', sub: 'HISTORIC MARS TOUCHDOWN • 1976', color: '#ef4444' },
-      { id: '08', title: 'INSIGHT LANDER', sub: 'MARTIAN GEOPHYSICS • 2018', color: '#f97316' },
-      { id: '09', title: 'DAWN SPACECRAFT', sub: 'VESTA & CERES PROBE • 2007', color: '#38bdf8' },
-      { id: '10', title: 'NEAR SHOEMAKER', sub: 'ASTEROID 433 EROS • 1996', color: '#a855f7' },
-      { id: '11', title: 'PIONEER 10 & 11', sub: 'JUPITER & SATURN VOYAGERS • 1972', color: '#fbbf24' },
-      { id: '12', title: 'INGENUITY HELI', sub: 'MARS POWERED FLIGHT • 2021', color: '#10b981' },
-      { id: '13', title: 'KEPLER / K2', sub: 'EXOPLANET HUNTER • 2009', color: '#6366f1' }
-    ];
-
-    /*/ Default Symmetrical 3-Row Layout in the Open Exhibition Plaza /*/
-    this.defaultLayout = [
-      /*/ Row 1 (North / Deep Plaza, Z = -18.50) /*/
-      { index: 0,  x: -9.00, z: -18.50, rotY: 0.0,  radius: 1.20, height: 0.28 },
-      { index: 1,  x: -3.00, z: -18.50, rotY: 0.0,  radius: 1.20, height: 0.28 },
-      { index: 2,  x:  3.00, z: -18.50, rotY: 0.0,  radius: 1.20, height: 0.28 },
-      { index: 3,  x:  9.00, z: -18.50, rotY: 0.0,  radius: 1.20, height: 0.28 },
-
-      /*/ Row 2 (Central Grand Showcase Aisle, Z = -12.50) /*/
-      { index: 4,  x: -10.00, z: -12.50, rotY: 0.0, radius: 1.20, height: 0.28 },
-      { index: 5,  x:  -5.00, z: -12.50, rotY: 0.0, radius: 1.20, height: 0.28 },
-      { index: 6,  x:   0.00, z: -12.50, rotY: 0.0, radius: 1.45, height: 0.35 }, /*/ Centerpiece VIP platform /*/
-      { index: 7,  x:   5.00, z: -12.50, rotY: 0.0, radius: 1.20, height: 0.28 },
-      { index: 8,  x:  10.00, z: -12.50, rotY: 0.0, radius: 1.20, height: 0.28 },
-
-      /*/ Row 3 (South / Gallery Approach, Z = -6.50) /*/
-      { index: 9,  x: -9.00, z: -6.50, rotY: 0.0,  radius: 1.20, height: 0.28 },
-      { index: 10, x: -3.00, z: -6.50, rotY: 0.0,  radius: 1.20, height: 0.28 },
-      { index: 11, x:  3.00, z: -6.50, rotY: 0.0,  radius: 1.20, height: 0.28 },
-      { index: 12, x:  9.00, z: -6.50, rotY: 0.0,  radius: 1.20, height: 0.28 }
+    /*/ Active Exhibition Podia Roster (Exactly 8 NASA Exploration Missions with 3D Models) /*/
+    this.defaultPlatforms = [
+      {
+        id: '01',
+        title: 'APOLLO 11 LM',
+        sub: 'LUNAR LANDER • 1969',
+        color: '#38bdf8',
+        modelUrl: '/models/Apollo Lunar Module.glb',
+        x: -9.00,
+        z: -18.50,
+        rotY: 0.0,
+        radius: 1.30,
+        height: 0.28,
+        standAngle: 0,
+        scale: 0.28,
+        modelRotY: 15.0,
+        offsetY: 0.0,
+        turntable: false,
+        turntableSpeed: 0.2
+      },
+      {
+        id: '06',
+        title: 'SPIRIT & OPPORTUNITY',
+        sub: 'TWIN MER ROVERS • 2004',
+        color: '#f97316',
+        modelUrl: '/models/24883_MER_static.glb',
+        x: -5.00,
+        z: -12.50,
+        rotY: 0.0,
+        radius: 1.25,
+        height: 0.28,
+        standAngle: 0,
+        scale: 0.75,
+        modelRotY: 15.0,
+        offsetY: 0.0,
+        turntable: false,
+        turntableSpeed: 0.2
+      },
+      {
+        id: '07',
+        title: 'VIKING LANDER',
+        sub: 'HISTORIC MARS TOUCHDOWN • 1976',
+        color: '#ef4444',
+        modelUrl: '/models/Viking Lander.glb',
+        x: 0.00,
+        z: -12.50,
+        rotY: 0.0,
+        radius: 1.50,
+        height: 0.35,
+        standAngle: 0,
+        scale: 0.11,
+        modelRotY: 20.0,
+        offsetY: 0.0,
+        turntable: false,
+        turntableSpeed: 0.2
+      },
+      {
+        id: '08',
+        title: 'INSIGHT LANDER',
+        sub: 'MARTIAN GEOPHYSICS • 2018',
+        color: '#f97316',
+        modelUrl: '/models/24880_InSight_deployed.glb',
+        x: 5.00,
+        z: -12.50,
+        rotY: 0.0,
+        radius: 1.25,
+        height: 0.28,
+        standAngle: 0,
+        scale: 0.29,
+        modelRotY: 15.0,
+        offsetY: 0.0,
+        turntable: false,
+        turntableSpeed: 0.2
+      },
+      {
+        id: '09',
+        title: 'DAWN SPACECRAFT',
+        sub: 'VESTA & CERES PROBE • 2007',
+        color: '#38bdf8',
+        modelUrl: '/models/Dawn.glb',
+        x: 10.00,
+        z: -12.50,
+        rotY: 0.0,
+        radius: 1.25,
+        height: 0.28,
+        standAngle: 0,
+        scale: 0.09,
+        modelRotY: 25.0,
+        offsetY: 0.25,
+        turntable: false,
+        turntableSpeed: 0.2
+      },
+      {
+        id: '10',
+        title: 'NEAR SHOEMAKER',
+        sub: 'ASTEROID 433 EROS • 1996',
+        color: '#a855f7',
+        modelUrl: '/models/NEAR Shoemaker.glb',
+        x: -9.00,
+        z: -6.50,
+        rotY: 0.0,
+        radius: 1.20,
+        height: 0.28,
+        standAngle: 180,
+        scale: 0.26,
+        modelRotY: 15.0,
+        offsetY: 0.25,
+        turntable: false,
+        turntableSpeed: 0.2
+      },
+      {
+        id: '11',
+        title: 'PIONEER 10 & 11',
+        sub: 'JUPITER & SATURN VOYAGERS • 1972',
+        color: '#fbbf24',
+        modelUrl: '/models/Pioneer 10.glb',
+        x: -3.00,
+        z: -6.50,
+        rotY: 0.0,
+        radius: 1.20,
+        height: 0.28,
+        standAngle: 180,
+        scale: 0.22,
+        modelRotY: 35.0,
+        offsetY: 0.30,
+        turntable: false,
+        turntableSpeed: 0.2
+      },
+      {
+        id: '12',
+        title: 'INGENUITY HELI',
+        sub: 'MARS POWERED FLIGHT • 2021',
+        color: '#10b981',
+        modelUrl: '/models/Ingenuity Mars Helicopter.glb',
+        x: 3.00,
+        z: -6.50,
+        rotY: 0.0,
+        radius: 1.20,
+        height: 0.28,
+        standAngle: 180,
+        scale: 0.20,
+        modelRotY: 20.0,
+        offsetY: 0.0,
+        turntable: false,
+        turntableSpeed: 0.2
+      }
     ];
 
     /*/ Configurable Parameters /*/
@@ -70,17 +201,16 @@ export class ExhibitionPlatforms {
       glowColor: '#00b3ff',
       glowIntensity: 1.0,
       showReticles: true,
-      showPlaques: true,
-      selectedPlatformIndex: 0,
-      copyToClipboard: () => this.copyValues(),
-      resetToDefaults: () => this.resetDefaults()
+      showPlaques: true
     };
 
-    /*/ Clone positions for live calibration /*/
-    this.platformConfigs = JSON.parse(JSON.stringify(this.defaultLayout));
+    /*/ Active Runtime Configurations /*/
+    this.platformConfigs = JSON.parse(JSON.stringify(this.defaultPlatforms));
 
     this.initSharedMaterials();
     this.buildPlatforms();
+    this.loadInitialModels();
+    this.loadTabletStand();
     this.scene.add(this.group);
     this.initGui();
   }
@@ -144,7 +274,7 @@ export class ExhibitionPlatforms {
 
     /*/ Mission Title /*/
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 36px sans-serif';
+    ctx.font = 'bold 34px sans-serif';
     ctx.textAlign = 'left';
     ctx.fillText(data.title, 24, 105);
 
@@ -177,9 +307,9 @@ export class ExhibitionPlatforms {
     this.platforms = [];
     this.collidableMeshes = [];
 
-    this.platformConfigs.forEach((cfg) => {
+    this.platformConfigs.forEach((cfg, idx) => {
       const pGroup = new THREE.Group();
-      pGroup.name = `ExhibitionPlatform_${cfg.index + 1}`;
+      pGroup.name = `ExhibitionPlatform_${cfg.id}`;
       pGroup.position.set(cfg.x, this.floorY, cfg.z);
       pGroup.rotation.y = THREE.MathUtils.degToRad(cfg.rotY);
       pGroup.scale.setScalar(this.params.globalScale);
@@ -240,68 +370,289 @@ export class ExhibitionPlatforms {
       ]);
       const crossLines = new THREE.LineSegments(crossGeo, this.reticleMat);
       reticleGroup.add(crossLines);
-
       pGroup.add(reticleGroup);
 
       /*/ 5. Interactive Sci-Fi Information Plaque Stanchion /*/
       const plaqueGroup = new THREE.Group();
       plaqueGroup.name = 'InformationPlaque';
       plaqueGroup.visible = this.params.showPlaques;
-
-      /*/ Stanchion Post /*/
-      const postGeo = new THREE.CylinderGeometry(0.03, 0.04, 0.75, 12);
-      const postMesh = new THREE.Mesh(postGeo, this.stanchionMat);
-      postMesh.position.set(0, 0.38, R + 0.28);
-      postMesh.rotation.x = THREE.MathUtils.degToRad(-15);
-      plaqueGroup.add(postMesh);
-
-      /*/ Angled Information Plaque Tablet /*/
-      const data = this.missionData[cfg.index] || { id: `${cfg.index + 1}`, title: `MISSION ${cfg.index + 1}`, sub: 'NASA EXPLORATION', color: '#38bdf8' };
-      const plaqueTex = this.createPlaqueTexture(data);
-      const tabletGeo = new THREE.BoxGeometry(0.55, 0.30, 0.025);
-      const tabletMat = new THREE.MeshStandardMaterial({
-        map: plaqueTex,
-        metalness: 0.5,
-        roughness: 0.3,
-        emissive: new THREE.Color(data.color || '#38bdf8'),
-        emissiveMap: plaqueTex,
-        emissiveIntensity: 0.35
-      });
-      const tabletMesh = new THREE.Mesh(tabletGeo, tabletMat);
-      tabletMesh.position.set(0, 0.75, R + 0.38);
-      tabletMesh.rotation.x = THREE.MathUtils.degToRad(-45);
-      plaqueGroup.add(tabletMesh);
-
       pGroup.add(plaqueGroup);
 
-      /*/ 6. Dedicated 3D Model Mount Point (Slot where user models will be placed) /*/
+      /*/ 6. Dedicated 3D Model Mount Point /*/
       const mountPoint = new THREE.Group();
-      mountPoint.name = `ModelMountPoint_${cfg.index + 1}`;
+      mountPoint.name = `ModelMountPoint_${cfg.id}`;
       mountPoint.position.set(0, H, 0);
       pGroup.add(mountPoint);
 
       this.group.add(pGroup);
-      this.platforms.push({
+      const platformEntry = {
         group: pGroup,
         config: cfg,
+        baseMesh: baseMesh,
+        glowMesh: glowMesh,
+        deckMesh: deckMesh,
         mountPoint: mountPoint,
         reticleGroup: reticleGroup,
         plaqueGroup: plaqueGroup
-      });
+      };
+      this.platforms.push(platformEntry);
+      this.setupPlatformStand(platformEntry, idx);
     });
   }
 
-  /*/ Convenience method to mount a 3D rover model onto a specific platform /*/
-  addRoverModel(platformIndex, modelObject, scale = 1.0, offsetY = 0.0) {
-    if (platformIndex < 0 || platformIndex >= this.platforms.length) {
-      console.warn(`[ExhibitionPlatforms] Invalid platform index: ${platformIndex}`);
+  /*/ Dynamically rebuild a platform when its radius or height is adjusted in lil-gui /*/
+  rebuildPlatformGeometry(idx) {
+    const p = this.platforms[idx];
+    if (!p) return;
+    const cfg = this.platformConfigs[idx];
+    const R = cfg.radius;
+    const H = cfg.height;
+    const baseH = H * 0.55;
+    const deckH = H * 0.45;
+
+    /*/ 1. Update Chamfered Plinth Geometry /*/
+    if (p.baseMesh) {
+      p.baseMesh.geometry.dispose();
+      p.baseMesh.geometry = new THREE.CylinderGeometry(R, R * 1.08, baseH, 32);
+      p.baseMesh.position.y = baseH / 2;
+    }
+
+    /*/ 2. Update Glowing LED Ring Geometry /*/
+    if (p.glowMesh) {
+      p.glowMesh.geometry.dispose();
+      const glowGeo = new THREE.TorusGeometry(R * 1.01, 0.025, 12, 32);
+      glowGeo.rotateX(Math.PI / 2);
+      p.glowMesh.geometry = glowGeo;
+      p.glowMesh.position.y = baseH;
+    }
+
+    /*/ 3. Update Obsidian Deck Geometry /*/
+    if (p.deckMesh) {
+      p.deckMesh.geometry.dispose();
+      p.deckMesh.geometry = new THREE.CylinderGeometry(R * 0.96, R * 0.98, deckH, 32);
+      p.deckMesh.position.y = baseH + deckH / 2;
+    }
+
+    /*/ 4. Update Docking Reticle Geometry /*/
+    if (p.reticleGroup) {
+      while (p.reticleGroup.children.length > 0) {
+        const child = p.reticleGroup.children[0];
+        if (child.geometry) child.geometry.dispose();
+        p.reticleGroup.remove(child);
+      }
+
+      const outerRingGeo = new THREE.RingGeometry(R * 0.75, R * 0.77, 32);
+      outerRingGeo.rotateX(-Math.PI / 2);
+      const outerRing = new THREE.Mesh(outerRingGeo, this.reticleMat);
+      outerRing.position.y = H + 0.002;
+      p.reticleGroup.add(outerRing);
+
+      const innerRingGeo = new THREE.RingGeometry(R * 0.40, R * 0.42, 32);
+      innerRingGeo.rotateX(-Math.PI / 2);
+      const innerRing = new THREE.Mesh(innerRingGeo, this.reticleMat);
+      innerRing.position.y = H + 0.002;
+      p.reticleGroup.add(innerRing);
+
+      const crossGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-R * 0.70, H + 0.002, 0),
+        new THREE.Vector3( R * 0.70, H + 0.002, 0),
+        new THREE.Vector3(0, H + 0.002, -R * 0.70),
+        new THREE.Vector3(0, H + 0.002,  R * 0.70)
+      ]);
+      const crossLines = new THREE.LineSegments(crossGeo, this.reticleMat);
+      p.reticleGroup.add(crossLines);
+    }
+
+    /*/ 5. Update Mount Point Height so 3D Model rests on the deck surface /*/
+    if (p.mountPoint) {
+      p.mountPoint.position.y = H;
+    }
+
+    /*/ 6. Reposition Tablet Stand relative to updated radius /*/
+    this.setupPlatformStand(p, idx);
+  }
+
+  loadInitialModels() {
+    this.platformConfigs.forEach((cfg, idx) => {
+      if (cfg.modelUrl) {
+        this.loadPlatformModel(idx, cfg);
+      }
+    });
+  }
+
+  loadPlatformModel(platformIndex, cfg) {
+    const p = this.platforms[platformIndex];
+    if (!p) {
+      console.warn(`[ExhibitionPlatforms] Platform index ${platformIndex} not found`);
       return;
     }
-    const mount = this.platforms[platformIndex].mountPoint;
-    modelObject.scale.setScalar(scale);
-    modelObject.position.y += offsetY;
-    mount.add(modelObject);
-    console.log(`[ExhibitionPlatforms] Mounted 3D model to Platform ${platformIndex + 1} (${this.missionData[platformIndex].title})`);
+
+    const {
+      modelUrl,
+      scale = 0.30,
+      modelRotY = 0,
+      offsetY = 0,
+      turntable = false,
+      turntableSpeed = 0.2,
+      title = `Model_${platformIndex + 1}`
+    } = cfg;
+
+    /*/ Clear any existing mounted model on this platform /*/
+    while (p.mountPoint.children.length > 0) {
+      const child = p.mountPoint.children[0];
+      p.mountPoint.remove(child);
+    }
+
+    const modelPivot = new THREE.Group();
+    modelPivot.name = `ModelPivot_${title}`;
+    modelPivot.position.set(0, offsetY, 0);
+    modelPivot.rotation.y = THREE.MathUtils.degToRad(modelRotY);
+    modelPivot.scale.setScalar(scale);
+
+    this.gltfLoader.load(
+      encodeURI(modelUrl),
+      (gltf) => {
+        const model = gltf.scene;
+        model.name = title;
+
+        /*/ Compute bounding box to ground landing pads perfectly on deck (Y = 0) and center on X/Z /*/
+        const box = new THREE.Box3().setFromObject(model);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+
+        model.position.set(-center.x, -box.min.y, -center.z);
+
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material) {
+              if (child.material.map) child.material.map.colorSpace = THREE.SRGBColorSpace;
+              child.material.needsUpdate = true;
+            }
+          }
+        });
+
+        modelPivot.add(model);
+        p.mountPoint.add(modelPivot);
+
+        this.mountedModels[platformIndex] = {
+          name: title,
+          pivot: modelPivot,
+          model: model,
+          options: { scale, modelRotY, offsetY, turntable, turntableSpeed }
+        };
+
+        console.log(`[ExhibitionPlatforms] Staged 3D model "${title}" on Platform ${cfg.id}`);
+      },
+      undefined,
+      (err) => {
+        console.error(`[ExhibitionPlatforms] Error loading 3D model ${modelUrl}:`, err);
+      }
+    );
+  }
+
+  loadTabletStand() {
+    this.objLoader.load(
+      encodeURI('/models/TABLET STAND.obj'),
+      (obj) => {
+        /*/ Apply dark titanium PBR material to stand /*/
+        obj.traverse((child) => {
+          if (child.isMesh) {
+            child.material = new THREE.MeshStandardMaterial({
+              color: 0x1e293b,
+              metalness: 0.85,
+              roughness: 0.25
+            });
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+
+        this.standTemplate = obj;
+
+        /*/ Mount 3D stand on each platform /*/
+        this.platforms.forEach((p, idx) => {
+          this.setupPlatformStand(p, idx);
+        });
+        console.log('[ExhibitionPlatforms] Mounted 3D TABLET STAND.obj on all platforms');
+      },
+      undefined,
+      (err) => {
+        console.error('[ExhibitionPlatforms] Failed to load TABLET STAND.obj:', err);
+      }
+    );
+  }
+
+  setupPlatformStand(p, idx) {
+    if (!p || !p.plaqueGroup) return;
+
+    /*/ Clean up existing stand and tablet in plaqueGroup /*/
+    while (p.plaqueGroup.children.length > 0) {
+      const child = p.plaqueGroup.children[0];
+      child.traverse((obj) => {
+        if (obj.isMesh) {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (obj.material.map) obj.material.map.dispose();
+            if (obj.material.emissiveMap) obj.material.emissiveMap.dispose();
+            obj.material.dispose();
+          }
+        }
+      });
+      p.plaqueGroup.remove(child);
+    }
+
+    const cfg = this.platformConfigs[idx] || p.config;
+    const R = cfg.radius;
+    const offsetZ = this.standParams.offsetZ;
+    const tabletH = this.standParams.tabletHeight;
+    const tabletTilt = this.standParams.tabletTilt;
+    const standAngle = (cfg.standAngle !== undefined) ? cfg.standAngle : 0;
+    const angleRad = THREE.MathUtils.degToRad(standAngle);
+    const D = R + offsetZ;
+    const posX = D * Math.sin(angleRad);
+    const posZ = D * Math.cos(angleRad);
+
+    /*/ 1. Stand Container (Both Stand & Mounted Tablet rotate together) /*/
+    const standHolder = new THREE.Group();
+    standHolder.name = `StandHolder_${cfg.id}`;
+    standHolder.position.set(posX, 0, posZ);
+    standHolder.rotation.y = angleRad;
+
+    if (this.standTemplate) {
+      /*/ Authentic 3D Model Tablet Stand /*/
+      const stand = this.standTemplate.clone(true);
+      stand.name = `TabletStand3D_${cfg.id}`;
+      standHolder.add(stand);
+    } else {
+      /*/ Procedural Fallback while OBJ is loading /*/
+      const postGeo = new THREE.CylinderGeometry(0.03, 0.04, 0.75, 12);
+      const postMesh = new THREE.Mesh(postGeo, this.stanchionMat);
+      postMesh.position.set(0, 0.38, 0);
+      postMesh.rotation.x = THREE.MathUtils.degToRad(-15);
+      standHolder.add(postMesh);
+    }
+
+    /*/ 2. Digital Information Plaque Screen Mounted On Top Bracket /*/
+    const plaqueTex = this.createPlaqueTexture(cfg);
+    const tabletGeo = new THREE.BoxGeometry(0.36, 0.18, 0.015);
+    const tabletMat = new THREE.MeshStandardMaterial({
+      map: plaqueTex,
+      metalness: 0.5,
+      roughness: 0.3,
+      emissive: new THREE.Color(cfg.color || '#38bdf8'),
+      emissiveMap: plaqueTex,
+      emissiveIntensity: 0.35
+    });
+    const tabletMesh = new THREE.Mesh(tabletGeo, tabletMat);
+    tabletMesh.name = `TabletScreen_${cfg.id}`;
+    tabletMesh.position.set(0, tabletH, 0);
+    tabletMesh.rotation.x = THREE.MathUtils.degToRad(tabletTilt);
+    tabletMesh.castShadow = true;
+    standHolder.add(tabletMesh);
+
+    p.plaqueGroup.add(standHolder);
   }
 
   applyTransforms() {
@@ -317,19 +668,20 @@ export class ExhibitionPlatforms {
       p.group.scale.setScalar(this.params.globalScale);
       p.reticleGroup.visible = this.params.showReticles;
       p.plaqueGroup.visible = this.params.showPlaques;
+      this.rebuildPlatformGeometry(idx);
     });
   }
 
   initGui() {
     /*/ UI Gating: Only display lil-gui controls if window.DEBUG_EXHIBITION_PLATFORMS is true
         or when explicitly requested via #gui hash in the URL.
-        To re-open the live calibration GUI, add #gui to the URL in browser /*/
+        To open the live calibration GUI, add #gui to the URL in browser /*/
     if (typeof window !== 'undefined' && !window.location.hash.includes('gui') && !window.DEBUG_EXHIBITION_PLATFORMS) {
       return;
     }
 
     try {
-      this.gui = new GUI({ title: '🏛️ 13 Rover Platforms Calibration' });
+      this.gui = new GUI({ title: '🏛️ Exhibition Platforms & Models' });
       this.gui.domElement.style.position = 'fixed';
       this.gui.domElement.style.top = '20px';
       this.gui.domElement.style.right = '20px';
@@ -340,6 +692,11 @@ export class ExhibitionPlatforms {
         this.gui.domElement.addEventListener(evt, (e) => e.stopPropagation());
       });
 
+      /*/ Master Action Buttons /*/
+      this.gui.add({ copyAll: () => this.copyAllDetails() }, 'copyAll').name('📋 Copy All Platform Details');
+      this.gui.add({ resetAll: () => this.resetDefaults() }, 'resetAll').name('🔄 Reset All to Defaults');
+
+      /*/ Global Arena Master Settings /*/
       const globalFolder = this.gui.addFolder('🌐 Master Arena Controls');
       globalFolder.add(this.params, 'visible').name('Show Platforms').onChange(() => this.applyTransforms());
       globalFolder.add(this.params, 'globalScale', 0.5, 2.0, 0.05).name('Global Scale').onChange(() => this.applyTransforms());
@@ -347,83 +704,144 @@ export class ExhibitionPlatforms {
       globalFolder.add(this.params, 'glowIntensity', 0.1, 3.0, 0.1).name('Glow Pulse');
       globalFolder.add(this.params, 'showReticles').name('Docking Targets').onChange(() => this.applyTransforms());
       globalFolder.add(this.params, 'showPlaques').name('Mission Plaques').onChange(() => this.applyTransforms());
-      globalFolder.open();
+      globalFolder.close();
 
-      /*/ Individual Platform Tuner /*/
-      const singleFolder = this.gui.addFolder('📍 Tune Selected Platform');
-      const platformOptions = {};
-      this.missionData.forEach((m, idx) => {
-        platformOptions[`[${m.id}] ${m.title}`] = idx;
+      /*/ 3D Tablet Stand Global Settings /*/
+      const standFolder = this.gui.addFolder('📱 3D Tablet Stand Settings');
+      standFolder.add(this.standParams, 'offsetZ', 0.10, 0.60, 0.01).name('Stand Distance Z').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupPlatformStand(p, idx));
+      });
+      standFolder.add(this.standParams, 'tabletHeight', 1.0, 1.5, 0.01).name('Tablet Height Y').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupPlatformStand(p, idx));
+      });
+      standFolder.add(this.standParams, 'tabletTilt', -70, -10, 1).name('Tablet Tilt Angle').onChange(() => {
+        this.platforms.forEach((p, idx) => this.setupPlatformStand(p, idx));
+      });
+      standFolder.close();
+
+      /*/ Dedicated Subfolder for Each Active Platform & 3D Model /*/
+      const platformsFolder = this.gui.addFolder('🛸 Active Exhibition Podia');
+
+      this.platformConfigs.forEach((cfg, idx) => {
+        const folderName = `[P${cfg.id}] ${cfg.title}`;
+        const subFolder = platformsFolder.addFolder(folderName);
+
+        /*/ Platform Podia Geometry & Placement Controls /*/
+        subFolder.add(cfg, 'radius', 0.50, 4.00, 0.05).name('Platform Radius (m)').onChange(() => {
+          this.rebuildPlatformGeometry(idx);
+        });
+
+        subFolder.add(cfg, 'height', 0.10, 1.00, 0.01).name('Platform Height (m)').onChange(() => {
+          this.rebuildPlatformGeometry(idx);
+        });
+
+        subFolder.add(cfg, 'x', -15.0, 15.0, 0.1).name('Position X').onChange((val) => {
+          const p = this.platforms[idx];
+          if (p) p.group.position.x = val;
+        });
+
+        subFolder.add(cfg, 'z', -25.0, -2.0, 0.1).name('Position Z').onChange((val) => {
+          const p = this.platforms[idx];
+          if (p) p.group.position.z = val;
+        });
+
+        subFolder.add(cfg, 'rotY', -180, 180, 1).name('Yaw Y (Deg)').onChange((val) => {
+          const p = this.platforms[idx];
+          if (p) p.group.rotation.y = THREE.MathUtils.degToRad(val);
+        });
+
+        subFolder.add(cfg, 'standAngle', 0, 360, 5).name('Stand Angle (Deg)').onChange(() => {
+          const p = this.platforms[idx];
+          if (p) this.setupPlatformStand(p, idx);
+        });
+
+        /*/ 3D Model Scale & Orientation Controls /*/
+        subFolder.add(cfg, 'scale', 0.005, 3.0, 0.005).name('Model Scale').onChange((val) => {
+          const m = this.mountedModels[idx];
+          if (m && m.pivot) {
+            m.pivot.scale.setScalar(val);
+            if (m.options) m.options.scale = val;
+          }
+        });
+
+        subFolder.add(cfg, 'modelRotY', -180, 180, 1).name('Model Rot Y (Deg)').onChange((val) => {
+          const m = this.mountedModels[idx];
+          if (m && m.pivot) {
+            m.pivot.rotation.y = THREE.MathUtils.degToRad(val);
+            if (m.options) m.options.modelRotY = val;
+          }
+        });
+
+        subFolder.add(cfg, 'offsetY', -0.50, 3.0, 0.01).name('Model Hover Y').onChange((val) => {
+          const m = this.mountedModels[idx];
+          if (m && m.pivot) {
+            m.pivot.position.y = val;
+            if (m.options) m.options.offsetY = val;
+          }
+        });
+
+        subFolder.add(cfg, 'turntable').name('Turntable Spin').onChange((val) => {
+          const m = this.mountedModels[idx];
+          if (m && m.options) m.options.turntable = val;
+        });
+
+        subFolder.add(cfg, 'turntableSpeed', 0.05, 1.0, 0.05).name('Spin Speed').onChange((val) => {
+          const m = this.mountedModels[idx];
+          if (m && m.options) m.options.turntableSpeed = val;
+        });
+
+        subFolder.close();
       });
 
-      const selectedCfg = () => this.platformConfigs[this.params.selectedPlatformIndex];
-
-      singleFolder.add(this.params, 'selectedPlatformIndex', platformOptions).name('Select Platform').onChange(() => {
-        if (this.xCtrl) this.xCtrl.setValue(selectedCfg().x);
-        if (this.zCtrl) this.zCtrl.setValue(selectedCfg().z);
-        if (this.rotCtrl) this.rotCtrl.setValue(selectedCfg().rotY);
-      });
-
-      this.xCtrl = singleFolder.add(selectedCfg(), 'x', -15.0, 15.0, 0.1).name('X (Left/Right)').onChange((val) => {
-        selectedCfg().x = val;
-        this.applyTransforms();
-      });
-
-      this.zCtrl = singleFolder.add(selectedCfg(), 'z', -25.0, -2.0, 0.1).name('Z (Depth)').onChange((val) => {
-        selectedCfg().z = val;
-        this.applyTransforms();
-      });
-
-      this.rotCtrl = singleFolder.add(selectedCfg(), 'rotY', -180, 180, 5).name('Yaw Y (Deg)').onChange((val) => {
-        selectedCfg().rotY = val;
-        this.applyTransforms();
-      });
-      singleFolder.open();
-
-      this.gui.add(this.params, 'copyToClipboard').name('📋 Copy Coordinates');
-      this.gui.add(this.params, 'resetToDefaults').name('🔄 Reset to Defaults');
+      platformsFolder.open();
     } catch (err) {
       console.warn('[ExhibitionPlatforms] Failed to initialize lil-gui:', err);
     }
   }
 
   resetDefaults() {
-    this.platformConfigs = JSON.parse(JSON.stringify(this.defaultLayout));
+    this.platformConfigs = JSON.parse(JSON.stringify(this.defaultPlatforms));
+    this.platformConfigs.forEach((cfg, idx) => {
+      const p = this.platforms[idx];
+      if (p) {
+        p.group.position.set(cfg.x, this.floorY, cfg.z);
+        p.group.rotation.y = THREE.MathUtils.degToRad(cfg.rotY);
+        this.rebuildPlatformGeometry(idx);
+
+        const m = this.mountedModels[idx];
+        if (m && m.pivot) {
+          m.pivot.scale.setScalar(cfg.scale);
+          m.pivot.rotation.y = THREE.MathUtils.degToRad(cfg.modelRotY);
+          m.pivot.position.y = cfg.offsetY;
+          if (m.options) {
+            m.options.scale = cfg.scale;
+            m.options.modelRotY = cfg.modelRotY;
+            m.options.offsetY = cfg.offsetY;
+            m.options.turntable = cfg.turntable;
+            m.options.turntableSpeed = cfg.turntableSpeed;
+          }
+        }
+      }
+    });
+
     if (this.gui && typeof this.gui.controllersRecursive === 'function') {
       this.gui.controllersRecursive().forEach((c) => c.updateDisplay());
     }
-    this.applyTransforms();
 
-    const toast = document.createElement('div');
-    toast.style.position = 'fixed';
-    toast.style.bottom = '90px';
-    toast.style.left = '50%';
-    toast.style.transform = 'translateX(-50%)';
-    toast.style.padding = '12px 24px';
-    toast.style.background = 'rgba(15, 23, 42, 0.95)';
-    toast.style.border = '1px solid #f59e0b';
-    toast.style.borderRadius = '8px';
-    toast.style.color = '#fbbf24';
-    toast.style.fontFamily = 'monospace';
-    toast.style.fontSize = '13px';
-    toast.style.zIndex = '999999';
-    toast.style.boxShadow = '0 8px 32px rgba(245, 158, 11, 0.35)';
-    toast.innerHTML = '🔄 <b>13 Rover Platforms reset to default layout!</b>';
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.style.transition = 'opacity 0.6s';
-      toast.style.opacity = '0';
-      setTimeout(() => toast.remove(), 600);
-    }, 2800);
+    this.showToast('🔄 <b>All Exhibition Platforms & Models reset to defaults!</b>', '#f59e0b', '#fbbf24');
   }
 
-  copyValues() {
+  copyAllDetails() {
     const formatted = `EXHIBITION_PLATFORMS_CONFIG = ${JSON.stringify(this.platformConfigs, null, 2)};`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(formatted).catch(() => {});
     }
-    console.log('[ExhibitionPlatforms] Current Configuration:\n', formatted);
+    console.log('[ExhibitionPlatforms] Current Platform & Model Configuration:\n', formatted);
+    this.showToast('📋 <b>All Platform & Model Details copied to clipboard!</b>', '#38bdf8', '#38bdf8');
+  }
 
+  showToast(html, borderColor, textColor) {
+    if (typeof document === 'undefined') return;
     const toast = document.createElement('div');
     toast.style.position = 'fixed';
     toast.style.bottom = '90px';
@@ -431,14 +849,14 @@ export class ExhibitionPlatforms {
     toast.style.transform = 'translateX(-50%)';
     toast.style.padding = '12px 24px';
     toast.style.background = 'rgba(15, 23, 42, 0.95)';
-    toast.style.border = '1px solid #38bdf8';
+    toast.style.border = `1px solid ${borderColor}`;
     toast.style.borderRadius = '8px';
-    toast.style.color = '#38bdf8';
+    toast.style.color = textColor;
     toast.style.fontFamily = 'monospace';
     toast.style.fontSize = '13px';
     toast.style.zIndex = '999999';
-    toast.style.boxShadow = '0 8px 32px rgba(56, 189, 248, 0.35)';
-    toast.innerHTML = '📋 <b>13 Platform Coordinates copied!</b> Paste in chat.';
+    toast.style.boxShadow = `0 8px 32px ${borderColor}40`;
+    toast.innerHTML = html;
     document.body.appendChild(toast);
     setTimeout(() => {
       toast.style.transition = 'opacity 0.6s';
@@ -452,6 +870,15 @@ export class ExhibitionPlatforms {
     if (this.glowMat) {
       this.glowTime += delta * 2.4;
       this.glowMat.opacity = (0.65 + 0.30 * Math.sin(this.glowTime)) * this.params.glowIntensity;
+    }
+
+    /*/ Turntable Animation for Mounted Rover Models /*/
+    if (this.mountedModels) {
+      Object.values(this.mountedModels).forEach((entry) => {
+        if (entry.options && entry.options.turntable && entry.pivot) {
+          entry.pivot.rotation.y += delta * entry.options.turntableSpeed;
+        }
+      });
     }
   }
 }

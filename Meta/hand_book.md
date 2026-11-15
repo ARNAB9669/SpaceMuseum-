@@ -1060,6 +1060,139 @@
   - `Row 3 (Z = -6.50m)`: $X = \{-9.0, -3.0, +3.0, +9.0\}$, radius $1.20\text{m}$, height $0.28\text{m}$.
 - **UI Gating**: Gated the master platforms calibration GUI behind `#gui` in the browser URL / `window.DEBUG_EXHIBITION_PLATFORMS` to keep the museum interface clean for visitors.
 - **Model Mounting Ready**: All 13 `ModelMountPoint` nodes are active and waiting to mount the 3D rover models.
+---
+### Log : 83
+**Title**: Asset Directory Streamlining & Duplicate Texture Cleanup  
+**Description**: Cleaned up redundant image assets in the public structure:
+- **Removed Duplicate PNGs**: Safely deleted the 13 redundant `.png` copies from `public/models/`, standardizing `public/` as the single source of truth for all 2D museum artwork and posters.
+- **Clean Model Repository**: Preserved pure 3D model assets in `public/models/` (`Apollo Lunar Module.glb`, `theatre-seat.glb`).
+- **Build Verification**: `npx vite build` passed cleanly with 0 errors.
+---
+### Log : 84
+**Title**: Platform 01 3D Model Staging — Apollo 11 Lunar Module & Draco Decompression  
+**Description**: Successfully integrated and staged the authentic 3D Apollo Lunar Module on Platform 01 in the central exhibition plaza:
+- **Draco Mesh Decompression**:
+  - Identified that NASA's lightweight GLB models utilize Google's Draco mesh compression (`KHR_draco_mesh_compression`).
+  - Integrated `DRACOLoader` from `three/addons/loaders/DRACOLoader.js` and wired it into `GLTFLoader`.
+  - Staged native Draco WASM binaries (`draco_decoder.wasm`, `draco_decoder.js`, `draco_wasm_wrapper.js`) locally in `public/draco/` for high-speed offline decompression.
+- **Model Ingestion & Automatic Alignment**:
+  - Automatically calculated model bounding box (`6.43m × 5.01m × 6.43m`).
+  - Centered horizontally $(X=0, Z=0)$ on the circular docking reticle.
+  - Automatically grounded the landing footpads flush onto the top obsidian deck surface ($Y = 0$).
+  - Scaled by `0.32` so the four landing gear pads rest neatly within the glowing cyan LED halo ring (deck radius $1.20\text{m}$, footprint radius $1.03\text{m}$), standing at a majestic $1.60\text{m}$ human eye level.
+  - Preserved full PBR materials with `sRGBColorSpace` and enabled shadow casting/receiving on all 134 submeshes.
+- **Fine-Tuning & Exhibition Animation**:
+  - Added dedicated `🛸 Platform 01: Apollo 11 LM` lil-gui calibration folder (accessible via `#gui` in URL) with controls for `Scale`, `Rotation Y`, `Offset Y`, `Turntable Spin`, and `Spin Speed`.
+  - Supported real-time turntable rotation in the render loop.
+- **Build Verification**: `npx vite build` passed cleanly with 0 errors.
+---
+### Log : 85
+**Title**: Architectural 3D Tablet Stand Integration across All 13 Exhibition Podia  
+**Description**: Replaced the procedural cylinder stanchions with the authentic 3D `TABLET STAND.obj` model:
+- **OBJ Ingestion & PBR Shading**:
+  - Imported Three.js `OBJLoader` and loaded `public/models/TABLET STAND.obj`.
+  - Applied dark titanium/slate PBR finish (`#1e293b`, metalness `0.85`, roughness `0.25`) with shadow casting/receiving.
+- **Precision Alignment & Ergonomics**:
+  - Positioned stand on the courtyard floor at $(0, 0, R + 0.26\text{m})$ facing south toward arriving visitors.
+  - Mounted the high-definition digital mission plaque tablet ($0.36\text{m} \times 0.18\text{m}$) flush onto the stand's angled top bracket ($Y = 1.24\text{m}$, tilt angle $-38^\circ$), providing a comfortable, ergonomic reading angle for museum visitors in first-person mode.
+- **Live GUI Controls**: Added `📱 3D Tablet Stand Settings` folder under `#gui` to allow live calibration of stand distance, tablet height, and tilt angle.
+- **Build Verification**: `npx vite build` passed cleanly in 508ms with 0 errors.
+---
+### Log : 86
+**Title**: Dynamic Stand Side Orientation (Inner Plaza vs. Wall Clearance)  
+**Description**: Configured per-platform `standAngle` orientation so stands always face open visitor walkways:
+- **Inner Plaza Realignment for Row 3 (Front Line, Z = -6.50m)**:
+  - Platforms 10, 11, 12, 13 (NEAR Shoemaker, Pioneer, Ingenuity, Kepler K2) are closest to the south perimeter wall.
+  - Configured `standAngle: 180°`, placing the 3D stands on the **inner** north perimeter of each platform (towards the central plaza aisle) and facing north towards arriving visitors.
+  - Eliminates the wall pinch point and keeps the walkway completely unobstructed.
+- **Unified Stand Holder Transform**:
+  - Grouped the 3D stand and its angled digital tablet inside a unified `standHolder` node, ensuring the tablet screen rotates and pitches automatically with the stand at any angle $\theta \in [0^\circ, 360^\circ]$.
+- **Live GUI Tuning**: Added `Stand Side (Deg)` slider in lil-gui under `📍 Tune Selected Platform` to permit instantaneous angle adjustment per platform.
+- **Build Verification**: `npx vite build` passed cleanly in 510ms with 0 errors.
+---
+### Log : 87
+**Title**: Batch 3D Rover & Spacecraft Staging across 8 Exhibition Podia  
+**Description**: Ingested, scaled, centered, and rendered all 8 NASA 3D exploration models downloaded in `public/models/`:
+- **Staged Mission Roster (8 of 13 Platforms Active)**:
+  1. `Platform 01 (Apollo 11 LM)`: `Apollo Lunar Module.glb` (scale `0.30`, rotY `15°`) — Grounded on deck.
+  2. `Platform 06 (Spirit & Opportunity)`: `24883_MER_static.glb` (scale `0.75`, rotY `15°`) — MER rover on 6 rocker-bogie wheels.
+  3. `Platform 07 (Viking Lander - VIP Centerpiece)`: `Viking Lander.glb` (scale `0.14`, rotY `20°`) — Mars lander on 3 footpads.
+  4. `Platform 08 (InSight Lander)`: `24880_InSight_deployed.glb` (scale `0.052`, rotY `15°`) — Lander with twin circular solar arrays.
+  5. `Platform 09 (Dawn Spacecraft)`: `Dawn.glb` (scale `0.070`, rotY `25°`, hover Y `+0.20m`) — In-flight ion propulsion probe with solar wings.
+  6. `Platform 10 (NEAR Shoemaker)`: `NEAR Shoemaker.glb` (scale `0.008`, rotY `15°`, hover Y `+0.20m`) — Asteroid rendezvous probe.
+  7. `Platform 11 (Pioneer 10 & 11)`: `Pioneer 10.glb` (scale `0.0028`, rotY `35°`, hover Y `+0.25m`) — Deep-space high-gain dish voyager.
+  8. `Platform 12 (Ingenuity Mars Helicopter)`: `Ingenuity Mars Helicopter.glb` (scale `0.78`, rotY `20°`) — Dual coaxial rotors on 4 carbon landing legs.
+- **Automated Geometry Normalization**:
+  - Automatically centered on $X = 0, Z = 0$ on each docking reticle.
+  - Grounded lowest vertices flush to $Y = 0$ (platform deck surface).
+  - High-precision Draco decompression active for lightweight NASA models.
+- **Live Master GUI**: Added multi-rover selector dropdown in lil-gui under `🛸 3D Rover Models Fine-Tuning` for real-time scale, rotation, hover height, and turntable spin adjustments.
+- **Build Verification**: `npx vite build` passed cleanly in 578ms with 0 errors.
+---
+### Log : 88
+**Title**: Comprehensive Single Master GUI with Dedicated Per-Model Calibration Subfolders  
+**Description**: Rebuilt the lil-gui rover controls into a single master folder with organized subfolders for every model, plus recalibrated initial base scales:
+- **Transformed Bounding Box Recalibration**:
+  - `InSight Lander`: Recalibrated from `0.052` to `0.29` (fixed miniature coin appearance).
+  - `NEAR Shoemaker`: Recalibrated from `0.008` to `0.26` (fixed microscopic probe appearance).
+  - `Pioneer 10`: Recalibrated from `0.0028` to `0.22` (scaled high-gain dish voyager).
+  - `Viking Lander`: Scaled from oversized `0.14` to proportional `0.11` on centerpiece platform.
+  - `Ingenuity Heli`: Scaled from `0.78` to `0.20` matching real-world 1.2m rotor scale.
+  - `Dawn Spacecraft`: Scaled to `0.09` with `0.25m` hover height.
+  - `Apollo 11 LM`: Scaled to `0.28`.
+- **Master Folder & Subfolder Architecture in lil-gui**:
+  - Top-level folder: `🛸 3D Rover Models Calibration`.
+  - 8 Individual subfolders:
+    1. `📁 [P01] Apollo 11 Lunar Module`
+    2. `📁 [P06] Spirit & Opportunity MER`
+    3. `📁 [P07] Viking Lander (VIP Centerpiece)`
+    4. `📁 [P08] InSight Mars Lander`
+    5. `📁 [P09] Dawn Spacecraft`
+    6. `📁 [P10] NEAR Shoemaker`
+    7. `📁 [P11] Pioneer 10 & 11`
+    8. `📁 [P12] Ingenuity Mars Helicopter`
+  - Each subfolder provides sliders: `Scale`, `Rotation Y (Deg)`, `Offset Y (Hover)`, `Turntable Spin`, and `Spin Speed`.
+  - Master action buttons: `📋 Copy Rover Config` and `🔄 Reset Rover Transforms`.
+- **Build Verification**: `npx vite build` passed cleanly in 660ms with 0 errors.
+
+---
+### Log : 89
+**Title**: Clean Podia Architecture (5 Empty Platforms Deleted) & Per-Platform Dynamic GUI Controls  
+**Description**: Fully removed all 5 empty placeholder exhibition podia, leaving strictly the 8 active exploration missions equipped with authentic 3D models and tablet stands. Added dedicated individual lil-gui calibration subfolders for each platform with dynamic real-time mesh rebuilding:
+- **Deletion of Empty Platforms**:
+  - Removed Platforms 02, 03, 04, 05, and 13.
+  - Active roster is now exactly 8 missions:
+    1. `[P01] APOLLO 11 LM` (`Apollo Lunar Module.glb`)
+    2. `[P06] SPIRIT & OPPORTUNITY` (`24883_MER_static.glb`)
+    3. `[P07] VIKING LANDER` (`Viking Lander.glb`, VIP Centerpiece)
+    4. `[P08] INSIGHT LANDER` (`24880_InSight_deployed.glb`)
+    5. `[P09] DAWN SPACECRAFT` (`Dawn.glb`)
+    6. `[P10] NEAR SHOEMAKER` (`NEAR Shoemaker.glb`)
+    7. `[P11] PIONEER 10 & 11` (`Pioneer 10.glb`)
+    8. `[P12] INGENUITY HELI` (`Ingenuity Mars Helicopter.glb`)
+- **Real-Time Dynamic Geometry Reconstruction (`rebuildPlatformGeometry`)**:
+  - When the user modifies `Platform Radius (m)` ($0.50\text{m} \dots 4.00\text{m}$) or `Platform Height (m)` ($0.10\text{m} \dots 1.00\text{m}$), the chamfered plinth, obsidian deck, LED neon halo, and docking target reticles are dynamically re-calculated and updated in WebGL with 0 memory leaks.
+  - `mountPoint.position.y` automatically updates to $H$ so the 3D rover model rests flush on the elevated deck surface.
+  - `setupPlatformStand` shifts the 3D tablet stand radially outward to $R + \text{offsetZ}$ at the specified `standAngle`.
+- **Dedicated Master & Per-Platform lil-gui Architecture**:
+  - Pinned GUI panel titled `🏛️ Exhibition Platforms & Models` with individual folders:
+    - Master Buttons: `📋 Copy All Platform Details` and `🔄 Reset All to Defaults`.
+    - `🌐 Master Arena Controls`: Global visibility, scale, glow color/pulse, docking targets, mission plaques.
+    - `📱 3D Tablet Stand Settings`: Distance Z, Tablet Height Y, Tilt Angle.
+    - `🛸 Active Exhibition Podia`: 8 subfolders containing:
+      - `Platform Radius (m)`
+      - `Platform Height (m)`
+      - `Position X`
+      - `Position Z`
+      - `Yaw Y (Deg)`
+      - `Stand Angle (Deg)`
+      - `Model Scale`
+      - `Model Rot Y (Deg)`
+      - `Model Hover Y`
+      - `Turntable Spin`
+      - `Spin Speed`
+- **Build Verification**: `npx vite build` passed cleanly in 801ms with 0 errors.
+
 
 
 
