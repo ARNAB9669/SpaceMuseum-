@@ -237,7 +237,7 @@ npx wrangler secret put GEMINI_API_KEY
 
 ---
 
-## 🏆 NASA Space Apps Challenge 2026
+##  NASA Space Apps Challenge 2026
 
 **Challenge Topic**: *"Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars"*
 
