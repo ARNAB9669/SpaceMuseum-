@@ -11,6 +11,7 @@ import { RoadLights } from './Ui/road-light.js';
 import { FloorMapSelector } from './Logic/map-selector.js';
 import { WelcomeSign, OuterWallPoster, EntranceCorridorPoster, Apollo15Poster, Apollo12Poster, Surveyor3Poster, SojournerRoverPoster, SpiritOpportunityPoster, VikingLanderPoster, InsightLanderPoster, DawnMissionPoster, NearShoemakerPoster, PioneerPoster, IngenuityHelicopterPoster, KeplerK2Poster } from './Ui/posters.js';
 import { TheatreRoom } from './Ui/theatre.js';
+import { ExhibitionPlatforms } from './Ui/exhibition-platforms.js';
 
 /*/ Canvas & Rendering Setup /*/
 const canvas = document.getElementById('webgl-canvas');
@@ -92,6 +93,10 @@ const nearShoemakerPoster = new NearShoemakerPoster(scene);
 const pioneerPoster = new PioneerPoster(scene);
 const ingenuityHelicopterPoster = new IngenuityHelicopterPoster(scene);
 const keplerK2Poster = new KeplerK2Poster(scene);
+
+/*/ Central Open-Air Courtyard: 13 Rover Exhibition Platforms /*/
+const exhibitionPlatforms = new ExhibitionPlatforms(scene);
+fpController.addCollidableMeshes(exhibitionPlatforms.collidableMeshes);
 
 /*/ NASA Space Apps Documentary Movie Theatre /*/
 const theatre = new TheatreRoom(scene, camera, fpController);
@@ -321,6 +326,7 @@ function animate(timestamp) {
   pioneerPoster.update(delta);
   ingenuityHelicopterPoster.update(delta);
   keplerK2Poster.update(delta);
+  exhibitionPlatforms.update(delta);
   theatre.update(delta);
 
   /*/ Check proximity to cinema seats when in First-Person POV /*/

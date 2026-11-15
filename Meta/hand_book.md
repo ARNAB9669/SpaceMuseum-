@@ -1029,6 +1029,40 @@
   - `3D Bezel & Neon Accent`: Frame thickness $0.12\text{m}$, depth $0.18\text{m}$, frame color slate `#1e293b`, cyan LED glow trim `#00b3ff`
 - **UI Gating**: Gated the calibration GUI behind `#gui` in browser URL / `window.DEBUG_KEPLER_K2_POSTER` to maintain a pristine, visitor-ready gallery presentation.
 
+---
+
+### Log : 81
+**Title**: Central Exhibition Plaza: 13 Rover Display Podia Architecture & Calibration  
+**Description**: Designed and constructed 13 architectural exhibition platforms (podia) in the central sunken open-air courtyard plaza ($X \in [-12, +12]$, $Z \in [-21, -4]$, ground $Y = -2.42\text{m}$) for displaying 3D rover and spacecraft models:
+- **Architectural Podia Geometry**:
+  - Chamfered base plinth with dark titanium/slate alloy (`#1e293b`).
+  - Recessed pulsing neon cyan LED halo trim ring (`#00b3ff`) with breathing sinusoidal illumination.
+  - Polished obsidian/basalt top display surface (`#0f172a`) with concentric docking target reticles and crosshairs.
+  - Angled interactive holographic mission information plaque stanchion on the front perimeter of each platform displaying mission name, category, and ID `[ 01 ]` to `[ 13 ]`.
+  - Dedicated `mountPoint` on top of each platform with helper method `addRoverModel(index, object3D, scale, offsetY)` ready for 3D model staging.
+- **Symmetrical 3-Row Plaza Layout ($4 + 5 + 4 = 13$)**:
+  - `Row 1 (North, Z = -18.50)`: Platforms 01 to 04 (Apollo 11 LM, Apollo 15 LM, Apollo 12 LM, Surveyor 3)
+  - `Row 2 (Central Aisle, Z = -12.50)`: Platforms 05 to 09 (Sojourner Rover, Spirit & Opportunity, Viking Lander VIP Centerpiece, InSight Lander, Dawn)
+  - `Row 3 (South, Z = -6.50)`: Platforms 10 to 13 (NEAR Shoemaker, Pioneer 10 & 11, Ingenuity Helicopter, Kepler K2)
+- **Live lil-gui Calibration Panel**:
+  - Live panel titled `"🏛️ 13 Rover Platforms Calibration"` with master controls (scale, visibility, glow color/pulse, reticles, plaques) and individual platform fine-tuning sliders ($X, Z, \text{Yaw } Y$).
+  - `📋 Copy Coordinates` and `🔄 Reset to Defaults` buttons.
+- **Player Physics**: Registered platform bases with `fpController.addCollidableMeshes` for seamless first-person navigation.
+
+---
+
+### Log : 82
+**Title**: 13 Exhibition Podia Permanent Calibration & Staging Readiness  
+**Description**: Locked in the approved symmetrical grid coordinates for the 13 exhibition platforms in the open-air plaza:
+- **Locked Transforms**:
+  - `Row 1 (Z = -18.50m)`: $X = \{-9.0, -3.0, +3.0, +9.0\}$, radius $1.20\text{m}$, height $0.28\text{m}$.
+  - `Row 2 (Z = -12.50m)`: $X = \{-10.0, -5.0, 0.0, +5.0, +10.0\}$, centerpiece at $(0, -12.50)$ with radius $1.45\text{m}$, height $0.35\text{m}$.
+  - `Row 3 (Z = -6.50m)`: $X = \{-9.0, -3.0, +3.0, +9.0\}$, radius $1.20\text{m}$, height $0.28\text{m}$.
+- **UI Gating**: Gated the master platforms calibration GUI behind `#gui` in the browser URL / `window.DEBUG_EXHIBITION_PLATFORMS` to keep the museum interface clean for visitors.
+- **Model Mounting Ready**: All 13 `ModelMountPoint` nodes are active and waiting to mount the 3D rover models.
+
+
+
 
 
 
