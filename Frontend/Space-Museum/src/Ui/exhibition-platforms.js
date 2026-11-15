@@ -184,12 +184,12 @@ export class ExhibitionPlatforms {
         sub: 'JUPITER & SATURN VOYAGERS • 1972',
         color: '#fbbf24',
         modelUrl: '/models/Pioneer 10.glb',
-        x: -3.00,
-        z: -6.50,
+        x: 3.60,
+        z: -6.80,
         rotY: 0.0,
         scaleX: 1.0,
         scaleZ: 1.0,
-        radius: 1.20,
+        radius: 1.60,
         height: 0.28,
         standAngle: 180,
         scale: 0.22,
@@ -197,7 +197,7 @@ export class ExhibitionPlatforms {
         modelRotY: 35.0,
         modelRotZ: 0.0,
         offsetY: 0.30,
-        turntable: false,
+        turntable: true,
         turntableSpeed: 0.2
       },
       {
@@ -358,7 +358,6 @@ export class ExhibitionPlatforms {
       const baseGeo = new THREE.CylinderGeometry(R, R * 1.08, baseH, 32);
       const baseMesh = new THREE.Mesh(baseGeo, this.baseMat);
       baseMesh.position.y = baseH / 2;
-      baseMesh.castShadow = true;
       baseMesh.receiveShadow = true;
       pGroup.add(baseMesh);
       this.collidableMeshes.push(baseMesh);
@@ -374,7 +373,6 @@ export class ExhibitionPlatforms {
       const deckGeo = new THREE.CylinderGeometry(R * 0.96, R * 0.98, deckH, 32);
       const deckMesh = new THREE.Mesh(deckGeo, this.deckMat);
       deckMesh.position.y = baseH + deckH / 2;
-      deckMesh.castShadow = true;
       deckMesh.receiveShadow = true;
       pGroup.add(deckMesh);
       this.collidableMeshes.push(deckMesh);

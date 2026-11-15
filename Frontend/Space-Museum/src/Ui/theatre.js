@@ -243,7 +243,7 @@ export class TheatreRoom {
     const tier2Box = new THREE.Mesh(tier2Geo, riserMat);
     tier2Box.position.set(0, stepH / 2, z2);
     tier2Box.receiveShadow = true;
-    tier2Box.castShadow = true;
+    tier2Box.castShadow = false;
     this.riserGroup.add(tier2Box);
 
     const strip2Geo = new THREE.BoxGeometry(W, 0.02, 0.03);
@@ -256,7 +256,7 @@ export class TheatreRoom {
     const tier3Box = new THREE.Mesh(tier3Geo, riserMat);
     tier3Box.position.set(0, stepH, z3);
     tier3Box.receiveShadow = true;
-    tier3Box.castShadow = true;
+    tier3Box.castShadow = false;
     this.riserGroup.add(tier3Box);
 
     const strip3Geo = new THREE.BoxGeometry(W, 0.02, 0.03);
@@ -298,7 +298,7 @@ export class TheatreRoom {
 
     this.baseSeatModel.traverse((c) => {
       if (c.isMesh) {
-        c.castShadow = true;
+        c.castShadow = false;
         c.receiveShadow = true;
         if (c.material) {
           /*/ Enhance crimson velvet & matte metal finish /*/
@@ -475,7 +475,7 @@ export class TheatreRoom {
       this.params.roofPosY,
       this.params.roofPosZ
     );
-    this.roofMesh.castShadow = true;
+    this.roofMesh.castShadow = false;
     this.roofMesh.receiveShadow = true;
     this.roofGroup.add(this.roofMesh);
 
@@ -622,8 +622,25 @@ export class TheatreRoom {
       this.currentChapter = (this.currentChapter + 1) % this.chapters.length;
     }
 
-    this.renderCanvasFrame();
-    this.screenTexture.needsUpdate = true;
+    /*/ High-Performance Culling: Only redraw & upload 1280x720 canvas when camera is near the theatre /*/
+    let shouldUpdateScreen = true;
+    if (this.camera) {
+      const dx = this.camera.position.x - this.params.posX;
+      const dz = this.camera.position.z - this.params.posZ;
+      const distSq = dx * dx + dz * dz;
+      /*/ If camera is further than 22m (e.g. outside exploring rovers or in orbit), freeze texture uploads /*/
+      if (distSq > 484) {
+        shouldUpdateScreen = false;
+      }
+    }
+
+    /*/ Throttle screen canvas redraw to 24 FPS (cinematic documentary rate) to save 60% GPU memory bus bandwidth /*/
+    this.canvasFrameThrottle = (this.canvasFrameThrottle || 0) + delta;
+    if (shouldUpdateScreen && this.canvasFrameThrottle >= 0.041) {
+      this.canvasFrameThrottle = 0;
+      this.renderCanvasFrame();
+      this.screenTexture.needsUpdate = true;
+    }
 
     /*/ Smooth cinematic lighting transitions (Pitch black when seated, subtle dim when walking) /*/
     const targetSconce = this.isDimmed ? 0.0 : this.params.sconceIntensity;

@@ -134,7 +134,6 @@ export class RoadLights {
       /*/ 2. Tapered Vertical Mast (Collidable) /*/
       const mastMesh = new THREE.Mesh(mastGeo, mastMaterial);
       mastMesh.position.y = H / 2 + 0.08;
-      mastMesh.castShadow = true;
       mastMesh.receiveShadow = true;
       lampContainer.add(mastMesh);
       this.collidableMeshes.push(mastMesh);
@@ -153,7 +152,7 @@ export class RoadLights {
       /*/ 5. Luminaire Head Housing /*/
       const headMesh = new THREE.Mesh(headHousingGeo, jointMaterial);
       headMesh.position.set(0, H + 0.05, armL);
-      headMesh.castShadow = true;
+      headMesh.receiveShadow = true;
       lampContainer.add(headMesh);
 
       /*/ 6. Glowing Recessed LED Diffuser Panel /*/
@@ -161,12 +160,12 @@ export class RoadLights {
       emitterMesh.position.set(0, H + 0.01, armL);
       lampContainer.add(emitterMesh);
 
-      /*/ 7. Strategic Real-Time Downward Road Pool Light /*/
-      if (index % 2 === 0 || index === lampDefinitions.length - 1) {
+      /*/ 7. Strategic Real-Time Downward Road Pool Light (Distributed on key curve checkpoints) /*/
+      if (index % 3 === 0 || index === lampDefinitions.length - 1) {
         const light = new THREE.PointLight(
           this.coldLightColor.clone(),
           this.params.lightIntensity,
-          this.params.lightDistance,
+          8.5,
           this.params.lightDecay
         );
         light.position.set(0, H - 0.20, armL);

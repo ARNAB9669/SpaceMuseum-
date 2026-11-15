@@ -70,7 +70,8 @@ export async function loadMuseumIsland(scene, onProgress) {
         child.material = structureMaterial;
         collidableMeshes.push(child);
       }
-      child.castShadow = true;
+      /*/ Building architecture receives shadows from rovers & props, but does not cast self-shadows for high performance /*/
+      child.castShadow = false;
       child.receiveShadow = true;
       child.geometry.computeVertexNormals();
     }
@@ -112,14 +113,14 @@ export async function loadMuseumIsland(scene, onProgress) {
   hemiLight.position.set(0, 20, 0);
   islandLights.add(hemiLight);
 
-  /*/ 3. Primary Directional Sunlight /*/
+  /*/ 3. Primary Directional Sunlight (Optimized 1024x1024 shadow map) /*/
   const coldDirColor = new THREE.Color(0xdbeafe);
   const warmDirColor = new THREE.Color(0xffecd1);
   const dirLight = new THREE.DirectionalLight(coldDirColor.clone(), 1.8);
   dirLight.position.set(12, 25, 15);
   dirLight.castShadow = true;
-  dirLight.shadow.mapSize.width = 2048;
-  dirLight.shadow.mapSize.height = 2048;
+  dirLight.shadow.mapSize.width = 1024;
+  dirLight.shadow.mapSize.height = 1024;
   dirLight.shadow.camera.near = 0.5;
   dirLight.shadow.camera.far = 70;
   dirLight.shadow.camera.left = -30;
@@ -192,10 +193,13 @@ export async function loadMuseumIsland(scene, onProgress) {
 
   const pointLights = [];
   accentLightDefs.forEach(({ x, y, z }, idx) => {
-    const pLight = new THREE.PointLight(accentColdColors[idx].clone(), 20, 16, 1.2);
-    pLight.position.set(x, y, z);
-    islandLights.add(pLight);
-    pointLights.push(pLight);
+    /*/ Optimized: Alternate fixtures host point lights to prevent mobile GPU shader overload /*/
+    if (idx % 2 === 0) {
+      const pLight = new THREE.PointLight(accentColdColors[idx].clone(), 12, 10, 1.4);
+      pLight.position.set(x, y, z);
+      islandLights.add(pLight);
+      pointLights.push(pLight);
+    }
 
     const fixture = new THREE.Mesh(fixtureGeo, fixtureMat);
     fixture.position.set(x, y, z);

@@ -28,18 +28,25 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.set(120, 160, 240);
 
+/*/ Intelligent Adaptive DPR: Tablets & Mobile capped at 1.0; Desktop capped at 1.25 for 60 FPS /*/
+const isMobileOrTablet = (typeof navigator !== 'undefined') && (
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+  (window.innerWidth <= 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0))
+);
+const optimalDPR = isMobileOrTablet ? 1.0 : Math.min(window.devicePixelRatio, 1.25);
+
 /*/ WebGL Renderer /*/
 const renderer = new THREE.WebGLRenderer({
   canvas,
-  antialias: true,
+  antialias: !isMobileOrTablet, /*/ Fast hardware anti-aliasing on desktop; native subpixel rendering on tablets /*/
   powerPreference: 'high-performance'
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+renderer.setPixelRatio(optimalDPR);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.15;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 
 /*/ Interactive Orbit Controls /*/
 const controls = new OrbitControls(camera, canvas);
@@ -259,7 +266,7 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setPixelRatio(isMobileOrTablet ? 1.0 : Math.min(window.devicePixelRatio, 1.25));
 }
 window.addEventListener('resize', onWindowResize);
 
