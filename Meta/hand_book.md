@@ -1193,6 +1193,145 @@
       - `Spin Speed`
 - **Build Verification**: `npx vite build` passed cleanly in 801ms with 0 errors.
 
+---
+### Log : 90
+**Title**: Full 3D Attitude Controls (Pitch, Yaw, Roll) & Non-Uniform Platform Scaling (Scale X, Scale Z)  
+**Description**: Enhanced individual exhibition platform calibration with full 3-axis rotation for mounted 3D models and non-uniform axis scaling for platform podia:
+- **3D Model Attitude Controls**:
+  - `Model Pitch X (Deg)`: Rotate spacecraft/rover around horizontal pitch axis ($-180^\circ \dots 180^\circ$) — vital for angling deep-space probes like Pioneer 10 and Dawn.
+  - `Model Yaw Y (Deg)`: Azimuth rotation on the platform surface ($-180^\circ \dots 180^\circ$).
+  - `Model Roll Z (Deg)`: Lateral roll tilt ($-180^\circ \dots 180^\circ$).
+- **Non-Uniform Platform Scaling**:
+  - `Platform Scale X` ($0.20 \dots 3.00$): Custom width scaling along platform local coordinates.
+  - `Platform Scale Z` ($0.20 \dots 3.00$): Custom depth scaling along platform local coordinates.
+  - Seamlessly integrates with `Platform Radius (m)` and `Platform Height (m)`.
+- **Vercel Deployment Root & Branch Alignment**:
+  - Identified root cause of Vercel build failure: Vercel defaulted to `origin/main` (an initial commit where `src/main.js` was uncommitted).
+  - Active codebase resides on branch `work-here` with root directory `Frontend/Space-Museum`.
+- **Build Verification**: `npx vite build` passed cleanly in 580ms with 0 errors.
+
+---
+### Log : 91
+**Title**: Finalized Dawn Spacecraft Platform & 3D Model Parameters  
+**Description**: Hardcoded the user-calibrated transform parameters for the Dawn Spacecraft ([P09] DAWN SPACECRAFT) and its grand exhibition podium in `exhibition-platforms.js`:
+- **Finalized Parameters ([exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js))**:
+  - `Position`: $X = 10.80$, $Z = -15.80$
+  - `Platform Radius`: $3.15\text{m}$ (scaled up to gracefully accommodate the expansive solar array wingspan)
+  - `Platform Height`: $0.28\text{m}$
+  - `Model Scale`: $0.295$ (calibrated from $0.090$ for monumental presence)
+  - `Model Rotations`: Pitch $0.0^\circ$, Yaw $25.0^\circ$, Roll $0.0^\circ$
+  - `Hover Height`: $+0.25\text{m}$ (in-flight space cruise pose)
+  - `Turntable Animation`: Enabled (`turntable: true`), `turntableSpeed: 0.20`
+  - `3D Tablet Stand`: Stand angle $0.0^\circ$, positioned at $R + \text{offsetZ} = 3.41\text{m}$
+- **Build Verification**: `npx vite build` passed cleanly in 698ms with 0 errors.
+
+---
+### Log : 92
+**Title**: Finalized InSight Lander Platform & 3D Model Parameters  
+**Description**: Hardcoded the user-calibrated transform parameters for the InSight Lander ([P08] INSIGHT LANDER) and its wide exhibition podium in `exhibition-platforms.js`:
+- **Finalized Parameters ([exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js))**:
+  - `Position`: $X = 4.00$, $Z = -17.70$
+  - `Platform Radius`: $2.40\text{m}$ (expanded to fit the deployed dual circular solar arrays)
+  - `Platform Height`: $0.28\text{m}$
+  - `Platform Yaw`: $-8.0^\circ$
+  - `Model Scale`: $0.96$ (majestic true lander proportions)
+  - `Model Rotations`: Pitch $0.0^\circ$, Yaw $15.0^\circ$, Roll $0.0^\circ$
+  - `Hover Height`: $0.0\text{m}$ (grounded flush on the obsidian deck)
+  - `Turntable Animation`: Enabled (`turntable: true`), `turntableSpeed: 0.20`
+  - `3D Tablet Stand`: Stand angle $0.0^\circ$, positioned at $R + \text{offsetZ} = 2.66\text{m}$
+- **Build Verification**: `npx vite build` passed cleanly in 881ms with 0 errors.
+
+---
+### Log : 93
+**Title**: Finalized Viking Lander Platform & 3D Model Parameters  
+**Description**: Hardcoded the user-calibrated transform parameters for the Viking Lander ([P07] VIKING LANDER) and its elevated display podium in `exhibition-platforms.js`:
+- **Finalized Parameters ([exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js))**:
+  - `Position`: $X = -3.10$, $Z = -17.70$ (aligned symmetrically along the north aisle with InSight Lander)
+  - `Platform Radius`: $2.15\text{m}$
+  - `Platform Height`: $0.32\text{m}$ (prominent centerpiece podium height)
+  - `Platform Yaw`: $25.0^\circ$
+  - `Model Scale`: $0.215$ (enlarged from $0.110$ for rich surface details)
+  - `Model Rotations`: Pitch $0.0^\circ$, Yaw $20.0^\circ$, Roll $0.0^\circ$
+  - `Hover Height`: $0.0\text{m}$ (grounded flush on the obsidian deck)
+  - `Turntable Animation`: Enabled (`turntable: true`), `turntableSpeed: 0.20`
+  - `3D Tablet Stand`: Stand angle $0.0^\circ$, positioned at $R + \text{offsetZ} = 2.41\text{m}$
+- **Build Verification**: `npx vite build` passed cleanly in 2.29s with 0 errors.
+
+---
+### Log : 94
+**Title**: Finalized Apollo 11 Lunar Module Platform & 3D Model Parameters  
+**Description**: Hardcoded the user-calibrated transform parameters for the Apollo 11 Lunar Module ([P01] APOLLO 11 LM) and its grand northwest corner podium in `exhibition-platforms.js`:
+- **Finalized Parameters ([exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js))**:
+  - `Position`: $X = -10.50$, $Z = -17.40$
+  - `Platform Radius`: $2.30\text{m}$ (expanded to accommodate the lunar landing footpads and ladder struts)
+  - `Platform Height`: $0.31\text{m}$
+  - `Platform Yaw`: $43.0^\circ$ (angled toward the plaza entrance path)
+  - `Model Scale`: $0.65$ (calibrated from $0.28$ for monumental human-scale presence)
+  - `Model Rotations`: Pitch $0.0^\circ$, Yaw $15.0^\circ$, Roll $0.0^\circ$
+  - `Hover Height`: $0.0\text{m}$ (grounded flush on the obsidian deck)
+  - `Turntable Animation`: Enabled (`turntable: true`), `turntableSpeed: 0.20`
+  - `3D Tablet Stand`: Stand angle $0.0^\circ$, positioned at $R + \text{offsetZ} = 2.56\text{m}$
+- **Build Verification**: `npx vite build` passed cleanly in 964ms with 0 errors.
+
+---
+### Log : 95
+**Title**: Finalized NEAR Shoemaker Asteroid Probe Platform & 3D Model Parameters  
+**Description**: Hardcoded the user-calibrated transform parameters for the NEAR Shoemaker Asteroid Probe ([P10] NEAR SHOEMAKER) and its southwest podium in `exhibition-platforms.js`:
+- **Finalized Parameters ([exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js))**:
+  - `Position`: $X = -10.90$, $Z = -7.40$
+  - `Platform Radius`: $2.05\text{m}$
+  - `Platform Height`: $0.26\text{m}$
+  - `Platform Yaw`: $-37.0^\circ$ (angled toward the central plaza)
+  - `Model Scale`: $0.92$ (calibrated from $0.26$ to showcase delicate antenna arrays and instrument packages)
+  - `Model Rotations`: Pitch $0.0^\circ$, Yaw $15.0^\circ$, Roll $0.0^\circ$
+  - `Hover Height`: $+0.39\text{m}$ (in-flight asteroid rendezvous cruise pose)
+  - `Turntable Animation`: Enabled (`turntable: true`), `turntableSpeed: 0.20`
+  - `3D Tablet Stand`: Stand angle $180.0^\circ$ (facing inward toward the central courtyard), positioned at $R + \text{offsetZ} = 2.31\text{m}$
+- **Build Verification**: `npx vite build` passed cleanly in 587ms with 0 errors.
+
+---
+### Log : 96
+**Title**: Finalized Ingenuity Mars Helicopter Platform & 3D Model Parameters  
+**Description**: Hardcoded the user-calibrated transform parameters for the Ingenuity Mars Helicopter ([P12] INGENUITY HELI) and its southeast podium in `exhibition-platforms.js`:
+- **Finalized Parameters ([exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js))**:
+  - `Position`: $X = 11.50$, $Z = -6.50$ (southeast plaza podium)
+  - `Platform Radius`: $1.95\text{m}$
+  - `Platform Height`: $0.28\text{m}$
+  - `Platform Yaw`: $67.0^\circ$ (angled toward the central plaza)
+  - `Model Scale`: $3.00$ (magnified display scale revealing top solar panel, dual coaxial rotor blades, sensor assembly, fuselage cube, and carbon-fiber landing legs)
+  - `Model Rotations`: Pitch $0.0^\circ$, Yaw $20.0^\circ$, Roll $0.0^\circ$
+  - `Hover Height`: $0.0\text{m}$ (grounded flush on the obsidian deck)
+  - `Turntable Animation`: Enabled (`turntable: true`), `turntableSpeed: 0.20`
+  - `3D Tablet Stand`: Stand angle $180.0^\circ$ (facing inward toward the central courtyard), positioned at $R + \text{offsetZ} = 2.21\text{m}$
+- **Build Verification**: `npx vite build` passed cleanly in 947ms with 0 errors.
+
+---
+### Log : 97
+**Title**: Finalized Spirit & Opportunity MER Podium & Global Tablet Stand Optics  
+**Description**: Hardcoded the user-calibrated transform parameters for the Spirit & Opportunity Mars Exploration Rover ([P06] SPIRIT & OPPORTUNITY) and refined global 3D tablet stand viewing ergonomics:
+- **Global 3D Tablet Stand Optics ([exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js))**:
+  - `Stand Distance Z`: $0.24\text{m}$ (tightened offset from perimeter ring)
+  - `Tablet Height Y`: $1.24\text{m}$
+  - `Tablet Tilt Angle`: $-51.0^\circ$ (steepened screen inclination for natural human eye level reading)
+- **Finalized Parameters ([P06] SPIRIT & OPPORTUNITY)**:
+  - `Position`: $X = -4.60$, $Z = -6.80$ (re-staged on the south aisle)
+  - `Platform Radius`: $1.50\text{m}$
+  - `Platform Height`: $0.28\text{m}$
+  - `Platform Yaw`: $152.0^\circ$ (angled toward the plaza core)
+  - `Model Scale`: $1.275$ (magnificent full-scale twin rover presence)
+  - `Model Rotations`: Pitch $0.0^\circ$, Yaw $15.0^\circ$, Roll $0.0^\circ$
+  - `Hover Height`: $0.0\text{m}$ (all 6 rocker-bogie wheels grounded on the deck)
+  - `Turntable Animation`: Enabled (`turntable: true`), `turntableSpeed: 0.20`
+- **Build Verification**: `npx vite build` passed cleanly in 770ms with 0 errors.
+
+
+
+
+
+
+
+
+
 
 
 

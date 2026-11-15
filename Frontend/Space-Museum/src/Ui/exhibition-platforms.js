@@ -36,9 +36,9 @@ export class ExhibitionPlatforms {
     this.objLoader = new OBJLoader();
     this.standTemplate = null;
     this.standParams = {
-      offsetZ: 0.26,
+      offsetZ: 0.24,
       tabletHeight: 1.24,
-      tabletTilt: -38
+      tabletTilt: -51
     };
 
     /*/ Global Arena Base Floor Level (Courtyard ground Y = -2.42) /*/
@@ -52,16 +52,20 @@ export class ExhibitionPlatforms {
         sub: 'LUNAR LANDER • 1969',
         color: '#38bdf8',
         modelUrl: '/models/Apollo Lunar Module.glb',
-        x: -9.00,
-        z: -18.50,
-        rotY: 0.0,
-        radius: 1.30,
-        height: 0.28,
+        x: -10.50,
+        z: -17.40,
+        rotY: 43.0,
+        scaleX: 1.0,
+        scaleZ: 1.0,
+        radius: 2.30,
+        height: 0.31,
         standAngle: 0,
-        scale: 0.28,
+        scale: 0.65,
+        modelRotX: 0.0,
         modelRotY: 15.0,
+        modelRotZ: 0.0,
         offsetY: 0.0,
-        turntable: false,
+        turntable: true,
         turntableSpeed: 0.2
       },
       {
@@ -70,16 +74,20 @@ export class ExhibitionPlatforms {
         sub: 'TWIN MER ROVERS • 2004',
         color: '#f97316',
         modelUrl: '/models/24883_MER_static.glb',
-        x: -5.00,
-        z: -12.50,
-        rotY: 0.0,
-        radius: 1.25,
+        x: -4.60,
+        z: -6.80,
+        rotY: 152.0,
+        scaleX: 1.0,
+        scaleZ: 1.0,
+        radius: 1.50,
         height: 0.28,
         standAngle: 0,
-        scale: 0.75,
+        scale: 1.275,
+        modelRotX: 0.0,
         modelRotY: 15.0,
+        modelRotZ: 0.0,
         offsetY: 0.0,
-        turntable: false,
+        turntable: true,
         turntableSpeed: 0.2
       },
       {
@@ -88,16 +96,20 @@ export class ExhibitionPlatforms {
         sub: 'HISTORIC MARS TOUCHDOWN • 1976',
         color: '#ef4444',
         modelUrl: '/models/Viking Lander.glb',
-        x: 0.00,
-        z: -12.50,
-        rotY: 0.0,
-        radius: 1.50,
-        height: 0.35,
+        x: -3.10,
+        z: -17.70,
+        rotY: 25.0,
+        scaleX: 1.0,
+        scaleZ: 1.0,
+        radius: 2.15,
+        height: 0.32,
         standAngle: 0,
-        scale: 0.11,
+        scale: 0.215,
+        modelRotX: 0.0,
         modelRotY: 20.0,
+        modelRotZ: 0.0,
         offsetY: 0.0,
-        turntable: false,
+        turntable: true,
         turntableSpeed: 0.2
       },
       {
@@ -106,16 +118,20 @@ export class ExhibitionPlatforms {
         sub: 'MARTIAN GEOPHYSICS • 2018',
         color: '#f97316',
         modelUrl: '/models/24880_InSight_deployed.glb',
-        x: 5.00,
-        z: -12.50,
-        rotY: 0.0,
-        radius: 1.25,
+        x: 4.00,
+        z: -17.70,
+        rotY: -8.0,
+        scaleX: 1.0,
+        scaleZ: 1.0,
+        radius: 2.40,
         height: 0.28,
         standAngle: 0,
-        scale: 0.29,
+        scale: 0.96,
+        modelRotX: 0.0,
         modelRotY: 15.0,
+        modelRotZ: 0.0,
         offsetY: 0.0,
-        turntable: false,
+        turntable: true,
         turntableSpeed: 0.2
       },
       {
@@ -124,16 +140,20 @@ export class ExhibitionPlatforms {
         sub: 'VESTA & CERES PROBE • 2007',
         color: '#38bdf8',
         modelUrl: '/models/Dawn.glb',
-        x: 10.00,
-        z: -12.50,
+        x: 10.80,
+        z: -15.80,
         rotY: 0.0,
-        radius: 1.25,
+        scaleX: 1.0,
+        scaleZ: 1.0,
+        radius: 3.15,
         height: 0.28,
         standAngle: 0,
-        scale: 0.09,
+        scale: 0.295,
+        modelRotX: 0.0,
         modelRotY: 25.0,
+        modelRotZ: 0.0,
         offsetY: 0.25,
-        turntable: false,
+        turntable: true,
         turntableSpeed: 0.2
       },
       {
@@ -142,16 +162,20 @@ export class ExhibitionPlatforms {
         sub: 'ASTEROID 433 EROS • 1996',
         color: '#a855f7',
         modelUrl: '/models/NEAR Shoemaker.glb',
-        x: -9.00,
-        z: -6.50,
-        rotY: 0.0,
-        radius: 1.20,
-        height: 0.28,
+        x: -10.90,
+        z: -7.40,
+        rotY: -37.0,
+        scaleX: 1.0,
+        scaleZ: 1.0,
+        radius: 2.05,
+        height: 0.26,
         standAngle: 180,
-        scale: 0.26,
+        scale: 0.92,
+        modelRotX: 0.0,
         modelRotY: 15.0,
-        offsetY: 0.25,
-        turntable: false,
+        modelRotZ: 0.0,
+        offsetY: 0.39,
+        turntable: true,
         turntableSpeed: 0.2
       },
       {
@@ -163,11 +187,15 @@ export class ExhibitionPlatforms {
         x: -3.00,
         z: -6.50,
         rotY: 0.0,
+        scaleX: 1.0,
+        scaleZ: 1.0,
         radius: 1.20,
         height: 0.28,
         standAngle: 180,
         scale: 0.22,
+        modelRotX: 0.0,
         modelRotY: 35.0,
+        modelRotZ: 0.0,
         offsetY: 0.30,
         turntable: false,
         turntableSpeed: 0.2
@@ -178,16 +206,20 @@ export class ExhibitionPlatforms {
         sub: 'MARS POWERED FLIGHT • 2021',
         color: '#10b981',
         modelUrl: '/models/Ingenuity Mars Helicopter.glb',
-        x: 3.00,
+        x: 11.50,
         z: -6.50,
-        rotY: 0.0,
-        radius: 1.20,
+        rotY: 67.0,
+        scaleX: 1.0,
+        scaleZ: 1.0,
+        radius: 1.95,
         height: 0.28,
         standAngle: 180,
-        scale: 0.20,
+        scale: 3.00,
+        modelRotX: 0.0,
         modelRotY: 20.0,
+        modelRotZ: 0.0,
         offsetY: 0.0,
-        turntable: false,
+        turntable: true,
         turntableSpeed: 0.2
       }
     ];
@@ -312,7 +344,10 @@ export class ExhibitionPlatforms {
       pGroup.name = `ExhibitionPlatform_${cfg.id}`;
       pGroup.position.set(cfg.x, this.floorY, cfg.z);
       pGroup.rotation.y = THREE.MathUtils.degToRad(cfg.rotY);
-      pGroup.scale.setScalar(this.params.globalScale);
+      const sx = this.params.globalScale * (cfg.scaleX !== undefined ? cfg.scaleX : 1.0);
+      const sy = this.params.globalScale;
+      const sz = this.params.globalScale * (cfg.scaleZ !== undefined ? cfg.scaleZ : 1.0);
+      pGroup.scale.set(sx, sy, sz);
 
       const R = cfg.radius;
       const H = cfg.height;
@@ -410,6 +445,12 @@ export class ExhibitionPlatforms {
     const baseH = H * 0.55;
     const deckH = H * 0.45;
 
+    /*/ Update Non-Uniform Platform Scales /*/
+    const sx = this.params.globalScale * (cfg.scaleX !== undefined ? cfg.scaleX : 1.0);
+    const sy = this.params.globalScale;
+    const sz = this.params.globalScale * (cfg.scaleZ !== undefined ? cfg.scaleZ : 1.0);
+    p.group.scale.set(sx, sy, sz);
+
     /*/ 1. Update Chamfered Plinth Geometry /*/
     if (p.baseMesh) {
       p.baseMesh.geometry.dispose();
@@ -490,7 +531,9 @@ export class ExhibitionPlatforms {
     const {
       modelUrl,
       scale = 0.30,
+      modelRotX = 0,
       modelRotY = 0,
+      modelRotZ = 0,
       offsetY = 0,
       turntable = false,
       turntableSpeed = 0.2,
@@ -506,7 +549,11 @@ export class ExhibitionPlatforms {
     const modelPivot = new THREE.Group();
     modelPivot.name = `ModelPivot_${title}`;
     modelPivot.position.set(0, offsetY, 0);
-    modelPivot.rotation.y = THREE.MathUtils.degToRad(modelRotY);
+    modelPivot.rotation.set(
+      THREE.MathUtils.degToRad(modelRotX || 0),
+      THREE.MathUtils.degToRad(modelRotY || 0),
+      THREE.MathUtils.degToRad(modelRotZ || 0)
+    );
     modelPivot.scale.setScalar(scale);
 
     this.gltfLoader.load(
@@ -540,7 +587,7 @@ export class ExhibitionPlatforms {
           name: title,
           pivot: modelPivot,
           model: model,
-          options: { scale, modelRotY, offsetY, turntable, turntableSpeed }
+          options: { scale, modelRotX, modelRotY, modelRotZ, offsetY, turntable, turntableSpeed }
         };
 
         console.log(`[ExhibitionPlatforms] Staged 3D model "${title}" on Platform ${cfg.id}`);
@@ -735,6 +782,16 @@ export class ExhibitionPlatforms {
           this.rebuildPlatformGeometry(idx);
         });
 
+        subFolder.add(cfg, 'scaleX', 0.20, 3.00, 0.05).name('Platform Scale X').onChange((val) => {
+          const p = this.platforms[idx];
+          if (p) p.group.scale.x = this.params.globalScale * val;
+        });
+
+        subFolder.add(cfg, 'scaleZ', 0.20, 3.00, 0.05).name('Platform Scale Z').onChange((val) => {
+          const p = this.platforms[idx];
+          if (p) p.group.scale.z = this.params.globalScale * val;
+        });
+
         subFolder.add(cfg, 'x', -15.0, 15.0, 0.1).name('Position X').onChange((val) => {
           const p = this.platforms[idx];
           if (p) p.group.position.x = val;
@@ -745,7 +802,7 @@ export class ExhibitionPlatforms {
           if (p) p.group.position.z = val;
         });
 
-        subFolder.add(cfg, 'rotY', -180, 180, 1).name('Yaw Y (Deg)').onChange((val) => {
+        subFolder.add(cfg, 'rotY', -180, 180, 1).name('Platform Yaw Y (Deg)').onChange((val) => {
           const p = this.platforms[idx];
           if (p) p.group.rotation.y = THREE.MathUtils.degToRad(val);
         });
@@ -764,11 +821,27 @@ export class ExhibitionPlatforms {
           }
         });
 
-        subFolder.add(cfg, 'modelRotY', -180, 180, 1).name('Model Rot Y (Deg)').onChange((val) => {
+        subFolder.add(cfg, 'modelRotX', -180, 180, 1).name('Model Pitch X (Deg)').onChange((val) => {
+          const m = this.mountedModels[idx];
+          if (m && m.pivot) {
+            m.pivot.rotation.x = THREE.MathUtils.degToRad(val);
+            if (m.options) m.options.modelRotX = val;
+          }
+        });
+
+        subFolder.add(cfg, 'modelRotY', -180, 180, 1).name('Model Yaw Y (Deg)').onChange((val) => {
           const m = this.mountedModels[idx];
           if (m && m.pivot) {
             m.pivot.rotation.y = THREE.MathUtils.degToRad(val);
             if (m.options) m.options.modelRotY = val;
+          }
+        });
+
+        subFolder.add(cfg, 'modelRotZ', -180, 180, 1).name('Model Roll Z (Deg)').onChange((val) => {
+          const m = this.mountedModels[idx];
+          if (m && m.pivot) {
+            m.pivot.rotation.z = THREE.MathUtils.degToRad(val);
+            if (m.options) m.options.modelRotZ = val;
           }
         });
 
@@ -811,11 +884,17 @@ export class ExhibitionPlatforms {
         const m = this.mountedModels[idx];
         if (m && m.pivot) {
           m.pivot.scale.setScalar(cfg.scale);
-          m.pivot.rotation.y = THREE.MathUtils.degToRad(cfg.modelRotY);
+          m.pivot.rotation.set(
+            THREE.MathUtils.degToRad(cfg.modelRotX || 0),
+            THREE.MathUtils.degToRad(cfg.modelRotY || 0),
+            THREE.MathUtils.degToRad(cfg.modelRotZ || 0)
+          );
           m.pivot.position.y = cfg.offsetY;
           if (m.options) {
             m.options.scale = cfg.scale;
-            m.options.modelRotY = cfg.modelRotY;
+            m.options.modelRotX = cfg.modelRotX || 0;
+            m.options.modelRotY = cfg.modelRotY || 0;
+            m.options.modelRotZ = cfg.modelRotZ || 0;
             m.options.offsetY = cfg.offsetY;
             m.options.turntable = cfg.turntable;
             m.options.turntableSpeed = cfg.turntableSpeed;
