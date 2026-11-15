@@ -1437,6 +1437,77 @@
   - Expanded intensity range to `[0, 100]`, beam angle to `[15°, 80°]`, and focus height to `[0.0m, 2.5m]`.
 - **Build Verification**: `npx vite build` passed cleanly in 373ms with 0 errors.
 
+---
+### Log : 106
+**Title**: Cloudflare Worker Gateway Live Deployment via Wrangler CLI  
+**Description**: Successfully configured and deployed the Cloudflare Worker gateway to production using Wrangler:
+- **Worker Configuration ([wrangler.toml](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Backend/Cloudlfare/wrangler.toml), [package.json](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Backend/Cloudlfare/package.json))**:
+  - Configured ES module worker `space-museum-relic-gateway` with `nodejs_compat` flags and bundled `data.json`.
+  - Standardized all code comments in `cw.js` strictly into `/*/ comment text /*/` formatting.
+- **Wrangler Production Deployment**:
+  - Executed `npx wrangler deploy` successfully.
+  - Published production live URL: `https://space-museum-relic-gateway.arnabbiswas9669.workers.dev`.
+  - Verified live REST API `/relics` serving 13/13 space relics and HTTP status checks.
+- **Frontend Gateway Linkage ([relic-comlink.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/relic-comlink.js))**:
+  - Updated default WebSocket endpoint to `wss://space-museum-relic-gateway.arnabbiswas9669.workers.dev`.
+
+---
+### Log : 108
+**Title**: Real-Time Audio Engine & Immediate Greeting Telemetry Fix  
+**Description**: Resolved the silent audio issue in the Gemini 3.8 Live comlink:
+- **Automatic First-Person Greeting Trigger ([relic-comlink.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/relic-comlink.js))**:
+  - Automatically sends an introductory greeting turn upon receiving `setupComplete` from Gemini 3.8 Live, causing the spacecraft to immediately speak and welcome the visitor out loud without requiring them to speak first.
+- **Web Audio Engine Hardening**:
+  - Replaced fixed 24kHz context creation with device-native `new AudioContext()` to guarantee hardware speaker compatibility across macOS, Windows, and iPadOS.
+  - Converted buffer decoding to little-endian `DataView.getInt16` to prevent `RangeError` on odd-byte PCM packets.
+  - Connected decoded audio sources directly to `this.audioCtx.destination` and `this.analyser`.
+- **Microphone Pipeline Stabilization**:
+  - Unified microphone processing on the primary resumed `audioCtx` through a zero-gain monitor node, avoiding browser suspension bugs while preventing acoustic feedback loops.
+- **Build Verification**: `npx vite build` passed cleanly in 411ms with 0 errors.
+
+---
+### Log : 109
+**Title**: Full Covelly Live Voice Gateway Client Architecture Migration  
+**Description**: Migrated the production-proven audio pipeline from Covelly Live Voice (`Covelly/cw.js` & `Covelly/script.js`) into the Space Museum com-link controller:
+- **Correct Gemini Live Audio Input Schema ([relic-comlink.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/relic-comlink.js))**:
+  - Corrected real-time microphone packet structure from legacy REST `mediaChunks` to exact Gemini Live API schema:
+    `{ realtimeInput: { audio: { mimeType: 'audio/pcm;rate=16000', data: base64Data } } }`.
+  - Solved the issue where Gemini was not receiving the visitor's voice questions.
+- **Box-Filtered Downsampler & Audio Pipeline Utilities**:
+  - Integrated `downsampleTo16k` box-filtering downsampling algorithm for high-fidelity anti-aliased 16kHz speech encoding.
+  - Standardized `float32ToInt16`, `int16ToFloat32`, `bufferToBase64`, and `base64ToBuffer` conversions.
+  - Silenced microphone output buffer directly in `ScriptProcessorNode` (`out[i] = 0`) to eliminate speaker feedback while keeping the continuous audio pump active.
+- **Synchronized Scheduling & Barge-In**:
+  - Only starts mic capture after `setupComplete` to prevent packet desynchronization.
+  - Implemented 60ms jitter buffer scheduling with active audio source tracking and instant interruption clearing on user barge-in.
+- **Build Verification**: `npx vite build` passed cleanly in 488ms with 0 errors.
+
+---
+### Log : 110
+**Title**: Call Stability & WebSocket Connection Lifecycle Hardening  
+**Description**: Resolved random mid-call disconnects and WebSocket state collisions:
+- **Key-Repeat & Click Debouncing ([nevigation.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/ME/nevigation.js), [relic-comlink.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Logic/AI/relic-comlink.js))**:
+  - Filtered OS keyboard repeat (`if (e.repeat) return;`) on `KeyE` to prevent multiple rapid connect/disconnect toggles when pressing the key.
+  - Added `this.isConnecting` guard in `startComlink()` to debounce rapid clicks/taps.
+- **Race Condition & Socket Teardown Hardening**:
+  - Nullified all callbacks (`onopen`, `onmessage`, `onerror`, `onclose`) on old sockets immediately upon disconnection before invoking `.close()`, preventing stale callbacks from cross-firing into a new session.
+  - Added readiness check in `handleGatewayMessage`: waits for `socket.onopen` if `setupComplete` arrives while the client socket is still transitioning from `CONNECTING` to `OPEN`, eliminating `InvalidStateError`.
+- **Protected Audio Streaming Loop**:
+  - Wrapped audio packet transmissions in error-handling guards so intermittent network hiccups never tear down the active audio pipeline.
+- **Build Verification**: `npx vite build` passed cleanly in 427ms with 0 errors.
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

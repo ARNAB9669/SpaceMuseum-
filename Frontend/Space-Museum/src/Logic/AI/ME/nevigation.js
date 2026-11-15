@@ -418,11 +418,18 @@ export class FirstPersonController {
         }
       }
 
-      /*/ Ground interaction key (Sit in Seat when near one) /*/
-      if (e.code === 'KeyE' && !this.isSeated && this.theatre) {
-        const nearbySeat = this.theatre.checkSeatProximity(this.camera.position);
-        if (nearbySeat) {
-          this.theatre.sitInSeat(nearbySeat);
+      /*/ Ground interaction key (Sit in Seat when near one, or Speak with Relic) /*/
+      if (e.code === 'KeyE' && !this.isSeated) {
+        if (e.repeat) return; /*/ Suppress rapid OS keyboard repeat to prevent connection thrashing /*/
+        if (this.theatre) {
+          const nearbySeat = this.theatre.checkSeatProximity(this.camera.position);
+          if (nearbySeat) {
+            this.theatre.sitInSeat(nearbySeat);
+            return;
+          }
+        }
+        if (this.onInteract) {
+          this.onInteract();
           return;
         }
       }
@@ -736,10 +743,10 @@ export class FirstPersonController {
       this.toggleFlyMode();
     }
 
-    /*/ Gamepad Cinema Seat Interaction: Press X (Xbox X / PlayStation Cross) or Square to Sit /*/
-    if ((gp?.btnX || gp?.btnA) && !this.isSeated && this.theatre) {
-      let targetSeat = this.theatre.checkSeatProximity(this.camera.position);
-      if (!targetSeat) {
+    /*/ Gamepad Interaction: Press X or A to Sit in Seat or Speak with Relic /*/
+    if ((gp?.btnX || gp?.btnA) && !this.isSeated) {
+      let targetSeat = this.theatre ? this.theatre.checkSeatProximity(this.camera.position) : null;
+      if (!targetSeat && this.theatre) {
         /*/ Crosshair Raycast Fallback: sitting while looking directly at a seat within 3.6m /*/
         const seatRay = new THREE.Raycaster();
         seatRay.setFromCamera(new THREE.Vector2(0, 0), this.camera);
@@ -753,6 +760,9 @@ export class FirstPersonController {
       if (targetSeat) {
         this.theatre.sitInSeat(targetSeat);
         this.gamepad?.vibrate(70, 0.4, 0.4);
+      } else if (this.onInteract) {
+        this.onInteract();
+        this.gamepad?.vibrate(50, 0.3, 0.3);
       }
     }
 

@@ -1,0 +1,11 @@
+{
+  "name": "space-museum-relic-gateway",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker WebSocket Gateway for NASA Space Museum Gemini Live Audio",
+  "type": "module",
+  "main": "cw.js",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  }
+}

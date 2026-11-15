@@ -12,9 +12,35 @@ import { FloorMapSelector } from './Logic/map-selector.js';
 import { WelcomeSign, OuterWallPoster, EntranceCorridorPoster, Apollo15Poster, Apollo12Poster, Surveyor3Poster, SojournerRoverPoster, SpiritOpportunityPoster, VikingLanderPoster, InsightLanderPoster, DawnMissionPoster, NearShoemakerPoster, PioneerPoster, IngenuityHelicopterPoster, KeplerK2Poster } from './Ui/posters.js';
 import { TheatreRoom } from './Ui/theatre.js';
 import { ExhibitionPlatforms } from './Ui/exhibition-platforms.js';
+import { RelicComlink } from './Logic/AI/relic-comlink.js';
 
 /*/ Canvas & Rendering Setup /*/
 const canvas = document.getElementById('webgl-canvas');
+
+/*/ Safe Pointer Capture Guard: Prevents browser InvalidStateError when touches cross DOM overlays or release prematurely /*/
+if (canvas) {
+  const origSetPointerCapture = canvas.setPointerCapture;
+  if (origSetPointerCapture) {
+    canvas.setPointerCapture = function(pointerId) {
+      try {
+        origSetPointerCapture.call(this, pointerId);
+      } catch (e) {
+        /*/ Suppress browser InvalidStateError if pointer is no longer active /*/
+      }
+    };
+  }
+  const origReleasePointerCapture = canvas.releasePointerCapture;
+  if (origReleasePointerCapture) {
+    canvas.releasePointerCapture = function(pointerId) {
+      try {
+        origReleasePointerCapture.call(this, pointerId);
+      } catch (e) {
+        /*/ Suppress browser InvalidStateError /*/
+      }
+    };
+  }
+}
+
 const dockPrompt = document.getElementById('dock-prompt');
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#010106');
@@ -109,9 +135,30 @@ fpController.addCollidableMeshes(exhibitionPlatforms.collidableMeshes);
 const theatre = new TheatreRoom(scene, camera, fpController);
 fpController.theatre = theatre;
 
+/*/ Direct Spacecraft Voice Com-Link (Gemini Multimodal Live Voice Engine) /*/
+const relicComlink = new RelicComlink();
+let currentNearbyRelic = null;
+
+fpController.onInteract = () => {
+  if (relicComlink.isActive) {
+    relicComlink.stopComlink();
+    return;
+  }
+  if (currentNearbyRelic) {
+    relicComlink.startComlink(currentNearbyRelic.id, currentNearbyRelic.name);
+  }
+};
+
 /*/ UI Interactive Elements /*/
 const interactPrompt = document.getElementById('interact-prompt');
 const btnCinemaStand = document.getElementById('btn-cinema-stand');
+
+if (interactPrompt) {
+  interactPrompt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (fpController.onInteract) fpController.onInteract();
+  });
+}
 
 if (btnCinemaStand) {
   btnCinemaStand.addEventListener('click', (e) => {
@@ -336,13 +383,15 @@ function animate(timestamp) {
   exhibitionPlatforms.update(delta);
   theatre.update(delta);
 
-  /*/ Check proximity to cinema seats when in First-Person POV /*/
+  /*/ Check proximity to cinema seats or rover exhibition platforms /*/
   if (fpController.isFirstPerson && !fpController.isLanding && !fpController.isAscending) {
     if (fpController.isSeated) {
+      currentNearbyRelic = null;
       if (interactPrompt) interactPrompt.classList.add('hidden');
     } else {
       const nearbySeat = theatre.checkSeatProximity(camera.position);
       if (nearbySeat) {
+        currentNearbyRelic = null;
         if (interactPrompt) {
           interactPrompt.classList.remove('hidden');
           const promptKey = interactPrompt.querySelector('.prompt-key');
@@ -355,12 +404,48 @@ function animate(timestamp) {
           }
         }
       } else {
-        if (interactPrompt) interactPrompt.classList.add('hidden');
+        /*/ Proximity Check to Active Rover Podia for Gemini Live Voice Com-Link /*/
+        let nearbyRelic = null;
+        for (const cfg of exhibitionPlatforms.platformConfigs) {
+          const dx = camera.position.x - cfg.x;
+          const dz = camera.position.z - cfg.z;
+          const dist = Math.hypot(dx, dz);
+          if (dist < cfg.radius + 1.45) {
+            const mapEntry = relicComlink.platformRelicMap[cfg.id];
+            if (mapEntry) {
+              nearbyRelic = { id: mapEntry.id, name: cfg.title || mapEntry.name };
+              break;
+            }
+          }
+        }
+
+        if (nearbyRelic) {
+          currentNearbyRelic = nearbyRelic;
+          if (interactPrompt) {
+            interactPrompt.classList.remove('hidden');
+            const promptKey = interactPrompt.querySelector('.prompt-key');
+            const promptText = interactPrompt.querySelector('.prompt-text');
+            if (promptKey) {
+              promptKey.textContent = fpController.gamepad?.isConnected ? 'X' : 'E';
+            }
+            if (promptText) {
+              promptText.textContent = relicComlink.isActive
+                ? `Disconnect Com-Link (${nearbyRelic.name})`
+                : `Speak with ${nearbyRelic.name}`;
+            }
+          }
+        } else {
+          currentNearbyRelic = null;
+          if (interactPrompt) interactPrompt.classList.add('hidden');
+        }
       }
     }
   } else {
+    currentNearbyRelic = null;
     if (interactPrompt) interactPrompt.classList.add('hidden');
   }
+
+  relicComlink.update(delta);
 
   renderer.render(scene, camera);
 }

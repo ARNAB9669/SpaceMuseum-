@@ -1,0 +1,302 @@
+{
+    "apollo_11": {
+        "name": "Apollo 11 Lunar Module (Eagle) & EASEP",
+        "cospar_id": "1969-059C",
+        "target_body": "Moon",
+        "mission_type": "Crewed Lunar Module & Surface Experiments",
+        "launch_date": "1969-07-16",
+        "launch_vehicle": "Saturn V",
+        "launch_site": "Cape Canaveral, United States",
+        "landing_date": "1969-07-20T20:17:40Z",
+        "landing_site": "Mare Tranquilitatis (Sea of Tranquility)",
+        "coordinates": "0.67416 N, 23.47314 E",
+        "mass_kg": {
+            "total_spacecraft": 15103,
+            "ascent_dry": 2445,
+            "descent_dry": 2034,
+            "easep_package": 48
+        },
+        "crew": [
+            "Neil A. Armstrong (Commander)",
+            "Edwin E. 'Buzz' Aldrin, Jr. (LM Pilot)",
+            "Michael Collins (CSM Pilot)"
+        ],
+        "surface_stats": {
+            "surface_stay": "21 hours 36 minutes",
+            "eva_duration": "2 hours 31 minutes",
+            "traverse_distance_m": 250,
+            "samples_collected_kg": 21.55
+        },
+        "instruments": [
+            "Passive Seismometer",
+            "Lunar Dust Detector",
+            "Laser Ranging Retroreflector (LRRR)",
+            "Solar Wind Composition Experiment"
+        ],
+        "current_status": "Descent stage and EASEP remain at Tranquility Base (EASEP terminated Aug 27, 1969). Ascent stage jettisoned July 22, 1969 and assumed impacted on the Moon."
+    },
+    "apollo_12": {
+        "name": "Apollo 12 Lunar Module (Intrepid) & ALSEP",
+        "cospar_id": "1969-099C",
+        "target_body": "Moon",
+        "mission_type": "Crewed Lunar Module & Surface Experiments",
+        "launch_date": "1969-11-14",
+        "launch_vehicle": "Saturn V",
+        "launch_site": "Cape Canaveral, United States",
+        "landing_date": "1969-11-19T06:54:35Z",
+        "landing_site": "Oceanus Procellarum (180 m from Surveyor 3)",
+        "coordinates": "3.0128 S, 23.4219 W",
+        "mass_kg": {
+            "total_spacecraft": 15235,
+            "ascent_dry": 2383,
+            "descent_dry": 2118,
+            "alsep_central_station": 25,
+            "snap27_rtg": 17
+        },
+        "crew": [
+            "Charles P. 'Pete' Conrad (Commander)",
+            "Alan L. Bean (LM Pilot)",
+            "Richard F. Gordon Jr. (CSM Pilot)"
+        ],
+        "surface_stats": {
+            "surface_stay": "31 hours 31 minutes",
+            "eva_duration": "7 hours 45 minutes (2 EVAs)",
+            "traverse_distance_km": 1.35,
+            "samples_collected_kg": 34.35,
+            "notable_event": "Visited Surveyor 3 and returned ~10 kg of parts (camera and soil scoop) to Earth."
+        },
+        "power_source": "SNAP-27 Plutonium-238 RTG (~70W DC)",
+        "instruments": [
+            "Passive Seismometer",
+            "Suprathermal Ion Detector",
+            "Cold Cathode Ion Gauge",
+            "Lunar Dust Detector",
+            "Lunar Surface Magnetometer (LSM)",
+            "Solar Wind Spectrometer"
+        ],
+        "current_status": "Descent stage remains at landing site. Ascent stage intentionally crashed into Moon on Nov 20, 1969 (3.94 S, 338.80 E). ALSEP shut down Sept 30, 1977."
+    },
+    "apollo_15": {
+        "name": "Apollo 15 Lunar Module (Falcon), LRV & ALSEP",
+        "cospar_id": "1971-063C",
+        "target_body": "Moon",
+        "mission_type": "Crewed Lunar Module, Rover & Surface Experiments",
+        "launch_date": "1971-07-26",
+        "launch_vehicle": "Saturn V",
+        "launch_site": "Cape Canaveral, United States",
+        "landing_date": "1971-07-30T22:16:29Z",
+        "landing_site": "Mare Imbrium / Hadley-Apennine",
+        "coordinates": "26.13239 N, 3.63330 E",
+        "mass_kg": {
+            "total_spacecraft": 16430,
+            "ascent_dry": 2385,
+            "descent_dry": 2797,
+            "alsep_central_station": 25,
+            "snap27_rtg": 17
+        },
+        "crew": [
+            "David R. Scott (Commander)",
+            "James B. Irwin (LM Pilot)",
+            "Alfred M. Worden (CSM Pilot)"
+        ],
+        "surface_stats": {
+            "surface_stay": "66 hours 55 minutes",
+            "eva_duration": "18 hours 35 minutes (3 EVAs + 33 min standup EVA)",
+            "traverse_distance_km": 27.9,
+            "samples_collected_kg": 77.31,
+            "notable_event": "First deployment of the Lunar Roving Vehicle (LRV); hammer-and-feather vacuum drop test."
+        },
+        "power_source": "SNAP-27 Plutonium-238 RTG (~70W DC)",
+        "instruments": [
+            "Lunar Roving Vehicle (LRV)",
+            "Passive Seismometer",
+            "Lunar Surface Magnetometer (LSM)",
+            "Solar Wind Spectrometer",
+            "Suprathermal Ion Detector",
+            "Cold Cathode Ion Gauge",
+            "Lunar Dust Detector",
+            "Heat Flow Experiment"
+        ],
+        "current_status": "Descent stage and LRV parked permanently on the Moon. Ascent stage impacted Moon on Aug 3, 1971 (26.36 N, 0.25 E). ALSEP shut down Sept 30, 1977."
+    },
+    "surveyor_3": {
+        "name": "Surveyor 3 (Surveyor-C)",
+        "target_body": "Moon",
+        "mission_type": "Robotic Lunar Lander",
+        "launch_date": "1967-04-17T07:05:01Z",
+        "launch_vehicle": "Atlas Centaur (AC-12)",
+        "launch_site": "Cape Canaveral, Fla. / Launch Complex 36B",
+        "landing_date": "1967-04-20T00:04:17Z",
+        "landing_site": "Oceanus Procellarum",
+        "coordinates": "3 S, 23.41 W",
+        "mass_kg": 997.9,
+        "instruments": [
+            "TV Camera (transmitted 6,326 pictures)",
+            "Surface Sampler (5 ft reach, dug 4 trenches up to 7 inches deep)"
+        ],
+        "highlights": "Bounced twice during landing (10 m and 3 m) due to radar confusion. Measured lunar soil bearing strength at ~10 psi (98 kPa), proving it could support an Apollo Lunar Module. Visited by Apollo 12 astronauts in Nov 1969.",
+        "current_status": "Inactive on the Moon; last contact May 4, 1967."
+    },
+    "mars_pathfinder_sojourner": {
+        "name": "Mars Pathfinder (Carl Sagan Memorial Station) & Sojourner Rover",
+        "target_body": "Mars",
+        "mission_type": "Lander & Robotic Rover",
+        "launch_date": "1996-12-04",
+        "launch_vehicle": "Delta II 7925",
+        "launch_site": "Cape Canaveral Air Force Station, Florida",
+        "landing_date": "1997-07-04",
+        "landing_site": "Ares Vallis, Mars",
+        "mass_kg": {
+            "sojourner_rover": 10.6
+        },
+        "instruments": [
+            "Alpha Proton X-ray Spectrometer (APXS)",
+            "Three Cameras (Imager for Mars Pathfinder)",
+            "Atmospheric Structure Instrument / Meteorology Package"
+        ],
+        "highlights": "Delivered Sojourner, the first-ever rover on Mars, using an innovative 17-foot multi-lobed airbag system that bounced ~15 times. Returned 2.3 billion bits of data, 16,500 lander images, 550 rover images, and 15 chemical rock analyses confirming a warmer, wetter Martian past.",
+        "current_status": "Permanently parked in Ares Vallis; final transmission Sept 27, 1997."
+    },
+    "spirit_and_opportunity": {
+        "name": "Mars Exploration Rovers (MER): Spirit & Opportunity",
+        "target_body": "Mars",
+        "mission_type": "Twin Robotic Rovers",
+        "launch_date": {
+            "spirit": "2003-06-10",
+            "opportunity": "2003-07-07"
+        },
+        "landing_date": {
+            "spirit": "2004-01-04",
+            "opportunity": "2004-01-25"
+        },
+        "landing_site": {
+            "spirit": "Gusev Crater",
+            "opportunity": "Meridiani Planum"
+        },
+        "mass_kg": 185,
+        "instruments": [
+            "Panoramic Camera (Pancam)",
+            "Miniature Thermal Emission Spectrometer (Mini-TES)",
+            "Mössbauer Spectrometer",
+            "Alpha Particle X-Ray Spectrometer (APXS)",
+            "Microscopic Imager",
+            "Rock Abrasion Tool (RAT)"
+        ],
+        "highlights": "Designed for 90-sol missions, both rovers operated for years and found clear geological evidence of past liquid water on Mars. Opportunity drove over 45 km across Meridiani Planum.",
+        "current_status": "Inactive monuments on Mars. Spirit last communicated March 22, 2010; Opportunity lost contact during a global dust storm in June 2018 (mission ended Feb 2019)."
+    },
+    "viking_1": {
+        "name": "Viking 1 Lander & Orbiter",
+        "cospar_id": {
+            "orbiter": "1975-075A",
+            "lander": "1975-075C"
+        },
+        "target_body": "Mars",
+        "mission_type": "Orbiter & Lander",
+        "launch_date": "1975-08-20T21:22:00Z",
+        "launch_vehicle": "Titan IIIE-Centaur",
+        "launch_site": "Cape Canaveral LC-41",
+        "landing_date": "1976-07-20T11:53:06Z",
+        "landing_site": "Chryse Planitia",
+        "coordinates": "22.27 N, 312.05 E",
+        "mass_kg": {
+            "launch_total": 3527,
+            "orbiter_dry": 883,
+            "lander_dry": 572
+        },
+        "highlights": "First U.S. spacecraft to land safely and operate on Mars. Conducted biological soil experiments searching for life and captured the first high-resolution color panoramas of the Martian surface. Operated on the surface for 2,245 sols.",
+        "current_status": "Lander remains stationary at Chryse Planitia (last contact Nov 1982). Orbiter terminated Aug 17, 1980."
+    },
+    "insight": {
+        "name": "InSight Mars Lander (Interior Exploration using Seismic Investigations, Geodesy and Heat Transport)",
+        "target_body": "Mars",
+        "mission_type": "Robotic Geophysical Lander",
+        "launch_date": "2018-05-05",
+        "launch_vehicle": "Atlas V-401",
+        "launch_site": "Vandenberg Air Force Base, California",
+        "landing_date": "2018-11-26",
+        "landing_site": "Elysium Planitia",
+        "coordinates": "4.5024 N, 135.6234 E",
+        "mass_kg": {
+            "launch_total": 694,
+            "lander": 358
+        },
+        "instruments": [
+            "Seismic Experiment for Interior Structure (SEIS)",
+            "Heat Flow and Physical Properties Package (HP3)",
+            "Rotation and Interior Structure Experiment (RISE)"
+        ],
+        "highlights": "First mission dedicated to studying Mars' deep interior (crust, mantle, and core). Detected over 1,300 marsquakes (up to magnitude 5) and tracked meteoroid impacts.",
+        "current_status": "Inactive on Elysium Planitia; lost power due to dust buildup on its solar panels (mission ended Dec 21, 2022)."
+    },
+    "dawn": {
+        "name": "Dawn Spacecraft",
+        "cospar_id": "2007-043A",
+        "target_body": "4 Vesta & 1 Ceres (Main Asteroid Belt)",
+        "mission_type": "Ion-Propulsion Orbiter",
+        "launch_date": "2007-09-27T11:34:00Z",
+        "launch_vehicle": "Delta II Heavy 2925H-9.5",
+        "launch_site": "Cape Canaveral SLC-17B",
+        "mass_kg": {
+            "launch_total": 1217.7,
+            "dry": 747.1
+        },
+        "key_dates": {
+            "mars_gravity_assist": "2009-02-17",
+            "vesta_arrival": "2011-07-16",
+            "vesta_departure": "2012-09-05",
+            "ceres_arrival": "2015-03-06",
+            "end_of_mission": "2018-10-31"
+        },
+        "instruments": [
+            "Framing Camera (FC)",
+            "Visible and Infrared Spectrometer (VIR)",
+            "Gamma Ray and Neutron Detector (GRaND)",
+            "3 Xenon Ion Thrusters"
+        ],
+        "highlights": "First spacecraft to orbit two extraterrestrial bodies, first to orbit a main-belt asteroid (Vesta), and first to visit a dwarf planet (Ceres).",
+        "current_status": "Depleted its hydrazine fuel on Oct 31, 2018; remains in a perpetual, unpowered orbit around Ceres."
+    },
+    "ingenuity": {
+        "name": "Ingenuity Mars Helicopter",
+        "target_body": "Mars",
+        "mission_type": "Autonomous Rotorcraft",
+        "launch_date": "2020-07-30",
+        "landing_date": "2021-02-18 (attached to Perseverance Rover)",
+        "landing_site": "Jezero Crater, Mars",
+        "first_flight": "2021-04-19",
+        "mass_kg": 1.8,
+        "highlights": "First aircraft to achieve powered, controlled flight on another planet. Planned for 5 flights over 30 days, it completed 72 flights across nearly three years as an aerial scout for Perseverance.",
+        "current_status": "Sustained rotor damage during its 72nd landing on Jan 18, 2024 (mission ended Jan 25, 2024). Stationary artifact in Neretva Vallis."
+    },
+    "kepler": {
+        "name": "Kepler Space Telescope (Kepler / K2)",
+        "target_body": "Heliocentric Earth-Trailing Orbit",
+        "mission_type": "Exoplanet-Hunting Space Observatory",
+        "launch_date": "2009-03-06",
+        "launch_vehicle": "Delta 7925-10L",
+        "mass_kg": 1039,
+        "highlights": "NASA's first planet-hunting telescope; discovered thousands of exoplanets and proved that planets outnumber stars in the Milky Way. Operated an extended K2 mission after reaction wheel failures.",
+        "current_status": "Ran out of fuel and retired on Oct 30, 2018; drifting safely in an Earth-trailing orbit around the Sun."
+    },
+    "near_shoemaker": {
+        "name": "NEAR Shoemaker (Near Earth Asteroid Rendezvous)",
+        "target_body": "Asteroid 433 Eros",
+        "mission_type": "Asteroid Orbiter / Lander",
+        "launch_date": "1996-02-17",
+        "landing_date": "2001-02-12",
+        "highlights": "First spacecraft to orbit and successfully touch down on an asteroid (433 Eros), despite not being originally built as a lander.",
+        "current_status": "Permanently resting on the surface of asteroid 433 Eros (last contact Feb 28, 2001)."
+    },
+    "pioneer_10_11": {
+        "name": "Pioneer 10 & Pioneer 11",
+        "target_body": "Outer Solar System / Interstellar Space",
+        "mission_type": "Deep-Space Probes",
+        "launch_date": {
+            "pioneer_10": "1972-03-02",
+            "pioneer_11": "1973-04-06"
+        },
+        "highlights": "First spacecraft to traverse the asteroid belt and make close flybys of Jupiter (Pioneer 10 & 11) and Saturn (Pioneer 11). Both carry gold-anodized Pioneer Plaques depicting humanity.",
+        "current_status": "Unpowered and drifting silently out of the solar system into interstellar space."
+    }
+}

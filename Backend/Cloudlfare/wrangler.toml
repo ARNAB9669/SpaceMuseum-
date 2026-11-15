@@ -1,0 +1,9 @@
+name = "space-museum-relic-gateway"
+main = "cw.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+
+GEMINI_LIVE_MODEL = "models/gemini-3.8-live"
+MAX_SESSION_MINS = "6"
