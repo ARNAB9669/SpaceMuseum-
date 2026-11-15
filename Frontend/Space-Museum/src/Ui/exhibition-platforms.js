@@ -609,7 +609,7 @@ export class ExhibitionPlatforms {
               metalness: 0.85,
               roughness: 0.25
             });
-            child.castShadow = true;
+            child.castShadow = false;
             child.receiveShadow = true;
           }
         });
@@ -694,7 +694,8 @@ export class ExhibitionPlatforms {
     tabletMesh.name = `TabletScreen_${cfg.id}`;
     tabletMesh.position.set(0, tabletH, 0);
     tabletMesh.rotation.x = THREE.MathUtils.degToRad(tabletTilt);
-    tabletMesh.castShadow = true;
+    tabletMesh.castShadow = false;
+    tabletMesh.receiveShadow = true;
     standHolder.add(tabletMesh);
 
     p.plaqueGroup.add(standHolder);

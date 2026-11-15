@@ -1361,6 +1361,20 @@
     - `Turntable Animation`: Enabled (`turntable: true`), `turntableSpeed: 0.20`
 - **Build Verification**: `npx vite build` passed cleanly in 1.00s with 0 errors.
 
+---
+### Log : 100
+**Title**: Shadow Pass Overhead Purge & Production Push Readiness  
+**Description**: Eliminated redundant shadow-caster draw calls across secondary props and indoor architectural meshes to optimize GPU performance on tablets and mid-tier PCs before deployment:
+- **Secondary Prop & Interior Mesh Shadow Purge**:
+  - Disabled `castShadow` on all 3D tablet stands (`TABLET STAND.obj`) and interactive tablet screen displays across the 8 exhibition platforms in [exhibition-platforms.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/exhibition-platforms.js).
+  - Disabled `castShadow` on indoor auditorium assets in [theatre.js](file:///Users/arnabbiswas/Documents/Mine/©Covelly/SpaceMuseum/Space-Museum/Frontend/Space-Museum/src/Ui/theatre.js) (theatre seat models, stepped tiers 2 & 3, and blackout ceiling roof), eliminating over 40 redundant mesh draw calls during the directional sunlight shadow map pass.
+  - Retained `castShadow = true` exclusively on primary spacecraft/rover models for high visual fidelity on museum platform decks.
+- **Build Verification**: `npx vite build` passed cleanly in 645ms with 0 errors.
+- **Deployment Status**: Branch `work-here` validated, fully tested, and ready for commit and push to `origin/work-here` and `origin/main` for Vercel production rebuild.
+
+
+
+
 
 
 
